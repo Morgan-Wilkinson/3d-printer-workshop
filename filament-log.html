@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filament log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500;0,600;0,700;0,800;1,500&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #E7EAE7;
+    --surface: #FBFCFB;
+    --surface-2: #EFF1EE;
+    --ink: #1D211E;
+    --ink-soft: #5B615C;
+    --ink-faint: #8A908A;
+    --line: #C7CDC6;
+    --line-strong: #9BA39A;
+    --amber: #B4750F;
+    --amber-bg: #FBEDD4;
+    --red: #A3311A;
+    --red-bg: #F7E1DB;
+    --green: #3C6E42;
+    --focus: #2B6CB0;
+    --radius-sm: 3px;
+    --radius-md: 5px;
+    --font-head: 'Archivo', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #171917;
+      --surface: #1F221F;
+      --surface-2: #262925;
+      --ink: #E9ECE8;
+      --ink-soft: #A6ACA5;
+      --ink-faint: #6F756E;
+      --line: #363A35;
+      --line-strong: #484D46;
+      --amber: #E2A03F;
+      --amber-bg: #3A2E14;
+      --red: #E17A5F;
+      --red-bg: #3B211B;
+      --green: #7FB489;
+      --focus: #6FA8DC;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171917;
+    --surface: #1F221F;
+    --surface-2: #262925;
+    --ink: #E9ECE8;
+    --ink-soft: #A6ACA5;
+    --ink-faint: #6F756E;
+    --line: #363A35;
+    --line-strong: #484D46;
+    --amber: #E2A03F;
+    --amber-bg: #3A2E14;
+    --red: #E17A5F;
+    --red-bg: #3B211B;
+    --green: #7FB489;
+    --focus: #6FA8DC;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-head);
+    -webkit-font-smoothing: antialiased;
+  }
+  body { min-height: 100vh; padding-bottom: 64px; }
+
+  a { color: inherit; }
+  button { font-family: inherit; }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 20px 16px 0;
+  }
+
+  /* ---------- Header / dashboard ---------- */
+  .hdr {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .hdr h1 {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .hdr .tagline {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+  .hdr-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn {
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: var(--radius-sm);
+    padding: 9px 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .btn:hover { border-color: var(--ink-soft); }
+  .btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .btn-primary {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-quiet {
+    border-color: transparent;
+    background: transparent;
+    padding: 9px 10px;
+  }
+  .btn-quiet:hover { background: var(--surface-2); }
+  .btn-danger { color: var(--red); }
+  .btn-sm { padding: 6px 10px; font-size: 12.5px; }
+  .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--surface);
+    margin-bottom: 18px;
+  }
+  .stat {
+    padding: 12px 14px;
+    border-right: 1px solid var(--line);
+  }
+  .stat:last-child { border-right: none; }
+  .stat .num {
+    font-family: var(--font-mono);
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+  .stat .num.warn { color: var(--amber); }
+  .stat .lbl {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin-top: 3px;
+  }
+  @media (max-width: 560px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat:nth-child(2) { border-right: none; }
+  }
+
+  /* ---------- Tabs ---------- */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 18px;
+  }
+  .tab {
+    background: transparent;
+    border: none;
+    padding: 9px 4px;
+    margin-right: 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink-faint);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    position: relative;
+    bottom: -1px;
+  }
+  .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ---------- Filter bar ---------- */
+  .filterbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filterbar input[type="search"], .filterbar select {
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .filterbar input[type="search"] { flex: 1; min-width: 140px; }
+  .chk-lowstock {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; color: var(--ink-soft);
+    padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+    cursor: pointer; user-select: none;
+    background: var(--surface);
+  }
+  .chk-lowstock input { accent-color: var(--ink); }
+
+  /* ---------- Spool grid & card ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    padding: 14px;
+    display: flex;
+    gap: 12px;
+  }
+  .card.archived { opacity: 0.55; }
+  .ring-wrap { flex: none; position: relative; width: 64px; height: 64px; }
+  .ring-wrap svg { width: 64px; height: 64px; transform: rotate(-90deg); }
+  .ring-pct {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 12.5px; font-weight: 600;
+  }
+  .card-body { flex: 1; min-width: 0; }
+  .card-title {
+    font-weight: 700; font-size: 14.5px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .card-sub { font-size: 12px; color: var(--ink-faint); margin-top: 1px; }
+  .card-metrics {
+    display: flex; gap: 14px; margin-top: 8px; flex-wrap: wrap;
+  }
+  .metric { font-family: var(--font-mono); font-size: 12.5px; }
+  .metric .m-lbl { font-family: var(--font-head); color: var(--ink-faint); font-size: 11px; display: block; margin-bottom: 1px; }
+  .metric.low .m-val { color: var(--amber); }
+  .metric.crit .m-val { color: var(--red); }
+  .card-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .low-flag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; color: var(--amber);
+    background: var(--amber-bg); padding: 2px 7px; border-radius: 10px;
+    margin-top: 6px;
+  }
+  .low-flag.crit { color: var(--red); background: var(--red-bg); }
+
+  .empty {
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius-md);
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--ink-soft);
+  }
+  .empty h3 { margin: 0 0 6px; font-size: 15px; color: var(--ink); }
+  .empty p { margin: 0 0 16px; font-size: 13px; }
+
+  /* ---------- Usage log table ---------- */
+  .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .log-table th {
+    text-align: left; font-size: 11px; text-transform: none;
+    color: var(--ink-faint); font-weight: 600;
+    border-bottom: 1px solid var(--line); padding: 8px 10px;
+  }
+  .log-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .log-table td.num, .log-table th.num { font-family: var(--font-mono); text-align: right; }
+  .log-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; border: 1px solid rgba(0,0,0,0.15); }
+  .log-table tr:last-child td { border-bottom: none; }
+
+  /* ---------- Stats view ---------- */
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .panel h2 { font-size: 13.5px; margin: 0 0 12px; font-weight: 700; }
+  .bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .bar { width: 100%; max-width: 34px; background: var(--ink); border-radius: 2px 2px 0 0; min-height: 2px; }
+  .bar-lbl { font-size: 10px; color: var(--ink-faint); margin-top: 5px; font-family: var(--font-mono); }
+  .mat-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .mat-row:last-child { border-bottom: none; }
+  .mat-row .mat-name { flex: none; width: 90px; font-weight: 600; }
+  .mat-row .mat-bar-bg { flex: 1; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .mat-row .mat-bar-fill { height: 100%; background: var(--ink); }
+  .mat-row .mat-val { flex: none; font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); width: 70px; text-align: right; }
+
+  /* ---------- Modal ---------- */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(20,22,20,0.45);
+    display: none; align-items: flex-start; justify-content: center;
+    padding: 24px 12px; overflow-y: auto; z-index: 50;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    width: 100%; max-width: 520px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .modal h2 { font-size: 16px; margin: 0 0 4px; }
+  .modal .modal-sub { font-size: 12.5px; color: var(--ink-faint); margin-bottom: 16px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 4px; }
+  .field input, .field select, .field textarea {
+    width: 100%; border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+    padding: 8px 10px; font-size: 13.5px; font-family: inherit; background: var(--bg); color: var(--ink);
+  }
+  .field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible {
+    outline: 2px solid var(--focus); outline-offset: 1px;
+  }
+  .field textarea { resize: vertical; min-height: 50px; }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; }
+  .field-hint { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
+  .field-color-row { display: flex; gap: 8px; align-items: center; }
+  .field-color-row input[type="color"] { width: 44px; height: 36px; padding: 2px; flex: none; }
+  details.tech { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 12px; }
+  details.tech summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+  details.tech .field { margin-top: 10px; }
+  .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; gap: 8px; }
+  .modal-actions .right { display: flex; gap: 8px; }
+  .form-type-toggle { display: flex; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 14px; }
+  .form-type-toggle button {
+    flex: 1; border: none; background: var(--surface); color: var(--ink-soft);
+    padding: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .form-type-toggle button.active { background: var(--ink); color: var(--bg); }
+
+  .toast {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: var(--radius-sm);
+    font-size: 13px; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .toast.show { opacity: 1; }
+
+  .sync-note { font-size: 11px; color: var(--ink-faint); margin-top: -10px; margin-bottom: 16px; }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 14px 12px 0; }
+    .modal { padding: 16px; }
+    .field-row { flex-direction: column; gap: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="hdr">
+    <div>
+      <h1>Filament log</h1>
+      <div class="tagline">Spools, resin, and what they're costing you</div>
+    </div>
+    <div class="hdr-actions">
+      <button class="btn btn-quiet btn-sm" id="btnCloudSync">Cloud sync</button>
+      <button class="btn btn-quiet btn-sm" id="btnExport">Export backup</button>
+      <button class="btn btn-quiet btn-sm" id="btnImport">Import backup</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+      <button class="btn btn-primary" id="btnAddSpool">+ Add spool</button>
+    </div>
+  </div>
+  <div class="sync-note" id="syncNote">Stored only in this browser. Use Export/Import to move data to another device.</div>
+
+  <div class="stats" id="statsRow"></div>
+
+  <div class="tabs">
+    <button class="tab active" data-view="inventory">Inventory</button>
+    <button class="tab" data-view="log">Usage log</button>
+    <button class="tab" data-view="stats">Stats</button>
+  </div>
+
+  <div class="view active" id="view-inventory">
+    <div class="filterbar">
+      <input type="search" id="searchInput" placeholder="Search brand, color, material...">
+      <select id="materialFilter"><option value="">All materials</option></select>
+      <label class="chk-lowstock"><input type="checkbox" id="lowStockOnly"> Running low only</label>
+    </div>
+    <div id="spoolGrid" class="grid"></div>
+  </div>
+
+  <div class="view" id="view-log">
+    <div class="filterbar">
+      <select id="logSpoolFilter"><option value="">All spools</option></select>
+      <button class="btn btn-sm" id="btnLogUsageTab">+ Log a print</button>
+    </div>
+    <div id="logTableWrap"></div>
+  </div>
+
+  <div class="view" id="view-stats"></div>
+</div>
+
+<!-- Add / edit spool modal -->
+<div class="overlay" id="spoolOverlay">
+  <div class="modal">
+    <h2 id="spoolModalTitle">Add spool</h2>
+    <div class="modal-sub">Pick a known product to auto-fill specs, or enter your own.</div>
+
+    <div class="form-type-toggle" id="formTypeToggle">
+      <button type="button" data-type="filament" class="active">Filament (g)</button>
+      <button type="button" data-type="resin">Resin (mL)</button>
+    </div>
+
+    <div class="field">
+      <label for="presetSelect">Known product</label>
+      <select id="presetSelect"></select>
+      <div class="field-hint">Fills in density, temps, and a reference price — all editable below.</div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="fBrand">Brand</label>
+        <input type="text" id="fBrand" placeholder="e.g. Bambu Lab">
+      </div>
+      <div class="field">
+        <label for="fLine">Product line</label>
+        <input type="text" id="fLine" placeholder="e.g. PLA Basic">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="fMaterial">Material</label>
+        <input type="text" id="fMaterial" placeholder="e.g. PLA">
+      </div>
+      <div class="field">
+        <label for="fColorName">Color</label>
+        <input type="text" id="fColorName" placeholder="e.g. Jade White">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="fColorHex">Swatch</label>
+      <div class="field-color-row">
+        <input type="color" id="fColorHex" value="#8a8f89">
+        <span class="field-hint" style="margin-top:0;">Used for the inventory ring — match it to the actual spool.</span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label id="fNetWeightLabel" for="fNetWeight">Net weight (g)</label>
+        <input type="number" id="fNetWeight" min="0" step="1" placeholder="1000">
+      </div>
+      <div class="field">
+        <label id="fRemainingLabel" for="fRemaining">Currently remaining (g)</label>
+        <input type="number" id="fRemaining" min="0" step="1" placeholder="1000">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="fPrice">Price paid ($)</label>
+        <input type="number" id="fPrice" min="0" step="0.01" placeholder="22.00">
+      </div>
+      <div class="field">
+        <label for="fPurchaseDate">Purchase date</label>
+        <input type="date" id="fPurchaseDate">
+      </div>
+    </div>
+
+    <details class="tech" id="techFilament">
+      <summary>Print settings</summary>
+      <div class="field-row">
+        <div class="field">
+          <label for="fNozzleMin">Nozzle temp min (°C)</label>
+          <input type="number" id="fNozzleMin" placeholder="200">
+        </div>
+        <div class="field">
+          <label for="fNozzleMax">Nozzle temp max (°C)</label>
+          <input type="number" id="fNozzleMax" placeholder="220">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fBedMin">Bed temp min (°C)</label>
+          <input type="number" id="fBedMin" placeholder="55">
+        </div>
+        <div class="field">
+          <label for="fBedMax">Bed temp max (°C)</label>
+          <input type="number" id="fBedMax" placeholder="60">
+        </div>
+      </div>
+    </details>
+
+    <details class="tech" id="techResin" style="display:none;">
+      <summary>Cure settings</summary>
+      <div class="field-row">
+        <div class="field">
+          <label for="fCureNotes">Exposure / cure notes</label>
+          <input type="text" id="fCureNotes" placeholder="e.g. 2.5s normal, 30s base">
+        </div>
+      </div>
+    </details>
+
+    <div class="field">
+      <label for="fLowStock">Low stock alert below (%)</label>
+      <input type="number" id="fLowStock" min="1" max="90" value="15">
+    </div>
+
+    <div class="field">
+      <label for="fNotes">Notes</label>
+      <textarea id="fNotes" placeholder="Anything worth remembering about this one"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <div class="left">
+        <button class="btn btn-quiet btn-danger" id="btnDeleteSpool" style="display:none;">Delete spool</button>
+      </div>
+      <div class="right">
+        <button class="btn" id="btnCancelSpool">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveSpool">Save spool</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Log usage modal -->
+<div class="overlay" id="usageOverlay">
+  <div class="modal">
+    <h2>Log a print</h2>
+    <div class="modal-sub">Records what you used and updates the spool's remaining amount.</div>
+
+    <div class="field">
+      <label for="uSpool">Spool</label>
+      <select id="uSpool"></select>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label id="uAmountLabel" for="uAmount">Amount used (g)</label>
+        <input type="number" id="uAmount" min="0" step="1" placeholder="35">
+      </div>
+      <div class="field">
+        <label for="uDate">Date</label>
+        <input type="date" id="uDate">
+      </div>
+    </div>
+    <div class="field">
+      <label for="uProject">Project</label>
+      <input type="text" id="uProject" placeholder="What did you print?">
+    </div>
+    <div class="field">
+      <label for="uNotes">Notes</label>
+      <input type="text" id="uNotes" placeholder="Optional">
+    </div>
+    <div class="field-hint" id="uRemainingPreview" style="margin-bottom: 4px;"></div>
+
+    <div class="modal-actions">
+      <div class="left"></div>
+      <div class="right">
+        <button class="btn" id="btnCancelUsage">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveUsage">Log print</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Cloud sync modal -->
+<div class="overlay" id="cloudOverlay">
+  <div class="modal">
+    <h2>Cloud sync</h2>
+    <div class="modal-sub" id="cloudStatusLine">Not connected — data stays in this browser only.</div>
+
+    <div class="field">
+      <label for="cloudCode">Sync code</label>
+      <input type="text" id="cloudCode" placeholder="e.g. morgan-print-shop">
+      <div class="field-hint">A word or phrase only you know. Every device using the same Firebase project + the same sync code shares the same data. Treat it like a password.</div>
+    </div>
+
+    <div class="field">
+      <label for="cloudConfig">Firebase config</label>
+      <textarea id="cloudConfig" rows="7" placeholder='Paste the firebaseConfig object from your Firebase project settings, e.g.
+{
+  apiKey: "...",
+  authDomain: "...",
+  projectId: "...",
+  ...
+}'></textarea>
+      <div class="field-hint">From the Firebase console: Project settings → General → "Your apps" → the config snippet under a Web app.</div>
+    </div>
+
+    <div class="modal-actions">
+      <div class="left">
+        <button class="btn btn-quiet btn-danger" id="btnCloudDisconnect" style="display:none;">Disconnect</button>
+      </div>
+      <div class="right">
+        <button class="btn" id="btnCloudCancel">Close</button>
+        <button class="btn btn-primary" id="btnCloudConnect">Save &amp; connect</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ============================================================
+  // Reference database — known products used to auto-fill specs.
+  // Prices are rough street-price references (per kg / per L), not
+  // live quotes — always editable, and "price paid" is what drives
+  // every cost calculation in the app.
+  // ============================================================
+  var FILAMENT_DB = [
+    // Bambu Lab — full current lineup, us.store.bambulab.com
+    { brand:"Bambu Lab", line:"PLA Basic", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:19.99, nozzle:[190,230], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA Matte", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:19.99, nozzle:[190,230], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA Silk+", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:22.99, nozzle:[210,240], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA Tough+", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:23.99, nozzle:[190,230], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA Translucent", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:24.99, nozzle:[190,230], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA Aero", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:44.99, nozzle:[190,220], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA Sparkle", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:24.99, nozzle:[190,230], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA Metal", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:24.99, nozzle:[190,230], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA Marble", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:24.99, nozzle:[190,230], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA Galaxy", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:24.99, nozzle:[190,230], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA Wood", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:24.99, nozzle:[190,220], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA Glow", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:24.99, nozzle:[190,230], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PLA-CF", material:"PLA-CF", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:31.99, nozzle:[210,240], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PETG HF", material:"PETG", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:19.99, nozzle:[230,260], bed:[60,70] },
+    { brand:"Bambu Lab", line:"PETG Translucent", material:"PETG", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:19.99, nozzle:[230,250], bed:[70,80] },
+    { brand:"Bambu Lab", line:"PETG-CF", material:"PETG-CF", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:31.99, nozzle:[250,280], bed:[70,90] },
+    { brand:"Bambu Lab", line:"ABS", material:"ABS", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:19.99, nozzle:[250,270], bed:[80,90] },
+    { brand:"Bambu Lab", line:"ABS-GF", material:"ABS-GF", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:29.99, nozzle:[260,280], bed:[90,100] },
+    { brand:"Bambu Lab", line:"ASA", material:"ASA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:29.99, nozzle:[250,270], bed:[90,100] },
+    { brand:"Bambu Lab", line:"ASA-CF", material:"ASA-CF", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:36.99, nozzle:[260,280], bed:[90,100] },
+    { brand:"Bambu Lab", line:"TPU for AMS", material:"TPU", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:38.99, nozzle:[220,250], bed:[35,45] },
+    { brand:"Bambu Lab", line:"TPU 95A HF", material:"TPU", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:41.99, nozzle:[230,250], bed:[35,45] },
+    { brand:"Bambu Lab", line:"TPU 85A/90A", material:"TPU", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:41.99, nozzle:[220,250], bed:[35,45] },
+    { brand:"Bambu Lab", line:"PC", material:"Polycarbonate", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:39.99, nozzle:[260,280], bed:[90,110] },
+    { brand:"Bambu Lab", line:"PA6-CF", material:"Nylon-CF", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:42.99, nozzle:[270,300], bed:[90,110] },
+    { brand:"Bambu Lab", line:"PA6-GF", material:"Nylon-GF", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:59.99, nozzle:[270,300], bed:[90,110] },
+    { brand:"Bambu Lab", line:"PAHT-CF", material:"Nylon-CF", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:49.99, nozzle:[270,300], bed:[90,110] },
+    { brand:"Bambu Lab", line:"PET-CF", material:"PET-CF", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:44.99, nozzle:[260,280], bed:[70,90] },
+    { brand:"Bambu Lab", line:"PPA-CF", material:"PPA-CF", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:149.99, nozzle:[280,320], bed:[90,120] },
+    { brand:"Bambu Lab", line:"PPS-CF", material:"PPS-CF", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:129.99, nozzle:[280,320], bed:[100,130] },
+    // Elegoo — full current filament lineup, elegoo.com
+    { brand:"Elegoo", line:"PLA Basic", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:13.19, nozzle:[190,220], bed:[45,60] },
+    { brand:"Elegoo", line:"Rapid PLA+", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:15.99, nozzle:[200,230], bed:[45,60] },
+    { brand:"Elegoo", line:"PLA Silk", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:16.99, nozzle:[200,220], bed:[45,60] },
+    { brand:"Elegoo", line:"PLA Matte", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:15.99, nozzle:[190,220], bed:[45,60] },
+    { brand:"Elegoo", line:"PLA Marble", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:18.99, nozzle:[190,220], bed:[45,60] },
+    { brand:"Elegoo", line:"PLA Wood", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:18.99, nozzle:[190,210], bed:[45,60] },
+    { brand:"Elegoo", line:"PLA Metallic", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:18.99, nozzle:[190,220], bed:[45,60] },
+    { brand:"Elegoo", line:"PLA Sparkle", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:17.99, nozzle:[190,220], bed:[45,60] },
+    { brand:"Elegoo", line:"PLA Glow", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:19.99, nozzle:[190,220], bed:[45,60] },
+    { brand:"Elegoo", line:"PETG PRO", material:"PETG", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:12.62, nozzle:[230,250], bed:[70,80] },
+    { brand:"Elegoo", line:"Rapid PETG", material:"PETG", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:12.99, nozzle:[230,250], bed:[70,80] },
+    { brand:"Elegoo", line:"PETG Translucent", material:"PETG", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:13.99, nozzle:[230,250], bed:[70,80] },
+    { brand:"Elegoo", line:"TPU 95A", material:"TPU", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:17.99, nozzle:[220,240], bed:[0,50] },
+    { brand:"Elegoo", line:"ABS", material:"ABS", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:17.99, nozzle:[230,260], bed:[90,100] },
+    { brand:"Elegoo", line:"ASA", material:"ASA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:16.99, nozzle:[240,260], bed:[90,100] },
+    { brand:"Elegoo", line:"PC", material:"Polycarbonate", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:31.99, nozzle:[260,280], bed:[90,110] },
+    // Overture
+    { brand:"Overture", line:"PLA", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:20, nozzle:[190,220], bed:[50,60] },
+    { brand:"Overture", line:"PLA+", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:22, nozzle:[200,230], bed:[50,60] },
+    { brand:"Overture", line:"PETG", material:"PETG", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:22, nozzle:[230,250], bed:[70,80] },
+    { brand:"Overture", line:"ABS", material:"ABS", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:22, nozzle:[230,260], bed:[90,100] },
+    { brand:"Overture", line:"TPU", material:"TPU", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:27, nozzle:[210,230], bed:[25,50] },
+    // eSUN
+    { brand:"eSUN", line:"PLA+", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:19, nozzle:[210,230], bed:[45,60] },
+    { brand:"eSUN", line:"PETG", material:"PETG", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:20, nozzle:[230,250], bed:[50,75] },
+    { brand:"eSUN", line:"ABS+", material:"ABS", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:20, nozzle:[220,250], bed:[80,100] },
+    // SUNLU
+    { brand:"SUNLU", line:"PLA+", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:17, nozzle:[190,220], bed:[45,60] },
+    { brand:"SUNLU", line:"PETG", material:"PETG", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:19, nozzle:[220,250], bed:[50,80] },
+    { brand:"SUNLU", line:"TPU", material:"TPU", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:25, nozzle:[210,230], bed:[0,50] },
+    // Hatchbox
+    { brand:"Hatchbox", line:"PLA", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:21, nozzle:[180,210], bed:[0,60] },
+    // Polymaker
+    { brand:"Polymaker", line:"PolyTerra PLA", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:22, nozzle:[190,230], bed:[0,60] },
+    { brand:"Polymaker", line:"PolyLite PETG", material:"PETG", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:22, nozzle:[230,250], bed:[50,75] },
+    { brand:"Polymaker", line:"PolyLite ASA", material:"ASA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:28, nozzle:[240,260], bed:[90,100] },
+    { brand:"Polymaker", line:"PC-Plus", material:"Polycarbonate", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:35, nozzle:[260,280], bed:[90,110] },
+    // Prusament
+    { brand:"Prusament", line:"PLA", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:30, nozzle:[210,230], bed:[50,60] },
+    { brand:"Prusament", line:"PETG", material:"PETG", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:30, nozzle:[240,260], bed:[80,90] },
+    // Inland / Creality / misc budget
+    { brand:"Inland", line:"PLA", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:18, nozzle:[190,220], bed:[0,60] },
+    { brand:"Creality", line:"Hyper PLA", material:"PLA", type:"filament", diameter:1.75, netWeightG:1000, pricePerKg:20, nozzle:[210,240], bed:[45,60] },
+    { brand:"ColorFabb", line:"PLA/PHA", material:"PLA", type:"filament", diameter:1.75, netWeightG:750, pricePerKg:35, nozzle:[195,225], bed:[0,50] },
+    { brand:"Fillamentum", line:"PLA Extrafill", material:"PLA", type:"filament", diameter:1.75, netWeightG:750, pricePerKg:33, nozzle:[195,225], bed:[0,60] },
+    { brand:"NinjaTek", line:"NinjaFlex TPU", material:"TPU", type:"filament", diameter:1.75, netWeightG:500, pricePerKg:40, nozzle:[210,225], bed:[0,50] },
+    // Resin — Elegoo (relevant to a Saturn Ultra owner) and others
+    { brand:"Elegoo", line:"Standard Resin", material:"Standard Resin", type:"resin", netVolumeMl:1000, pricePerL:25 },
+    { brand:"Elegoo", line:"ABS-Like Resin", material:"ABS-Like Resin", type:"resin", netVolumeMl:1000, pricePerL:30 },
+    { brand:"Elegoo", line:"Water-Washable Resin", material:"Water-Washable Resin", type:"resin", netVolumeMl:1000, pricePerL:28 },
+    { brand:"Siraya Tech", line:"Fast", material:"Standard Resin", type:"resin", netVolumeMl:1000, pricePerL:40 },
+    { brand:"Siraya Tech", line:"Tenacious", material:"Tough Resin", type:"resin", netVolumeMl:1000, pricePerL:45 },
+    { brand:"Anycubic", line:"Standard Resin", material:"Standard Resin", type:"resin", netVolumeMl:1000, pricePerL:22 }
+  ];
+
+  // ============================================================
+  // Cloud sync (optional) — Firebase Firestore. Off by default;
+  // the app is fully local until you connect one. When connected,
+  // every device using the same Firebase project + sync code reads
+  // and writes the same Firestore documents, so the dataset is
+  // shared across locations instead of living in one browser.
+  // ============================================================
+  var CloudSync = {
+    connected: false,
+    db: null,
+    code: null,
+    unsubSpools: null,
+    unsubUsage: null,
+    firstSnapshotSpools: true,
+
+    loadSaved: function () {
+      try {
+        var raw = localStorage.getItem("filamentlog_cloud");
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    },
+    saveConfig: function (config, code) {
+      try { localStorage.setItem("filamentlog_cloud", JSON.stringify({ config: config, code: code })); } catch (e) {}
+    },
+    clearConfig: function () { try { localStorage.removeItem("filamentlog_cloud"); } catch (e) {} },
+
+    basePath: function () { return "syncrooms/" + this.code; },
+
+    connect: function (config, code, cb) {
+      var self = this;
+      try {
+        if (window.firebase && firebase.apps && firebase.apps.length) {
+          firebase.apps.slice().forEach(function (a) { a.delete(); });
+        }
+        firebase.initializeApp(config);
+        self.db = firebase.firestore();
+        self.code = code;
+        self.connected = true;
+        self.firstSnapshotSpools = true;
+        self.saveConfig(config, code);
+        self._subscribe(cb);
+      } catch (e) {
+        self.connected = false;
+        cb(false, e.message || "Couldn't connect with that config.");
+      }
+    },
+
+    disconnect: function () {
+      if (this.unsubSpools) this.unsubSpools();
+      if (this.unsubUsage) this.unsubUsage();
+      this.connected = false;
+      this.db = null;
+      this.code = null;
+      this.clearConfig();
+    },
+
+    _subscribe: function (cb) {
+      var self = this;
+      var preSpools = Store.spools.slice();
+      var preUsage = Store.usage.slice();
+      var announced = false;
+
+      self.unsubSpools = self.db.collection(self.basePath() + "/spools").onSnapshot(function (snap) {
+        Store.spools = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+        Store.persist();
+        Store.onChange();
+        if (!announced) {
+          announced = true;
+          cb(true, null);
+          if (self.firstSnapshotSpools && snap.docs.length === 0 && (preSpools.length || preUsage.length)) {
+            self.firstSnapshotSpools = false;
+            setTimeout(function () { self._offerMigration(preSpools, preUsage); }, 150);
+          }
+        }
+      }, function (err) {
+        showToast("Cloud sync error: " + err.message);
+        if (!announced) { announced = true; cb(false, err.message); }
+      });
+
+      self.unsubUsage = self.db.collection(self.basePath() + "/usage").onSnapshot(function (snap) {
+        Store.usage = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+        Store.persist();
+        Store.onChange();
+      }, function (err) { showToast("Cloud sync error: " + err.message); });
+    },
+
+    _offerMigration: function (preSpools, preUsage) {
+      var self = this;
+      if (!confirm("This sync code has no data in it yet, but this browser has " + preSpools.length + " spool(s) saved locally.\n\nUpload the local data to the cloud now?")) return;
+      var spoolCol = self.db.collection(self.basePath() + "/spools");
+      var usageCol = self.db.collection(self.basePath() + "/usage");
+      var idMap = {};
+      var writes = preSpools.map(function (s) {
+        var copy = Object.assign({}, s);
+        var oldId = copy.id;
+        delete copy.id;
+        return spoolCol.add(copy).then(function (ref) { idMap[oldId] = ref.id; });
+      });
+      Promise.all(writes).then(function () {
+        var usageWrites = preUsage.map(function (u) {
+          var copy = Object.assign({}, u);
+          delete copy.id;
+          if (idMap[copy.spoolId]) copy.spoolId = idMap[copy.spoolId];
+          return usageCol.add(copy);
+        });
+        return Promise.all(usageWrites);
+      }).then(function () {
+        showToast("Local data uploaded to the cloud.");
+      }).catch(function (e) {
+        showToast("Migration hit a snag: " + e.message);
+      });
+    }
+  };
+
+  // ============================================================
+  // Storage layer — 100% local to this file/browser. No network
+  // calls, no external accounts, nothing Claude-specific. Data is
+  // written to localStorage on every change, so it survives closing
+  // the tab, closing the browser, and restarting the device — as
+  // long as you reopen this same HTML file in the same browser.
+  // Use Export/Import (top right) to move data to another browser
+  // or another device, since localStorage itself doesn't sync.
+  // ============================================================
+  var Store = {
+    spools: [],
+    usage: [],
+    onChange: function () {},
+
+    init: function () {
+      try {
+        this.spools = JSON.parse(localStorage.getItem("filamentlog_spools") || "[]");
+        this.usage = JSON.parse(localStorage.getItem("filamentlog_usage") || "[]");
+      } catch (e) { this.spools = []; this.usage = []; }
+      this.onChange();
+
+      var saved = CloudSync.loadSaved();
+      if (saved && saved.config && saved.code && window.firebase) {
+        CloudSync.connect(saved.config, saved.code, function (ok, err) {
+          renderSyncStatus();
+          if (!ok) showToast("Cloud sync failed: " + err);
+        });
+      }
+      renderSyncStatus();
+    },
+
+    persist: function () {
+      try {
+        localStorage.setItem("filamentlog_spools", JSON.stringify(this.spools));
+        localStorage.setItem("filamentlog_usage", JSON.stringify(this.usage));
+        return true;
+      } catch (e) {
+        showToast("Storage is full or unavailable — export a backup if you can.");
+        return false;
+      }
+    },
+
+    genId: function () { return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); },
+
+    addSpool: function (data) {
+      if (CloudSync.connected) {
+        CloudSync.db.collection(CloudSync.basePath() + "/spools").add(data)
+          .catch(function (e) { showToast("Couldn't save to cloud: " + e.message); });
+        return;
+      }
+      data.id = this.genId();
+      this.spools.push(data);
+      this.persist();
+      this.onChange();
+    },
+    updateSpool: function (id, data) {
+      if (CloudSync.connected) {
+        CloudSync.db.collection(CloudSync.basePath() + "/spools").doc(id).set(data)
+          .catch(function (e) { showToast("Couldn't save to cloud: " + e.message); });
+        return;
+      }
+      var idx = this.spools.findIndex(function (s) { return s.id === id; });
+      if (idx > -1) this.spools[idx] = Object.assign({ id: id }, data);
+      this.persist();
+      this.onChange();
+    },
+    deleteSpool: function (id) {
+      if (CloudSync.connected) {
+        var base = CloudSync.basePath();
+        CloudSync.db.collection(base + "/spools").doc(id).delete()
+          .catch(function (e) { showToast("Couldn't delete from cloud: " + e.message); });
+        CloudSync.db.collection(base + "/usage").where("spoolId", "==", id).get().then(function (snap) {
+          snap.forEach(function (doc) { doc.ref.delete(); });
+        });
+        return;
+      }
+      this.spools = this.spools.filter(function (s) { return s.id !== id; });
+      this.usage = this.usage.filter(function (u) { return u.spoolId !== id; });
+      this.persist();
+      this.onChange();
+    },
+    addUsage: function (data) {
+      if (CloudSync.connected) {
+        CloudSync.db.collection(CloudSync.basePath() + "/usage").add(data)
+          .catch(function (e) { showToast("Couldn't save to cloud: " + e.message); });
+        return;
+      }
+      data.id = this.genId();
+      this.usage.unshift(data);
+      this.persist();
+      this.onChange();
+    },
+    deleteUsage: function (id) {
+      if (CloudSync.connected) {
+        CloudSync.db.collection(CloudSync.basePath() + "/usage").doc(id).delete()
+          .catch(function (e) { showToast("Couldn't delete from cloud: " + e.message); });
+        return;
+      }
+      this.usage = this.usage.filter(function (u) { return u.id !== id; });
+      this.persist();
+      this.onChange();
+    },
+
+    exportJson: function () {
+      return JSON.stringify({ spools: this.spools, usage: this.usage, exportedAt: new Date().toISOString(), version: 1 }, null, 2);
+    },
+    importJson: function (text, mode) {
+      var data;
+      try { data = JSON.parse(text); } catch (e) { throw new Error("That file isn't valid JSON."); }
+      if (!data || !Array.isArray(data.spools) || !Array.isArray(data.usage)) {
+        throw new Error("That file doesn't look like a Filament Log backup.");
+      }
+      if (mode === "replace") {
+        this.spools = data.spools;
+        this.usage = data.usage;
+      } else {
+        var existingIds = {};
+        this.spools.forEach(function (s) { existingIds[s.id] = true; });
+        data.spools.forEach(function (s) { if (!existingIds[s.id]) this.spools.push(s); }, this);
+        var existingUsageIds = {};
+        this.usage.forEach(function (u) { existingUsageIds[u.id] = true; });
+        data.usage.forEach(function (u) { if (!existingUsageIds[u.id]) this.usage.push(u); }, this);
+      }
+      this.persist();
+      this.onChange();
+    }
+  };
+
+  // ============================================================
+  // Helpers
+  // ============================================================
+  function $(id) { return document.getElementById(id); }
+  function fmtMoney(n) { return "$" + (Math.round(n * 100) / 100).toFixed(2); }
+  function fmtNum(n, d) { d = d || 0; return Number(n).toFixed(d); }
+  function todayStr() { return new Date().toISOString().slice(0, 10); }
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+  function spoolUnit(s) { return s.type === "resin" ? "mL" : "g"; }
+  function spoolTotal(s) { return s.type === "resin" ? (s.netVolumeMl || 0) : (s.netWeightG || 0); }
+  function spoolRemaining(s) { return s.type === "resin" ? (s.remainingMl || 0) : (s.remainingG || 0); }
+  function spoolPct(s) {
+    var total = spoolTotal(s);
+    if (!total) return 0;
+    return clamp(spoolRemaining(s) / total, 0, 1);
+  }
+  function usageForSpool(spoolId) {
+    return Store.usage.filter(function (u) { return u.spoolId === spoolId; });
+  }
+
+  function estDaysRemaining(s) {
+    var logs = usageForSpool(s.id).slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+    if (logs.length < 2) return null;
+    var first = new Date(logs[0].date), last = new Date(logs[logs.length - 1].date);
+    var days = Math.max(1, (last - first) / 86400000);
+    var totalUsed = logs.reduce(function (sum, u) { return sum + (Number(u.amount) || 0); }, 0);
+    if (totalUsed <= 0) return null;
+    var perDay = totalUsed / days;
+    if (perDay <= 0) return null;
+    return spoolRemaining(s) / perDay;
+  }
+
+  function showToast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { t.classList.remove("show"); }, 2400);
+  }
+
+  // ============================================================
+  // Rendering
+  // ============================================================
+  var state = {
+    activeView: "inventory",
+    search: "",
+    materialFilter: "",
+    lowStockOnly: false,
+    logSpoolFilter: "",
+    editingSpoolId: null,
+    formType: "filament"
+  };
+
+  function ringSvg(pct, color, size) {
+    size = size || 64;
+    var r = (size / 2) - 5;
+    var c = size / 2;
+    var circumference = 2 * Math.PI * r;
+    var offset = circumference * (1 - pct);
+    return '<svg viewBox="0 0 ' + size + ' ' + size + '">' +
+      '<circle cx="' + c + '" cy="' + c + '" r="' + r + '" fill="none" stroke="var(--surface-2)" stroke-width="6"/>' +
+      '<circle cx="' + c + '" cy="' + c + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="6" ' +
+        'stroke-dasharray="' + circumference + '" stroke-dashoffset="' + offset + '" stroke-linecap="round"/>' +
+      '</svg>';
+  }
+
+  function renderStats() {
+    var active = Store.spools.filter(function (s) { return !s.archived; });
+    var totalRemainVal = active.reduce(function (sum, s) { return sum + (s.pricePaid ? s.pricePaid * spoolPct(s) : 0); }, 0);
+    var totalRemainWeight = active.filter(function (s) { return s.type !== "resin"; })
+      .reduce(function (sum, s) { return sum + spoolRemaining(s); }, 0);
+    var lowCount = active.filter(function (s) { return spoolPct(s) * 100 <= (s.lowStockPct || 15); }).length;
+
+    $("statsRow").innerHTML =
+      '<div class="stat"><div class="num">' + active.length + '</div><div class="lbl">Spools on hand</div></div>' +
+      '<div class="stat"><div class="num">' + fmtNum(totalRemainWeight / 1000, 2) + ' kg</div><div class="lbl">Filament remaining</div></div>' +
+      '<div class="stat"><div class="num">' + fmtMoney(totalRemainVal) + '</div><div class="lbl">Inventory value</div></div>' +
+      '<div class="stat"><div class="num' + (lowCount ? ' warn' : '') + '">' + lowCount + '</div><div class="lbl">Running low</div></div>';
+  }
+
+  function renderMaterialFilterOptions() {
+    var mats = Array.from(new Set(Store.spools.map(function (s) { return s.material; }).filter(Boolean))).sort();
+    var sel = $("materialFilter");
+    var current = sel.value;
+    sel.innerHTML = '<option value="">All materials</option>' + mats.map(function (m) {
+      return '<option value="' + m + '">' + m + '</option>';
+    }).join("");
+    sel.value = mats.indexOf(current) > -1 ? current : "";
+  }
+
+  function renderSpoolGrid() {
+    var list = Store.spools.filter(function (s) { return !s.archived; });
+    if (state.materialFilter) list = list.filter(function (s) { return s.material === state.materialFilter; });
+    if (state.search) {
+      var q = state.search.toLowerCase();
+      list = list.filter(function (s) {
+        return (s.brand || "").toLowerCase().indexOf(q) > -1 ||
+          (s.line || "").toLowerCase().indexOf(q) > -1 ||
+          (s.colorName || "").toLowerCase().indexOf(q) > -1 ||
+          (s.material || "").toLowerCase().indexOf(q) > -1;
+      });
+    }
+    if (state.lowStockOnly) {
+      list = list.filter(function (s) { return spoolPct(s) * 100 <= (s.lowStockPct || 15); });
+    }
+    list.sort(function (a, b) { return spoolPct(a) - spoolPct(b); });
+
+    var grid = $("spoolGrid");
+    if (!Store.spools.filter(function (s) { return !s.archived; }).length) {
+      grid.innerHTML = "";
+      grid.parentElement.querySelector(".empty")?.remove();
+      var empty = document.createElement("div");
+      empty.className = "empty";
+      empty.innerHTML = "<h3>No spools yet</h3><p>Add your first spool and the app takes over the tracking from there.</p>" +
+        '<button class="btn btn-primary" id="emptyAddBtn">+ Add spool</button>';
+      grid.after(empty);
+      empty.querySelector("#emptyAddBtn").addEventListener("click", function () { openSpoolModal(); });
+      return;
+    }
+    var existingEmpty = grid.parentElement.querySelector(".empty");
+    if (existingEmpty) existingEmpty.remove();
+
+    if (!list.length) {
+      grid.innerHTML = '<div class="empty" style="grid-column:1/-1;"><h3>No matches</h3><p>Try clearing the search or filters.</p></div>';
+      return;
+    }
+
+    grid.innerHTML = list.map(function (s) {
+      var pct = spoolPct(s);
+      var pctInt = Math.round(pct * 100);
+      var low = pctInt <= (s.lowStockPct || 15);
+      var crit = pctInt <= 5;
+      var unit = spoolUnit(s);
+      var ppk = s.pricePaid ? (s.type === "resin" ? (s.pricePaid / (spoolTotal(s) / 1000)) : (s.pricePaid / (spoolTotal(s) / 1000))) : 0;
+      var days = estDaysRemaining(s);
+      return '<div class="card' + (low ? '' : '') + '" data-id="' + s.id + '">' +
+        '<div class="ring-wrap">' + ringSvg(pct, s.colorHex || "#8a8f89") +
+          '<div class="ring-pct">' + pctInt + '%</div></div>' +
+        '<div class="card-body">' +
+          '<div class="card-title">' + escapeHtml(s.brand || "Unlabeled") + ' — ' + escapeHtml(s.line || s.material || "") + '</div>' +
+          '<div class="card-sub">' + escapeHtml(s.colorName || "") + (s.colorName && s.material ? " · " : "") + escapeHtml(s.material || "") + '</div>' +
+          '<div class="card-metrics">' +
+            '<div class="metric' + (crit ? ' crit' : (low ? ' low' : '')) + '"><span class="m-lbl">Remaining</span><span class="m-val">' + fmtNum(spoolRemaining(s)) + ' / ' + fmtNum(spoolTotal(s)) + ' ' + unit + '</span></div>' +
+            (ppk ? '<div class="metric"><span class="m-lbl">Price</span><span class="m-val">' + fmtMoney(ppk) + '/kg' + '</span></div>' : '') +
+          '</div>' +
+          (days !== null ? '<div class="card-sub" style="margin-top:6px;">~' + Math.round(days) + ' days left at current pace</div>' : '') +
+          (low ? '<div class="low-flag' + (crit ? ' crit' : '') + '">' + (crit ? "Nearly empty" : "Running low") + '</div>' : '') +
+          '<div class="card-actions">' +
+            '<button class="btn btn-sm logBtn">Log print</button>' +
+            '<button class="btn btn-sm btn-quiet editBtn">Edit</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+
+    grid.querySelectorAll(".card").forEach(function (card) {
+      var id = card.getAttribute("data-id");
+      card.querySelector(".logBtn").addEventListener("click", function () { openUsageModal(id); });
+      card.querySelector(".editBtn").addEventListener("click", function () { openSpoolModal(id); });
+    });
+  }
+
+  function renderLogFilterOptions() {
+    var sel = $("logSpoolFilter");
+    var current = sel.value;
+    sel.innerHTML = '<option value="">All spools</option>' + Store.spools.map(function (s) {
+      return '<option value="' + s.id + '">' + escapeHtml(s.brand + " — " + (s.line || s.material) + (s.colorName ? " (" + s.colorName + ")" : "")) + '</option>';
+    }).join("");
+    sel.value = Store.spools.some(function (s) { return s.id === current; }) ? current : "";
+  }
+
+  function renderLogTable() {
+    var list = Store.usage.slice();
+    if (state.logSpoolFilter) list = list.filter(function (u) { return u.spoolId === state.logSpoolFilter; });
+    list.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+
+    var wrap = $("logTableWrap");
+    if (!list.length) {
+      wrap.innerHTML = '<div class="empty"><h3>No prints logged yet</h3><p>Log a print to start tracking usage and spend over time.</p></div>';
+      return;
+    }
+    var bySpool = {};
+    Store.spools.forEach(function (s) { bySpool[s.id] = s; });
+
+    wrap.innerHTML = '<table class="log-table"><thead><tr>' +
+      '<th>Date</th><th>Spool</th><th>Project</th><th class="num">Amount</th><th></th>' +
+      '</tr></thead><tbody>' +
+      list.map(function (u) {
+        var s = bySpool[u.spoolId];
+        var swatch = s ? '<span class="log-swatch" style="background:' + (s.colorHex || "#999") + '"></span>' : "";
+        var label = s ? (s.brand + " — " + (s.line || s.material)) : "(deleted spool)";
+        return '<tr data-id="' + u.id + '">' +
+          '<td>' + (u.date || "") + '</td>' +
+          '<td>' + swatch + escapeHtml(label) + '</td>' +
+          '<td>' + escapeHtml(u.project || "") + (u.notes ? '<div class="card-sub">' + escapeHtml(u.notes) + '</div>' : '') + '</td>' +
+          '<td class="num">' + fmtNum(u.amount) + (s ? " " + spoolUnit(s) : " g") + '</td>' +
+          '<td><button class="btn btn-sm btn-quiet btn-danger delUsageBtn">Delete</button></td>' +
+          '</tr>';
+      }).join("") + '</tbody></table>';
+
+    wrap.querySelectorAll(".delUsageBtn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.closest("tr").getAttribute("data-id");
+        if (confirm("Delete this log entry? This won't add the material back to the spool automatically.")) {
+          Store.deleteUsage(id);
+        }
+      });
+    });
+  }
+
+  function renderStatsView() {
+    var active = Store.spools.filter(function (s) { return !s.archived; });
+    var totalSpent = active.reduce(function (sum, s) { return sum + (Number(s.pricePaid) || 0); }, 0);
+
+    // Last 8 weeks of usage, by weight
+    var weeks = [];
+    var now = new Date();
+    for (var i = 7; i >= 0; i--) {
+      var start = new Date(now); start.setDate(now.getDate() - (i * 7 + now.getDay()));
+      weeks.push({ start: start, total: 0, label: (start.getMonth() + 1) + "/" + start.getDate() });
+    }
+    Store.usage.forEach(function (u) {
+      var d = new Date(u.date);
+      for (var i = weeks.length - 1; i >= 0; i--) {
+        if (d >= weeks[i].start) { weeks[i].total += (Number(u.amount) || 0); break; }
+      }
+    });
+    var maxWeek = Math.max.apply(null, weeks.map(function (w) { return w.total; }).concat([1]));
+
+    // By material
+    var byMat = {};
+    active.forEach(function (s) {
+      var key = s.material || "Other";
+      byMat[key] = byMat[key] || { count: 0, remaining: 0, value: 0 };
+      byMat[key].count++;
+      byMat[key].remaining += spoolRemaining(s);
+      byMat[key].value += (s.pricePaid ? s.pricePaid * spoolPct(s) : 0);
+    });
+    var maxMatVal = Math.max.apply(null, Object.keys(byMat).map(function (k) { return byMat[k].value; }).concat([1]));
+
+    var view = $("view-stats");
+    view.innerHTML =
+      '<div class="panel"><h2>Print activity — last 8 weeks (grams used)</h2>' +
+        '<div class="bars">' + weeks.map(function (w) {
+          var h = Math.max(2, Math.round((w.total / maxWeek) * 100));
+          return '<div class="bar-col"><div class="bar" style="height:' + h + '%" title="' + Math.round(w.total) + ' g"></div><div class="bar-lbl">' + w.label + '</div></div>';
+        }).join("") + '</div>' +
+      '</div>' +
+      '<div class="panel"><h2>Value on hand by material</h2>' +
+        (Object.keys(byMat).length ? Object.keys(byMat).sort(function (a, b) { return byMat[b].value - byMat[a].value; }).map(function (k) {
+          var w = Math.max(2, Math.round((byMat[k].value / maxMatVal) * 100));
+          return '<div class="mat-row"><div class="mat-name">' + escapeHtml(k) + '</div>' +
+            '<div class="mat-bar-bg"><div class="mat-bar-fill" style="width:' + w + '%"></div></div>' +
+            '<div class="mat-val">' + fmtMoney(byMat[k].value) + '</div></div>';
+        }).join("") : '<div class="card-sub">Nothing on hand yet.</div>') +
+      '</div>' +
+      '<div class="panel"><h2>Overview</h2>' +
+        '<div class="mat-row"><div class="mat-name">Total invested</div><div class="mat-bar-bg" style="visibility:hidden;"></div><div class="mat-val">' + fmtMoney(totalSpent) + '</div></div>' +
+        '<div class="mat-row"><div class="mat-name">Prints logged</div><div class="mat-bar-bg" style="visibility:hidden;"></div><div class="mat-val">' + Store.usage.length + '</div></div>' +
+        '<div class="mat-row"><div class="mat-name">Total used</div><div class="mat-bar-bg" style="visibility:hidden;"></div><div class="mat-val">' + fmtNum(Store.usage.reduce(function (s, u) { return s + (Number(u.amount) || 0); }, 0) / 1000, 2) + ' kg</div></div>' +
+      '</div>';
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function renderSyncStatus() {
+    var note = $("syncNote");
+    if (CloudSync.connected) {
+      note.textContent = "Cloud sync on — code \"" + CloudSync.code + "\". Every device using this project + code shares this data.";
+    } else {
+      note.textContent = "Stored only in this browser. Use Export/Import to move data, or set up Cloud sync to share across devices.";
+    }
+  }
+
+  function renderAll() {
+    renderStats();
+    renderMaterialFilterOptions();
+    renderSpoolGrid();
+    renderLogFilterOptions();
+    renderLogTable();
+    if (state.activeView === "stats") renderStatsView();
+  }
+  Store.onChange = renderAll;
+
+  // ============================================================
+  // Tabs
+  // ============================================================
+  document.querySelectorAll(".tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      document.querySelectorAll(".tab").forEach(function (t) { t.classList.remove("active"); });
+      document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
+      tab.classList.add("active");
+      var view = tab.getAttribute("data-view");
+      state.activeView = view;
+      $("view-" + view).classList.add("active");
+      if (view === "stats") renderStatsView();
+    });
+  });
+
+  // ============================================================
+  // Filters
+  // ============================================================
+  $("searchInput").addEventListener("input", function (e) { state.search = e.target.value; renderSpoolGrid(); });
+  $("materialFilter").addEventListener("change", function (e) { state.materialFilter = e.target.value; renderSpoolGrid(); });
+  $("lowStockOnly").addEventListener("change", function (e) { state.lowStockOnly = e.target.checked; renderSpoolGrid(); });
+  $("logSpoolFilter").addEventListener("change", function (e) { state.logSpoolFilter = e.target.value; renderLogTable(); });
+
+  // ============================================================
+  // Spool modal
+  // ============================================================
+  function populatePresetSelect() {
+    var sel = $("presetSelect");
+    var groups = {};
+    FILAMENT_DB.forEach(function (p, i) {
+      groups[p.brand] = groups[p.brand] || [];
+      groups[p.brand].push({ p: p, i: i });
+    });
+    var html = '<option value="">Custom / not listed</option>';
+    Object.keys(groups).sort().forEach(function (brand) {
+      html += '<optgroup label="' + escapeHtml(brand) + '">';
+      groups[brand].forEach(function (entry) {
+        html += '<option value="' + entry.i + '">' + escapeHtml(entry.p.line) + '</option>';
+      });
+      html += '</optgroup>';
+    });
+    sel.innerHTML = html;
+  }
+
+  function setFormType(type) {
+    state.formType = type;
+    document.querySelectorAll("#formTypeToggle button").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-type") === type);
+    });
+    var isResin = type === "resin";
+    $("fNetWeightLabel").textContent = isResin ? "Bottle size (mL)" : "Net weight (g)";
+    $("fRemainingLabel").textContent = isResin ? "Currently remaining (mL)" : "Currently remaining (g)";
+    $("techFilament").style.display = isResin ? "none" : "";
+    $("techResin").style.display = isResin ? "" : "none";
+  }
+
+  document.querySelectorAll("#formTypeToggle button").forEach(function (b) {
+    b.addEventListener("click", function () { setFormType(b.getAttribute("data-type")); });
+  });
+
+  $("presetSelect").addEventListener("change", function (e) {
+    if (e.target.value === "") return;
+    var p = FILAMENT_DB[Number(e.target.value)];
+    setFormType(p.type);
+    $("fBrand").value = p.brand;
+    $("fLine").value = p.line;
+    $("fMaterial").value = p.material;
+    if (p.type === "resin") {
+      $("fNetWeight").value = p.netVolumeMl;
+      if (!$("fRemaining").value) $("fRemaining").value = p.netVolumeMl;
+      $("fPrice").value = (p.pricePerL * (p.netVolumeMl / 1000)).toFixed(2);
+    } else {
+      $("fNetWeight").value = p.netWeightG;
+      if (!$("fRemaining").value) $("fRemaining").value = p.netWeightG;
+      $("fPrice").value = (p.pricePerKg * (p.netWeightG / 1000)).toFixed(2);
+      $("fNozzleMin").value = p.nozzle[0];
+      $("fNozzleMax").value = p.nozzle[1];
+      $("fBedMin").value = p.bed[0];
+      $("fBedMax").value = p.bed[1];
+    }
+  });
+
+  function openSpoolModal(id) {
+    state.editingSpoolId = id || null;
+    $("presetSelect").value = "";
+    document.querySelectorAll(".field input, .field textarea").forEach(function (i) { i.value = ""; });
+    $("fColorHex").value = "#8a8f89";
+    $("fLowStock").value = 15;
+    $("fPurchaseDate").value = todayStr();
+
+    if (id) {
+      var s = Store.spools.find(function (x) { return x.id === id; });
+      if (!s) return;
+      $("spoolModalTitle").textContent = "Edit spool";
+      setFormType(s.type || "filament");
+      $("fBrand").value = s.brand || "";
+      $("fLine").value = s.line || "";
+      $("fMaterial").value = s.material || "";
+      $("fColorName").value = s.colorName || "";
+      $("fColorHex").value = s.colorHex || "#8a8f89";
+      $("fNetWeight").value = s.type === "resin" ? (s.netVolumeMl || "") : (s.netWeightG || "");
+      $("fRemaining").value = s.type === "resin" ? (s.remainingMl || "") : (s.remainingG || "");
+      $("fPrice").value = s.pricePaid || "";
+      $("fPurchaseDate").value = s.purchaseDate || todayStr();
+      $("fNozzleMin").value = s.nozzleMin || "";
+      $("fNozzleMax").value = s.nozzleMax || "";
+      $("fBedMin").value = s.bedMin || "";
+      $("fBedMax").value = s.bedMax || "";
+      $("fCureNotes").value = s.cureNotes || "";
+      $("fLowStock").value = s.lowStockPct || 15;
+      $("fNotes").value = s.notes || "";
+      $("btnDeleteSpool").style.display = "";
+    } else {
+      $("spoolModalTitle").textContent = "Add spool";
+      setFormType("filament");
+      $("btnDeleteSpool").style.display = "none";
+    }
+    $("spoolOverlay").classList.add("open");
+  }
+  function closeSpoolModal() { $("spoolOverlay").classList.remove("open"); }
+
+  $("btnAddSpool").addEventListener("click", function () { openSpoolModal(); });
+  $("btnCancelSpool").addEventListener("click", closeSpoolModal);
+  $("spoolOverlay").addEventListener("click", function (e) { if (e.target === e.currentTarget) closeSpoolModal(); });
+
+  $("btnSaveSpool").addEventListener("click", function () {
+    var brand = $("fBrand").value.trim();
+    if (!brand) { showToast("Give it a brand so you can find it later."); $("fBrand").focus(); return; }
+    var isResin = state.formType === "resin";
+    var data = {
+      type: state.formType,
+      brand: brand,
+      line: $("fLine").value.trim(),
+      material: $("fMaterial").value.trim(),
+      colorName: $("fColorName").value.trim(),
+      colorHex: $("fColorHex").value,
+      pricePaid: parseFloat($("fPrice").value) || 0,
+      purchaseDate: $("fPurchaseDate").value || todayStr(),
+      lowStockPct: parseFloat($("fLowStock").value) || 15,
+      notes: $("fNotes").value.trim(),
+      archived: false
+    };
+    if (isResin) {
+      data.netVolumeMl = parseFloat($("fNetWeight").value) || 0;
+      data.remainingMl = parseFloat($("fRemaining").value) || 0;
+      data.cureNotes = $("fCureNotes").value.trim();
+    } else {
+      data.netWeightG = parseFloat($("fNetWeight").value) || 0;
+      data.remainingG = parseFloat($("fRemaining").value) || 0;
+      data.nozzleMin = parseFloat($("fNozzleMin").value) || null;
+      data.nozzleMax = parseFloat($("fNozzleMax").value) || null;
+      data.bedMin = parseFloat($("fBedMin").value) || null;
+      data.bedMax = parseFloat($("fBedMax").value) || null;
+    }
+
+    try {
+      if (state.editingSpoolId) {
+        Store.updateSpool(state.editingSpoolId, data);
+        showToast("Spool updated.");
+      } else {
+        Store.addSpool(data);
+        showToast("Spool added.");
+      }
+      closeSpoolModal();
+    } catch (e) {
+      showToast("Couldn't save — try again.");
+    }
+  });
+
+  $("btnDeleteSpool").addEventListener("click", function () {
+    if (!state.editingSpoolId) return;
+    if (!confirm("Delete this spool and its usage history? This can't be undone.")) return;
+    try {
+      Store.deleteSpool(state.editingSpoolId);
+      showToast("Spool deleted.");
+      closeSpoolModal();
+    } catch (e) { showToast("Couldn't delete — try again."); }
+  });
+
+  // ============================================================
+  // Usage modal
+  // ============================================================
+  function renderUsageSpoolSelect(preselect) {
+    var sel = $("uSpool");
+    var active = Store.spools.filter(function (s) { return !s.archived; });
+    sel.innerHTML = active.map(function (s) {
+      return '<option value="' + s.id + '">' + escapeHtml(s.brand + " — " + (s.line || s.material) + (s.colorName ? " (" + s.colorName + ")" : "")) + '</option>';
+    }).join("");
+    if (preselect) sel.value = preselect;
+    updateUsageLabel();
+  }
+  function updateUsageLabel() {
+    var s = Store.spools.find(function (x) { return x.id === $("uSpool").value; });
+    var isResin = s && s.type === "resin";
+    $("uAmountLabel").textContent = "Amount used (" + (isResin ? "mL" : "g") + ")";
+    updateUsagePreview();
+  }
+  function updateUsagePreview() {
+    var s = Store.spools.find(function (x) { return x.id === $("uSpool").value; });
+    var amt = parseFloat($("uAmount").value) || 0;
+    if (!s) { $("uRemainingPreview").textContent = ""; return; }
+    var remaining = spoolRemaining(s) - amt;
+    $("uRemainingPreview").textContent = "Leaves " + fmtNum(Math.max(0, remaining)) + " " + spoolUnit(s) + " on the spool.";
+  }
+  $("uSpool").addEventListener("change", updateUsageLabel);
+  $("uAmount").addEventListener("input", updateUsagePreview);
+
+  function openUsageModal(spoolId) {
+    if (!Store.spools.filter(function (s) { return !s.archived; }).length) {
+      showToast("Add a spool first.");
+      return;
+    }
+    renderUsageSpoolSelect(spoolId);
+    $("uAmount").value = "";
+    $("uProject").value = "";
+    $("uNotes").value = "";
+    $("uDate").value = todayStr();
+    updateUsagePreview();
+    $("usageOverlay").classList.add("open");
+  }
+  function closeUsageModal() { $("usageOverlay").classList.remove("open"); }
+
+  $("btnLogUsageTab").addEventListener("click", function () { openUsageModal(); });
+  $("btnCancelUsage").addEventListener("click", closeUsageModal);
+  $("usageOverlay").addEventListener("click", function (e) { if (e.target === e.currentTarget) closeUsageModal(); });
+
+  $("btnSaveUsage").addEventListener("click", function () {
+    var spoolId = $("uSpool").value;
+    var amount = parseFloat($("uAmount").value);
+    if (!spoolId) { showToast("Pick a spool."); return; }
+    if (!amount || amount <= 0) { showToast("Enter how much you used."); $("uAmount").focus(); return; }
+    var s = Store.spools.find(function (x) { return x.id === spoolId; });
+    if (!s) return;
+
+    var newRemaining = Math.max(0, spoolRemaining(s) - amount);
+    var updatedSpool = Object.assign({}, s);
+    if (s.type === "resin") updatedSpool.remainingMl = newRemaining; else updatedSpool.remainingG = newRemaining;
+    delete updatedSpool.id;
+
+    try {
+      Store.addUsage({
+        spoolId: spoolId,
+        amount: amount,
+        project: $("uProject").value.trim(),
+        notes: $("uNotes").value.trim(),
+        date: $("uDate").value || todayStr(),
+        loggedAt: new Date().toISOString()
+      });
+      Store.updateSpool(spoolId, updatedSpool);
+      showToast("Print logged.");
+      closeUsageModal();
+    } catch (e) {
+      showToast("Couldn't log it — try again.");
+    }
+  });
+
+  // ============================================================
+  // Cloud sync modal
+  // ============================================================
+  function openCloudModal() {
+    var saved = CloudSync.loadSaved();
+    $("cloudCode").value = CloudSync.connected ? CloudSync.code : (saved && saved.code) || "";
+    $("cloudConfig").value = saved && saved.config ? JSON.stringify(saved.config, null, 2) : "";
+    $("cloudStatusLine").textContent = CloudSync.connected
+      ? "Connected — sharing data under code \"" + CloudSync.code + "\"."
+      : "Not connected — data stays in this browser only.";
+    $("btnCloudDisconnect").style.display = CloudSync.connected ? "" : "none";
+    $("cloudOverlay").classList.add("open");
+  }
+  function closeCloudModal() { $("cloudOverlay").classList.remove("open"); }
+
+  $("btnCloudSync").addEventListener("click", openCloudModal);
+  $("btnCloudCancel").addEventListener("click", closeCloudModal);
+  $("cloudOverlay").addEventListener("click", function (e) { if (e.target === e.currentTarget) closeCloudModal(); });
+
+  $("btnCloudConnect").addEventListener("click", function () {
+    var code = $("cloudCode").value.trim();
+    var raw = $("cloudConfig").value.trim();
+    if (!code) { showToast("Pick a sync code first."); $("cloudCode").focus(); return; }
+    if (!raw) { showToast("Paste your Firebase config."); $("cloudConfig").focus(); return; }
+    if (!window.firebase) { showToast("Firebase library didn't load — check your internet connection and reload."); return; }
+
+    var config;
+    try {
+      config = new Function("return (" + raw + ")")();
+    } catch (e) {
+      showToast("Couldn't read that config — check it's the object Firebase gave you.");
+      return;
+    }
+    if (!config || !config.apiKey || !config.projectId) {
+      showToast("That doesn't look like a complete Firebase config.");
+      return;
+    }
+
+    $("btnCloudConnect").disabled = true;
+    CloudSync.connect(config, code, function (ok, err) {
+      $("btnCloudConnect").disabled = false;
+      renderSyncStatus();
+      if (ok) {
+        showToast("Connected. Syncing under \"" + code + "\".");
+        closeCloudModal();
+      } else {
+        showToast("Couldn't connect: " + err);
+      }
+    });
+  });
+
+  $("btnCloudDisconnect").addEventListener("click", function () {
+    if (!confirm("Disconnect cloud sync? This browser will go back to its own local copy of the data.")) return;
+    CloudSync.disconnect();
+    renderSyncStatus();
+    Store.init();
+    showToast("Disconnected from cloud sync.");
+    closeCloudModal();
+  });
+
+  // ============================================================
+  // Export / Import (manual sync between browsers/devices)
+  // ============================================================
+  $("btnExport").addEventListener("click", function () {
+    var blob = new Blob([Store.exportJson()], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "filament-log-backup-" + todayStr() + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    showToast("Backup downloaded.");
+  });
+
+  $("btnImport").addEventListener("click", function () { $("importFile").click(); });
+  $("importFile").addEventListener("change", function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var replace = confirm("Replace all current data with this backup?\n\nOK = replace everything\nCancel = merge with what's already here");
+      try {
+        Store.importJson(reader.result, replace ? "replace" : "merge");
+        showToast(replace ? "Backup restored." : "Backup merged in.");
+      } catch (err) {
+        showToast(err.message || "Couldn't read that backup file.");
+      }
+      $("importFile").value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  // ============================================================
+  // Boot
+  // ============================================================
+  populatePresetSelect();
+  setFormType("filament");
+  renderAll();
+  Store.init();
+
+})();
+</script>
+</body>
+</html>
