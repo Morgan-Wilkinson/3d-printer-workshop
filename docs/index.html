@@ -1,42 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Printer Workshop</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        h1 {
-            color: #333;
-        }
-        .page-list {
-            list-style: none;
-            padding: 0;
-        }
-        .page-list li {
-            margin: 10px 0;
-        }
-        .page-list a {
-            text-decoration: none;
-            color: #0066cc;
-            font-size: 18px;
-        }
-        .page-list a:hover {
-            text-decoration: underline;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Printer Workshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500;0,600;0,700;0,800;1,500&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #E7EAE7;
+    --surface: #FBFCFB;
+    --surface-2: #EFF1EE;
+    --ink: #1D211E;
+    --ink-soft: #5B615C;
+    --ink-faint: #8A908A;
+    --line: #C7CDC6;
+    --line-strong: #9BA39A;
+    --amber: #B4750F;
+    --amber-bg: #FBEDD4;
+    --red: #A3311A;
+    --red-bg: #F7E1DB;
+    --green: #3C6E42;
+    --focus: #2B6CB0;
+    --radius-sm: 3px;
+    --radius-md: 5px;
+    --font-head: 'Archivo', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #171917;
+      --surface: #1F221F;
+      --surface-2: #262925;
+      --ink: #E9ECE8;
+      --ink-soft: #A6ACA5;
+      --ink-faint: #6F756E;
+      --line: #363A35;
+      --line-strong: #484D46;
+      --amber: #E2A03F;
+      --amber-bg: #3A2E14;
+      --red: #E17A5F;
+      --red-bg: #3B211B;
+      --green: #7FB489;
+      --focus: #6FA8DC;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171917;
+    --surface: #1F221F;
+    --surface-2: #262925;
+    --ink: #E9ECE8;
+    --ink-soft: #A6ACA5;
+    --ink-faint: #6F756E;
+    --line: #363A35;
+    --line-strong: #484D46;
+    --amber: #E2A03F;
+    --amber-bg: #3A2E14;
+    --red: #E17A5F;
+    --red-bg: #3B211B;
+    --green: #7FB489;
+    --focus: #6FA8DC;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-head);
+    -webkit-font-smoothing: antialiased;
+  }
+  body { min-height: 100vh; padding-bottom: 64px; }
+
+  a { color: inherit; }
+  button { font-family: inherit; }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 20px 16px 0;
+  }
+
+  .hdr {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .hdr h1 {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .hdr .tagline {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+
+  .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card h2 {
+    font-size: 16px;
+    margin: 0 0 12px;
+    font-weight: 700;
+  }
+
+  .card p {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    margin: 0 0 16px;
+    line-height: 1.5;
+  }
+
+  .page-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .page-list li {
+    margin: 8px 0;
+  }
+
+  .page-list a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.12s, border-color 0.12s;
+  }
+
+  .page-list a:hover {
+    background: var(--surface);
+    border-color: var(--ink-soft);
+  }
+
+  .page-list a:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .page-icon {
+    font-size: 18px;
+  }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 14px 12px 0; }
+    .card { padding: 16px; }
+  }
+</style>
 </head>
 <body>
-    <h1>3D Printer Workshop</h1>
-    <p>Welcome to the 3D Printer Workshop pages:</p>
+
+<div class="wrap">
+  <div class="hdr">
+    <div>
+      <h1>3D Printer Workshop</h1>
+      <div class="tagline">Tools and resources for your 3D printing projects</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Workshop Pages</h2>
+    <p>Choose a tool or resource from the list below:</p>
     <ul class="page-list">
-        <li><a href="pages/filament-log.html">Filament Log</a></li>
+      <li>
+        <a href="pages/filament-log.html">
+          <span class="page-icon">🧵</span>
+          <span>Filament Log</span>
+        </a>
+      </li>
     </ul>
+  </div>
+</div>
+
 </body>
 </html>
