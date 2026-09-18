@@ -482,6 +482,21 @@
       </div>
     </div>
 
+    <div class="field">
+      <label for="fSource">Purchase source</label>
+      <input type="text" id="fSource" list="sourceOptions" placeholder="e.g. Amazon, Bambu Lab Store, Micro Center">
+      <datalist id="sourceOptions">
+        <option value="Amazon">
+        <option value="Bambu Lab Store">
+        <option value="Elegoo Store">
+        <option value="Micro Center">
+        <option value="Prusa Store">
+        <option value="Local hobby shop">
+        <option value="AliExpress">
+        <option value="eBay">
+      </datalist>
+    </div>
+
     <details class="tech" id="techFilament">
       <summary>Print settings</summary>
       <div class="field-row">
@@ -1105,6 +1120,7 @@
           '<div class="card-metrics">' +
             '<div class="metric' + (crit ? ' crit' : (low ? ' low' : '')) + '"><span class="m-lbl">Remaining</span><span class="m-val">' + fmtNum(spoolRemaining(s)) + ' / ' + fmtNum(spoolTotal(s)) + ' ' + unit + '</span></div>' +
             (ppk ? '<div class="metric"><span class="m-lbl">Price</span><span class="m-val">' + fmtMoney(ppk) + '/kg' + '</span></div>' : '') +
+            (s.purchaseSource ? '<div class="metric"><span class="m-lbl">From</span><span class="m-val">' + escapeHtml(s.purchaseSource) + '</span></div>' : '') +
           '</div>' +
           (days !== null ? '<div class="card-sub" style="margin-top:6px;">~' + Math.round(days) + ' days left at current pace</div>' : '') +
           (low ? '<div class="low-flag' + (crit ? ' crit' : '') + '">' + (crit ? "Nearly empty" : "Running low") + '</div>' : '') +
@@ -1353,6 +1369,7 @@
       $("fRemaining").value = s.type === "resin" ? (s.remainingMl || "") : (s.remainingG || "");
       $("fPrice").value = s.pricePaid || "";
       $("fPurchaseDate").value = s.purchaseDate || todayStr();
+      $("fSource").value = s.purchaseSource || "";
       $("fNozzleMin").value = s.nozzleMin || "";
       $("fNozzleMax").value = s.nozzleMax || "";
       $("fBedMin").value = s.bedMin || "";
@@ -1387,6 +1404,7 @@
       colorHex: $("fColorHex").value,
       pricePaid: parseFloat($("fPrice").value) || 0,
       purchaseDate: $("fPurchaseDate").value || todayStr(),
+      purchaseSource: $("fSource").value.trim(),
       lowStockPct: parseFloat($("fLowStock").value) || 15,
       notes: $("fNotes").value.trim(),
       archived: false
