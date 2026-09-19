@@ -138,12 +138,20 @@
 
   .stats {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
     overflow: hidden;
     background: var(--surface);
     margin-bottom: 18px;
+  }
+  @media (max-width: 680px) {
+    .stats { grid-template-columns: repeat(3, 1fr); }
+    .stat:nth-child(3) { border-right: none; }
+  }
+  @media (max-width: 560px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat:nth-child(2) { border-right: none; }
   }
   .stat {
     padding: 12px 14px;
@@ -256,7 +264,8 @@
   .metric .m-lbl { font-family: var(--font-head); color: var(--ink-faint); font-size: 11px; display: block; margin-bottom: 1px; }
   .metric.low .m-val { color: var(--amber); }
   .metric.crit .m-val { color: var(--red); }
-  .card-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .card-actions { display: flex; gap: 6px; margin-top: 10px; align-items: center; }
+  .bulk-select { margin-left: auto; }
   .low-flag {
     display: inline-flex; align-items: center; gap: 5px;
     font-size: 11px; font-weight: 600; color: var(--amber);
@@ -351,6 +360,253 @@
   }
   .form-type-toggle button.active { background: var(--ink); color: var(--bg); }
 
+  .bulk-items { max-height: 300px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 12px; }
+  .bulk-item { display: flex; gap: 8px; padding: 8px; border-bottom: 1px solid var(--line); align-items: center; }
+  .bulk-item:last-child { border-bottom: none; }
+  .bulk-item .field { flex: 1; margin-bottom: 0; }
+  .bulk-item .field input { padding: 6px 8px; font-size: 12px; }
+  .bulk-item .btn-remove { padding: 6px 8px; font-size: 11px; }
+
+  .bulk-select { display: flex; align-items: center; gap: 6px; padding: 4px; }
+  .bulk-select input { width: 16px; height: 16px; cursor: pointer; }
+  .bulk-actions-bar {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 40;
+    gap: 8px;
+  }
+  .bulk-actions-bar.show { display: flex; }
+
+  .inventory-section {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    background: var(--surface);
+  }
+  .inventory-section summary {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    background: var(--surface-alt);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+  .inventory-section summary:hover {
+    background: var(--line);
+  }
+  .inventory-section summary h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .inventory-section summary .section-count {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .inventory-section[open] summary {
+    border-bottom: 1px solid var(--line);
+  }
+  .inventory-section .filterbar {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .inventory-section .grid {
+    padding: 16px;
+  }
+
+  .analytics-container { margin-top: 16px; }
+  .analytics-view { display: none; }
+  .analytics-view.active { display: block; }
+
+  .chart-container {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .simple-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    padding: 16px;
+  }
+
+  .stat-card h3 {
+    font-size: 13px;
+    margin: 0 0 8px;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+
+  .stat-card .value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ink);
+    font-family: var(--font-mono);
+  }
+
+  .stat-card .sub {
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-top: 4px;
+  }
+
+  .query-results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .query-results-table th {
+    text-align: left;
+    font-size: 11px;
+    color: var(--ink-faint);
+    font-weight: 600;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 10px;
+  }
+
+  .query-results-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .query-results-table tr:last-child td { border-bottom: none; }
+
+  .saved-query-item {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .saved-query-item .name {
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .saved-query-item .desc {
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+
+  .saved-query-item .actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .alerts-panel {
+    width: 280px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+  }
+
+  .alerts-panel h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .alerts-panel .clear-btn {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: var(--line);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .alerts-panel .clear-btn:hover {
+    background: var(--ink-faint);
+  }
+
+  .alert-item {
+    background: var(--surface-alt);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+
+  .alert-item.low {
+    border-left: 3px solid var(--warn);
+  }
+
+  .alert-item.crit {
+    border-left: 3px solid var(--danger);
+  }
+
+  .alert-item .alert-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .alert-item .alert-message {
+    color: var(--ink-faint);
+    line-height: 1.4;
+  }
+
+  .alert-item .alert-time {
+    font-size: 10px;
+    color: var(--ink-faint);
+    margin-top: 4px;
+  }
+
+  .alerts-panel .empty {
+    text-align: center;
+    color: var(--ink-faint);
+    font-size: 12px;
+    padding: 20px 0;
+  }
+
+  .main-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .content-with-alerts {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
   .toast {
     position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
     background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: var(--radius-sm);
@@ -381,25 +637,146 @@
       <button class="btn btn-quiet btn-sm" id="btnImport">Import backup</button>
       <input type="file" id="importFile" accept="application/json" style="display:none;">
       <button class="btn btn-primary" id="btnAddSpool">+ Add spool</button>
+      <button class="btn btn-primary" id="btnAddRefill">+ Add refill</button>
+      <button class="btn btn-primary" id="btnBulkAdd">+ Bulk add</button>
     </div>
   </div>
   <div class="sync-note" id="syncNote">Stored only in this browser. Use Export/Import to move data to another device.</div>
 
   <div class="stats" id="statsRow"></div>
 
-  <div class="tabs">
-    <button class="tab active" data-view="inventory">Inventory</button>
-    <button class="tab" data-view="log">Usage log</button>
-    <button class="tab" data-view="stats">Stats</button>
-  </div>
+  <div class="content-with-alerts">
+    <div class="main-content">
+      <div class="tabs">
+        <button class="tab active" data-view="inventory">Inventory</button>
+        <button class="tab" data-view="log">Usage log</button>
+        <button class="tab" data-view="analytics">Analytics</button>
+        <button class="tab" data-view="stats">Stats</button>
+      </div>
 
-  <div class="view active" id="view-inventory">
+      <div class="view active" id="view-inventory">
     <div class="filterbar">
       <input type="search" id="searchInput" placeholder="Search brand, color, material...">
       <select id="materialFilter"><option value="">All materials</option></select>
+      <select id="sortFilter"><option value="name">Sort by name</option><option value="brand">Sort by brand</option><option value="source">Sort by source</option><option value="price">Sort by price</option></select>
       <label class="chk-lowstock"><input type="checkbox" id="lowStockOnly"> Running low only</label>
     </div>
-    <div id="spoolGrid" class="grid"></div>
+
+    <details class="inventory-section" id="spoolsSection" open>
+      <summary><h3>Spools</h3> <span class="section-count" id="spoolCount">0</span></summary>
+      <div id="spoolGrid" class="grid"></div>
+    </details>
+
+    <details class="inventory-section" id="refillsSection">
+      <summary><h3>Refills</h3> <span class="section-count" id="refillCount">0</span></summary>
+      <div class="filterbar">
+        <input type="search" id="refillSearchInput" placeholder="Search brand, color, material...">
+        <button class="btn btn-sm" id="btnAddRefillTab">+ Add refill</button>
+      </div>
+      <div id="refillGrid" class="grid"></div>
+    </details>
+  </div>
+
+  <div class="view" id="view-analytics">
+    <div class="tabs">
+      <button class="tab active" data-analytics="simple">Simple</button>
+      <button class="tab" data-analytics="advanced">Advanced</button>
+    </div>
+
+    <div class="analytics-view active" id="analytics-simple">
+      <div class="filterbar">
+        <button class="btn btn-sm" id="btnRefreshSimple">Refresh</button>
+        <button class="btn btn-sm" id="btnExportSimple">Export</button>
+      </div>
+      <div id="simpleStats" class="analytics-container"></div>
+    </div>
+
+    <div class="analytics-view" id="analytics-advanced">
+      <div class="filterbar">
+        <button class="btn btn-sm" id="btnNewAdvancedQuery">+ New query</button>
+        <button class="btn btn-sm" id="btnLoadSavedQuery">Load saved</button>
+        <button class="btn btn-sm" id="btnExportAdvanced">Export results</button>
+      </div>
+      <div id="advancedQueryBuilder" class="analytics-container" style="display:none;">
+        <div class="panel">
+          <h2>Advanced Query Builder</h2>
+          <div class="field">
+            <label>Data source</label>
+            <select id="advDataSource">
+              <option value="all">All data (spools + refills)</option>
+              <option value="spools">Spools only</option>
+              <option value="refills">Refills only</option>
+              <option value="usage">Usage data only</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Filters (JSON format)</label>
+            <textarea id="advFilters" rows="4" placeholder='{"brand": "Bambu Lab", "material": "PLA"}'></textarea>
+            <div class="field-hint">Example: {"brand": "Bambu Lab", "isSale": true, "pricePaid": {"$gt": 20}}</div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Group by</label>
+              <select id="advGroupBy">
+                <option value="">No grouping</option>
+                <option value="brand">Brand</option>
+                <option value="material">Material</option>
+                <option value="color">Color</option>
+                <option value="source">Source</option>
+                <option value="month">Month</option>
+                <option value="year">Year</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Aggregation</label>
+              <select id="advAggregate">
+                <option value="count">Count</option>
+                <option value="sumWeight">Sum weight (g)</option>
+                <option value="sumCost">Sum cost ($)</option>
+                <option value="avgCost">Average cost ($)</option>
+                <option value="avgWeight">Average weight (g)</option>
+                <option value="savings">Total savings ($)</option>
+                <option value="savingsPercent">Savings percentage</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Sort by</label>
+              <select id="advSortBy">
+                <option value="value">Result value</option>
+                <option value="name">Group name</option>
+                <option value="date">Date</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Sort order</label>
+              <select id="advSortOrder">
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Visualization</label>
+            <select id="advVisualization">
+              <option value="table">Table only</option>
+              <option value="bar">Bar chart</option>
+              <option value="pie">Pie chart</option>
+              <option value="line">Line chart</option>
+              <option value="both">Table + chart</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" id="btnCancelAdvanced">Cancel</button>
+            <button class="btn btn-primary" id="btnRunAdvancedQuery">Run query</button>
+            <button class="btn btn-primary" id="btnSaveAdvancedQuery">Save query</button>
+          </div>
+        </div>
+      </div>
+      <div id="advancedResults" class="analytics-container"></div>
+      <div id="savedQueries" class="analytics-container"></div>
+    </div>
   </div>
 
   <div class="view" id="view-log">
@@ -411,6 +788,16 @@
   </div>
 
   <div class="view" id="view-stats"></div>
+    </div>
+
+    <div class="alerts-panel">
+      <h3>
+        Alerts
+        <button class="clear-btn" id="btnClearAlerts">Clear all</button>
+      </h3>
+      <div id="alertsList"></div>
+    </div>
+  </div>
 </div>
 
 <!-- Add / edit spool modal -->
@@ -471,32 +858,6 @@
       </div>
     </div>
 
-    <div class="field-row">
-      <div class="field">
-        <label for="fPrice">Price paid ($)</label>
-        <input type="number" id="fPrice" min="0" step="0.01" placeholder="22.00">
-      </div>
-      <div class="field">
-        <label for="fPurchaseDate">Purchase date</label>
-        <input type="date" id="fPurchaseDate">
-      </div>
-    </div>
-
-    <div class="field">
-      <label for="fSource">Purchase source</label>
-      <input type="text" id="fSource" list="sourceOptions" placeholder="e.g. Amazon, Bambu Lab Store, Micro Center">
-      <datalist id="sourceOptions">
-        <option value="Amazon">
-        <option value="Bambu Lab Store">
-        <option value="Elegoo Store">
-        <option value="Micro Center">
-        <option value="Prusa Store">
-        <option value="Local hobby shop">
-        <option value="AliExpress">
-        <option value="eBay">
-      </datalist>
-    </div>
-
     <details class="tech" id="techFilament">
       <summary>Print settings</summary>
       <div class="field-row">
@@ -518,6 +879,53 @@
           <label for="fBedMax">Bed temp max (°C)</label>
           <input type="number" id="fBedMax" placeholder="60">
         </div>
+      </div>
+    </details>
+
+    <details class="tech">
+      <summary>Pricing & purchasing</summary>
+      <div class="field-row">
+        <div class="field">
+          <label for="fPrice">Price paid ($)</label>
+          <input type="number" id="fPrice" min="0" step="0.01" placeholder="22.00">
+        </div>
+        <div class="field">
+          <label for="fPurchaseDate">Purchase date</label>
+          <input type="date" id="fPurchaseDate">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fSource">Purchase source</label>
+        <input type="text" id="fSource" list="sourceOptions" placeholder="e.g. Amazon, Bambu Lab Store, Micro Center">
+        <datalist id="sourceOptions">
+          <option value="Amazon">
+          <option value="Bambu Lab Store">
+          <option value="Elegoo Store">
+          <option value="Micro Center">
+          <option value="Prusa Store">
+          <option value="Local hobby shop">
+          <option value="AliExpress">
+          <option value="eBay">
+        </datalist>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fOriginalPrice">Original price ($)</label>
+          <input type="number" id="fOriginalPrice" min="0" step="0.01" placeholder="29.99">
+        </div>
+        <div class="field">
+          <label for="fSaleUnit">Price per unit</label>
+          <select id="fSaleUnit">
+            <option value="">Not specified</option>
+            <option value="kg">Per kg</option>
+            <option value="lb">Per lb</option>
+            <option value="spool">Per spool</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fBundleInfo">Bundle info</label>
+        <input type="text" id="fBundleInfo" placeholder="e.g. 5-pack, 3-bundle">
       </div>
     </details>
 
@@ -594,6 +1002,311 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Bulk add modal -->
+<div class="overlay" id="bulkAddOverlay">
+  <div class="modal" style="max-width: 700px;">
+    <h2>Bulk add spools</h2>
+    <div class="modal-sub">Add multiple spools at once. All will share the same brand, material, and settings.</div>
+
+    <div class="field">
+      <label for="bulkPresetSelect">Known product</label>
+      <select id="bulkPresetSelect"></select>
+      <div class="field-hint">Fills in brand, material, temps, and reference price — all editable below.</div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="bulkBrand">Brand</label>
+        <input type="text" id="bulkBrand" placeholder="e.g. Bambu Lab">
+      </div>
+      <div class="field">
+        <label for="bulkMaterial">Material</label>
+        <input type="text" id="bulkMaterial" placeholder="e.g. PLA">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="bulkNetWeight">Net weight (g)</label>
+        <input type="number" id="bulkNetWeight" min="0" step="1" placeholder="1000">
+      </div>
+      <div class="field">
+        <label for="bulkPrice">Price each ($)</label>
+        <input type="number" id="bulkPrice" min="0" step="0.01" placeholder="22.00">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="bulkSource">Purchase source</label>
+      <input type="text" id="bulkSource" list="sourceOptions" placeholder="e.g. Amazon">
+    </div>
+
+    <details class="tech">
+      <summary>Print settings (applies to all)</summary>
+      <div class="field-row">
+        <div class="field">
+          <label for="bulkNozzleMin">Nozzle temp min (°C)</label>
+          <input type="number" id="bulkNozzleMin" placeholder="200">
+        </div>
+        <div class="field">
+          <label for="bulkNozzleMax">Nozzle temp max (°C)</label>
+          <input type="number" id="bulkNozzleMax" placeholder="220">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="bulkBedMin">Bed temp min (°C)</label>
+          <input type="number" id="bulkBedMin" placeholder="55">
+        </div>
+        <div class="field">
+          <label for="bulkBedMax">Bed temp max (°C)</label>
+          <input type="number" id="bulkBedMax" placeholder="60">
+        </div>
+      </div>
+    </details>
+
+    <details class="tech">
+      <summary>Sale information (applies to all)</summary>
+      <div class="field-row">
+        <div class="field">
+          <label for="bulkOriginalPrice">Original price each ($)</label>
+          <input type="number" id="bulkOriginalPrice" min="0" step="0.01" placeholder="29.99">
+        </div>
+        <div class="field">
+          <label for="bulkSaleUnit">Price per unit</label>
+          <select id="bulkSaleUnit">
+            <option value="">Not specified</option>
+            <option value="kg">Per kg</option>
+            <option value="lb">Per lb</option>
+            <option value="spool">Per spool</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="bulkBundleInfo">Bundle info</label>
+        <input type="text" id="bulkBundleInfo" placeholder="e.g. 5-pack, 3-bundle">
+      </div>
+    </details>
+
+    <div class="field">
+      <label>Spools to add</label>
+      <div class="bulk-items" id="bulkItems">
+        <div class="bulk-item">
+          <div class="field">
+            <input type="text" class="bulk-color-name" placeholder="Color name">
+          </div>
+          <div class="field">
+            <input type="color" class="bulk-color-hex" value="#8a8f89" style="width: 36px; height: 28px; padding: 2px;">
+          </div>
+          <button class="btn btn-sm btn-remove" onclick="this.parentElement.remove()">Remove</button>
+        </div>
+      </div>
+      <button class="btn btn-sm" id="btnAddBulkItem">+ Add another color</button>
+    </div>
+
+    <div class="modal-actions">
+      <div class="left"></div>
+      <div class="right">
+        <button class="btn" id="btnCancelBulkAdd">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveBulkAdd">Add all spools</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk edit modal -->
+<div class="overlay" id="bulkEditOverlay">
+  <div class="modal">
+    <h2>Bulk edit</h2>
+    <div class="modal-sub">Edit multiple spools at once. Leave fields blank to keep existing values.</div>
+
+    <div class="field">
+      <label for="bulkEditBrand">Brand</label>
+      <input type="text" id="bulkEditBrand" placeholder="Leave blank to keep current">
+    </div>
+
+    <div class="field">
+      <label for="bulkEditMaterial">Material</label>
+      <input type="text" id="bulkEditMaterial" placeholder="Leave blank to keep current">
+    </div>
+
+    <div class="field">
+      <label for="bulkEditSource">Purchase source</label>
+      <input type="text" id="bulkEditSource" placeholder="Leave blank to keep current">
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="bulkEditPrice">Price paid ($)</label>
+        <input type="number" id="bulkEditPrice" min="0" step="0.01" placeholder="Leave blank to keep current">
+      </div>
+      <div class="field">
+        <label for="bulkEditLowStock">Low stock alert below (%)</label>
+        <input type="number" id="bulkEditLowStock" min="1" max="90" placeholder="Leave blank to keep current">
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <div class="left"></div>
+      <div class="right">
+        <button class="btn" id="btnCancelBulkEdit">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveBulkEdit">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk actions bar -->
+<div class="bulk-actions-bar" id="bulkActionsBar">
+  <span id="bulkSelectedCount">0 selected</span>
+  <button class="btn btn-sm" id="btnBulkEdit">Edit selected</button>
+  <button class="btn btn-sm btn-danger" id="btnBulkDelete">Delete selected</button>
+  <button class="btn btn-sm btn-quiet" id="btnBulkCancel">Cancel</button>
+</div>
+
+<!-- Add / edit refill modal -->
+<div class="overlay" id="refillOverlay">
+  <div class="modal">
+    <h2 id="refillModalTitle">Add refill</h2>
+    <div class="modal-sub">Track filament refills (rolls without spool housing). These can be used to refill empty spools.</div>
+
+    <div class="field">
+      <label for="rPresetSelect">Known product</label>
+      <select id="rPresetSelect"></select>
+      <div class="field-hint">Fills in brand, material, temps, and reference price — all editable below.</div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="rBrand">Brand</label>
+        <input type="text" id="rBrand" placeholder="e.g. Bambu Lab">
+      </div>
+      <div class="field">
+        <label for="rLine">Product line</label>
+        <input type="text" id="rLine" placeholder="e.g. PLA Basic">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="rMaterial">Material</label>
+        <input type="text" id="rMaterial" placeholder="e.g. PLA">
+      </div>
+      <div class="field">
+        <label for="rColorName">Color</label>
+        <input type="text" id="rColorName" placeholder="e.g. Jade White">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="rColorHex">Swatch</label>
+      <div class="field-color-row">
+        <input type="color" id="rColorHex" value="#8a8f89">
+        <span class="field-hint" style="margin-top:0;">Used for inventory — match it to the actual filament.</span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="rAmount">Amount (g)</label>
+        <input type="number" id="rAmount" min="0" step="1" placeholder="1000">
+      </div>
+    </div>
+
+    <details class="tech">
+      <summary>Print settings</summary>
+      <div class="field-row">
+        <div class="field">
+          <label for="rNozzleMin">Nozzle temp min (°C)</label>
+          <input type="number" id="rNozzleMin" placeholder="200">
+        </div>
+        <div class="field">
+          <label for="rNozzleMax">Nozzle temp max (°C)</label>
+          <input type="number" id="rNozzleMax" placeholder="220">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="rBedMin">Bed temp min (°C)</label>
+          <input type="number" id="rBedMin" placeholder="55">
+        </div>
+        <div class="field">
+          <label for="rBedMax">Bed temp max (°C)</label>
+          <input type="number" id="rBedMax" placeholder="60">
+        </div>
+      </div>
+    </details>
+
+    <details class="tech">
+      <summary>Pricing & purchasing</summary>
+      <div class="field-row">
+        <div class="field">
+          <label for="rPrice">Price paid ($)</label>
+          <input type="number" id="rPrice" min="0" step="0.01" placeholder="22.00">
+        </div>
+        <div class="field">
+          <label for="rPurchaseDate">Purchase date</label>
+          <input type="date" id="rPurchaseDate">
+        </div>
+      </div>
+      <div class="field">
+        <label for="rSource">Purchase source</label>
+        <input type="text" id="rSource" list="sourceOptions" placeholder="e.g. Amazon">
+        <datalist id="sourceOptions">
+          <option value="Amazon">
+          <option value="Bambu Lab Store">
+          <option value="Elegoo Store">
+          <option value="Micro Center">
+          <option value="Prusa Store">
+          <option value="Local hobby shop">
+          <option value="AliExpress">
+          <option value="eBay">
+        </datalist>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="rOriginalPrice">Original price ($)</label>
+          <input type="number" id="rOriginalPrice" min="0" step="0.01" placeholder="29.99">
+        </div>
+        <div class="field">
+          <label for="rSaleUnit">Price per unit</label>
+          <select id="rSaleUnit">
+            <option value="">Not specified</option>
+            <option value="kg">Per kg</option>
+            <option value="lb">Per lb</option>
+            <option value="spool">Per spool</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="rBundleInfo">Bundle info</label>
+        <input type="text" id="rBundleInfo" placeholder="e.g. 5-pack, 3-bundle">
+      </div>
+    </details>
+
+    <div class="field">
+      <label for="rLowStock">Low stock alert below (%)</label>
+      <input type="number" id="rLowStock" min="1" max="90" value="15">
+    </div>
+
+    <div class="field">
+      <label for="rNotes">Notes</label>
+      <textarea id="rNotes" placeholder="Any notes about this refill"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <div class="left">
+        <button class="btn btn-quiet btn-danger" id="btnDeleteRefill" style="display:none;">Delete refill</button>
+        <button class="btn btn-quiet" id="btnConvertToSpool" style="display:none;">Convert to spool</button>
+      </div>
+      <div class="right">
+        <button class="btn" id="btnCancelRefill">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveRefill">Save refill</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Cloud sync modal -->
 <div class="overlay" id="cloudOverlay">
@@ -745,6 +1458,7 @@
     db: null,
     code: null,
     unsubSpools: null,
+    unsubRefills: null,
     unsubUsage: null,
     firstSnapshotSpools: true,
 
@@ -782,6 +1496,7 @@
 
     disconnect: function () {
       if (this.unsubSpools) this.unsubSpools();
+      if (this.unsubRefills) this.unsubRefills();
       if (this.unsubUsage) this.unsubUsage();
       this.connected = false;
       this.db = null;
@@ -792,6 +1507,7 @@
     _subscribe: function (cb) {
       var self = this;
       var preSpools = Store.spools.slice();
+      var preRefills = Store.refills.slice();
       var preUsage = Store.usage.slice();
       var announced = false;
 
@@ -802,15 +1518,21 @@
         if (!announced) {
           announced = true;
           cb(true, null);
-          if (self.firstSnapshotSpools && snap.docs.length === 0 && (preSpools.length || preUsage.length)) {
+          if (self.firstSnapshotSpools && snap.docs.length === 0 && (preSpools.length || preRefills.length || preUsage.length)) {
             self.firstSnapshotSpools = false;
-            setTimeout(function () { self._offerMigration(preSpools, preUsage); }, 150);
+            setTimeout(function () { self._offerMigration(preSpools, preRefills, preUsage); }, 150);
           }
         }
       }, function (err) {
         showToast("Cloud sync error: " + err.message);
         if (!announced) { announced = true; cb(false, err.message); }
       });
+
+      self.unsubRefills = self.db.collection(self.basePath() + "/refills").onSnapshot(function (snap) {
+        Store.refills = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+        Store.persist();
+        Store.onChange();
+      }, function (err) { showToast("Cloud sync error: " + err.message); });
 
       self.unsubUsage = self.db.collection(self.basePath() + "/usage").onSnapshot(function (snap) {
         Store.usage = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
@@ -819,10 +1541,11 @@
       }, function (err) { showToast("Cloud sync error: " + err.message); });
     },
 
-    _offerMigration: function (preSpools, preUsage) {
+    _offerMigration: function (preSpools, preRefills, preUsage) {
       var self = this;
       if (!confirm("This sync code has no data in it yet, but this browser has " + preSpools.length + " spool(s) saved locally.\n\nUpload the local data to the cloud now?")) return;
       var spoolCol = self.db.collection(self.basePath() + "/spools");
+      var refillCol = self.db.collection(self.basePath() + "/refills");
       var usageCol = self.db.collection(self.basePath() + "/usage");
       var idMap = {};
       var writes = preSpools.map(function (s) {
@@ -832,6 +1555,13 @@
         return spoolCol.add(copy).then(function (ref) { idMap[oldId] = ref.id; });
       });
       Promise.all(writes).then(function () {
+        var refillWrites = preRefills.map(function (r) {
+          var copy = Object.assign({}, r);
+          delete copy.id;
+          return refillCol.add(copy);
+        });
+        return Promise.all(refillWrites);
+      }).then(function () {
         var usageWrites = preUsage.map(function (u) {
           var copy = Object.assign({}, u);
           delete copy.id;
@@ -858,14 +1588,16 @@
   // ============================================================
   var Store = {
     spools: [],
+    refills: [],
     usage: [],
     onChange: function () {},
 
     init: function () {
       try {
         this.spools = JSON.parse(localStorage.getItem("filamentlog_spools") || "[]");
+        this.refills = JSON.parse(localStorage.getItem("filamentlog_refills") || "[]");
         this.usage = JSON.parse(localStorage.getItem("filamentlog_usage") || "[]");
-      } catch (e) { this.spools = []; this.usage = []; }
+      } catch (e) { this.spools = []; this.refills = []; this.usage = []; }
       this.onChange();
 
       var saved = CloudSync.loadSaved();
@@ -881,6 +1613,7 @@
     persist: function () {
       try {
         localStorage.setItem("filamentlog_spools", JSON.stringify(this.spools));
+        localStorage.setItem("filamentlog_refills", JSON.stringify(this.refills));
         localStorage.setItem("filamentlog_usage", JSON.stringify(this.usage));
         return true;
       } catch (e) {
@@ -949,9 +1682,55 @@
       this.persist();
       this.onChange();
     },
+    addRefill: function (data) {
+      if (CloudSync.connected) {
+        CloudSync.db.collection(CloudSync.basePath() + "/refills").add(data)
+          .catch(function (e) { showToast("Couldn't save to cloud: " + e.message); });
+        return;
+      }
+      data.id = this.genId();
+      this.refills.push(data);
+      this.persist();
+      this.onChange();
+    },
+    updateRefill: function (id, data) {
+      if (CloudSync.connected) {
+        CloudSync.db.collection(CloudSync.basePath() + "/refills").doc(id).set(data)
+          .catch(function (e) { showToast("Couldn't save to cloud: " + e.message); });
+        return;
+      }
+      var idx = this.refills.findIndex(function (r) { return r.id === id; });
+      if (idx > -1) this.refills[idx] = Object.assign({ id: id }, data);
+      this.persist();
+      this.onChange();
+    },
+    deleteRefill: function (id) {
+      if (CloudSync.connected) {
+        CloudSync.db.collection(CloudSync.basePath() + "/refills").doc(id).delete()
+          .catch(function (e) { showToast("Couldn't delete from cloud: " + e.message); });
+        return;
+      }
+      this.refills = this.refills.filter(function (r) { return r.id !== id; });
+      this.persist();
+      this.onChange();
+    },
+    convertRefillToSpool: function (refillId, spoolData) {
+      if (CloudSync.connected) {
+        CloudSync.db.collection(CloudSync.basePath() + "/refills").doc(refillId).delete()
+          .catch(function (e) { showToast("Couldn't delete from cloud: " + e.message); });
+        CloudSync.db.collection(CloudSync.basePath() + "/spools").add(spoolData)
+          .catch(function (e) { showToast("Couldn't save to cloud: " + e.message); });
+        return;
+      }
+      this.refills = this.refills.filter(function (r) { return r.id !== refillId; });
+      spoolData.id = this.genId();
+      this.spools.push(spoolData);
+      this.persist();
+      this.onChange();
+    },
 
     exportJson: function () {
-      return JSON.stringify({ spools: this.spools, usage: this.usage, exportedAt: new Date().toISOString(), version: 1 }, null, 2);
+      return JSON.stringify({ spools: this.spools, refills: this.refills, usage: this.usage, exportedAt: new Date().toISOString(), version: 5 }, null, 2);
     },
     importJson: function (text, mode) {
       var data;
@@ -959,13 +1738,70 @@
       if (!data || !Array.isArray(data.spools) || !Array.isArray(data.usage)) {
         throw new Error("That file doesn't look like a Filament Log backup.");
       }
+
+      // Migration from version 2 (old refill system with spoolId) to version 3 (independent refills)
+      if (data.version === 2 && Array.isArray(data.refills)) {
+        data.refills = data.refills.filter(function (r) {
+          // Remove refills that were tied to spools in the old system
+          // Users will need to re-add independent refills
+          return !r.spoolId;
+        });
+        data.version = 3;
+      }
+
+      // Migration from version 3 to version 4 (add sales fields)
+      if (data.version === 3) {
+        var addSalesFields = function (item) {
+          item.originalPrice = item.originalPrice || 0;
+          item.saleUnit = item.saleUnit || "";
+          item.bundleInfo = item.bundleInfo || "";
+          item.isSale = item.isSale || false;
+          return item;
+        };
+        data.spools = data.spools.map(addSalesFields);
+        data.refills = (data.refills || []).map(addSalesFields);
+        data.version = 4;
+      }
+
+      // Migration from version 4 to version 5 (add refill fields to match spools)
+      if (data.version === 4) {
+        var addRefillFields = function (item) {
+          if (item.type === "refill") {
+            item.line = item.line || "";
+            item.nozzleMin = item.nozzleMin || null;
+            item.nozzleMax = item.nozzleMax || null;
+            item.bedMin = item.bedMin || null;
+            item.bedMax = item.bedMax || null;
+            item.lowStockPct = item.lowStockPct || 15;
+            // Ensure sales fields exist (in case refill was created before sales tracking)
+            item.originalPrice = item.originalPrice || 0;
+            item.saleUnit = item.saleUnit || "";
+            item.bundleInfo = item.bundleInfo || "";
+            // Auto-calculate isSale from originalPrice
+            item.isSale = item.originalPrice > 0;
+          }
+          return item;
+        };
+        data.refills = (data.refills || []).map(addRefillFields);
+        // Also update spools to auto-calculate isSale
+        data.spools = data.spools.map(function (item) {
+          item.isSale = item.originalPrice > 0;
+          return item;
+        });
+        data.version = 5;
+      }
+
       if (mode === "replace") {
         this.spools = data.spools;
+        this.refills = data.refills || [];
         this.usage = data.usage;
       } else {
         var existingIds = {};
         this.spools.forEach(function (s) { existingIds[s.id] = true; });
         data.spools.forEach(function (s) { if (!existingIds[s.id]) this.spools.push(s); }, this);
+        var existingRefillIds = {};
+        this.refills.forEach(function (r) { existingRefillIds[r.id] = true; });
+        (data.refills || []).forEach(function (r) { if (!existingRefillIds[r.id]) this.refills.push(r); }, this);
         var existingUsageIds = {};
         this.usage.forEach(function (u) { existingUsageIds[u.id] = true; });
         data.usage.forEach(function (u) { if (!existingUsageIds[u.id]) this.usage.push(u); }, this);
@@ -1022,11 +1858,18 @@
   var state = {
     activeView: "inventory",
     search: "",
+    refillSearch: "",
     materialFilter: "",
+    sortFilter: "name",
     lowStockOnly: false,
     logSpoolFilter: "",
     editingSpoolId: null,
-    formType: "filament"
+    editingRefillId: null,
+    formType: "filament",
+    selectedSpools: new Set(),
+    analyticsView: "simple",
+    savedQueries: [],
+    alerts: []
   };
 
   function ringSvg(pct, color, size) {
@@ -1044,16 +1887,21 @@
 
   function renderStats() {
     var active = Store.spools.filter(function (s) { return !s.archived; });
+    var refillCount = Store.refills.filter(function (r) { return !r.archived; }).length;
     var totalRemainVal = active.reduce(function (sum, s) { return sum + (s.pricePaid ? s.pricePaid * spoolPct(s) : 0); }, 0);
     var totalRemainWeight = active.filter(function (s) { return s.type !== "resin"; })
       .reduce(function (sum, s) { return sum + spoolRemaining(s); }, 0);
     var lowCount = active.filter(function (s) { return spoolPct(s) * 100 <= (s.lowStockPct || 15); }).length;
 
-    $("statsRow").innerHTML =
-      '<div class="stat"><div class="num">' + active.length + '</div><div class="lbl">Spools on hand</div></div>' +
-      '<div class="stat"><div class="num">' + fmtNum(totalRemainWeight / 1000, 2) + ' kg</div><div class="lbl">Filament remaining</div></div>' +
-      '<div class="stat"><div class="num">' + fmtMoney(totalRemainVal) + '</div><div class="lbl">Inventory value</div></div>' +
-      '<div class="stat"><div class="num' + (lowCount ? ' warn' : '') + '">' + lowCount + '</div><div class="lbl">Running low</div></div>';
+    var statsHtml = [
+      '<div class="stat"><div class="num">' + active.length + '</div><div class="lbl">Spools on hand</div></div>',
+      '<div class="stat"><div class="num">' + refillCount + '</div><div class="lbl">Refills</div></div>',
+      '<div class="stat"><div class="num">' + fmtNum(totalRemainWeight / 1000, 2) + ' kg</div><div class="lbl">Filament remaining</div></div>',
+      '<div class="stat"><div class="num">' + fmtMoney(totalRemainVal) + '</div><div class="lbl">Inventory value</div></div>',
+      '<div class="stat"><div class="num' + (lowCount ? ' warn' : '') + '">' + lowCount + '</div><div class="lbl">Running low</div></div>'
+    ].join("");
+
+    $("statsRow").innerHTML = statsHtml;
   }
 
   function renderMaterialFilterOptions() {
@@ -1081,9 +1929,43 @@
     if (state.lowStockOnly) {
       list = list.filter(function (s) { return spoolPct(s) * 100 <= (s.lowStockPct || 15); });
     }
-    list.sort(function (a, b) { return spoolPct(a) - spoolPct(b); });
+
+    // Apply sorting
+    switch (state.sortFilter) {
+      case "name":
+        list.sort(function (a, b) {
+          var nameA = (a.colorName || "").toLowerCase();
+          var nameB = (b.colorName || "").toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+        break;
+      case "brand":
+        list.sort(function (a, b) {
+          var brandA = (a.brand || "").toLowerCase();
+          var brandB = (b.brand || "").toLowerCase();
+          return brandA.localeCompare(brandB);
+        });
+        break;
+      case "source":
+        list.sort(function (a, b) {
+          var sourceA = (a.purchaseSource || "").toLowerCase();
+          var sourceB = (b.purchaseSource || "").toLowerCase();
+          return sourceA.localeCompare(sourceB);
+        });
+        break;
+      case "price":
+        list.sort(function (a, b) {
+          var priceA = a.pricePaid || 0;
+          var priceB = b.pricePaid || 0;
+          return priceB - priceA; // Descending
+        });
+        break;
+      default:
+        list.sort(function (a, b) { return spoolPct(a) - spoolPct(b); });
+    }
 
     var grid = $("spoolGrid");
+
     if (!Store.spools.filter(function (s) { return !s.archived; }).length) {
       grid.innerHTML = "";
       grid.parentElement.querySelector(".empty")?.remove();
@@ -1103,6 +1985,7 @@
       return;
     }
 
+    $("spoolCount").textContent = list.length;
     grid.innerHTML = list.map(function (s) {
       var pct = spoolPct(s);
       var pctInt = Math.round(pct * 100);
@@ -1111,6 +1994,8 @@
       var unit = spoolUnit(s);
       var ppk = s.pricePaid ? (s.type === "resin" ? (s.pricePaid / (spoolTotal(s) / 1000)) : (s.pricePaid / (spoolTotal(s) / 1000))) : 0;
       var days = estDaysRemaining(s);
+      var isSelected = state.selectedSpools.has(s.id);
+      var savings = s.originalPrice > 0 ? (s.originalPrice - s.pricePaid) : 0;
       return '<div class="card' + (low ? '' : '') + '" data-id="' + s.id + '">' +
         '<div class="ring-wrap">' + ringSvg(pct, s.colorHex || "#8a8f89") +
           '<div class="ring-pct">' + pctInt + '%</div></div>' +
@@ -1122,11 +2007,15 @@
             (ppk ? '<div class="metric"><span class="m-lbl">Price</span><span class="m-val">' + fmtMoney(ppk) + '/kg' + '</span></div>' : '') +
             (s.purchaseSource ? '<div class="metric"><span class="m-lbl">From</span><span class="m-val">' + escapeHtml(s.purchaseSource) + '</span></div>' : '') +
           '</div>' +
+          (savings > 0 ? '<div class="card-sub" style="margin-top:6px; color:var(--green);">Saved ' + fmtMoney(savings) + ' on this purchase</div>' : '') +
           (days !== null ? '<div class="card-sub" style="margin-top:6px;">~' + Math.round(days) + ' days left at current pace</div>' : '') +
           (low ? '<div class="low-flag' + (crit ? ' crit' : '') + '">' + (crit ? "Nearly empty" : "Running low") + '</div>' : '') +
           '<div class="card-actions">' +
             '<button class="btn btn-sm logBtn">Log print</button>' +
             '<button class="btn btn-sm btn-quiet editBtn">Edit</button>' +
+            '<div class="bulk-select">' +
+              '<input type="checkbox" class="bulk-checkbox" data-id="' + s.id + '"' + (isSelected ? ' checked' : '') + '>' +
+            '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -1136,6 +2025,69 @@
       var id = card.getAttribute("data-id");
       card.querySelector(".logBtn").addEventListener("click", function () { openUsageModal(id); });
       card.querySelector(".editBtn").addEventListener("click", function () { openSpoolModal(id); });
+      var checkbox = card.querySelector(".bulk-checkbox");
+      if (checkbox) {
+        checkbox.addEventListener("change", function (e) {
+          if (e.target.checked) {
+            state.selectedSpools.add(id);
+          } else {
+            state.selectedSpools.delete(id);
+          }
+          updateBulkActionBar();
+        });
+      }
+    });
+  }
+
+  function renderRefillGrid() {
+    var list = Store.refills.filter(function (r) { return !r.archived; });
+
+    if (state.refillSearch) {
+      var q = state.refillSearch.toLowerCase();
+      list = list.filter(function (r) {
+        return (r.brand || "").toLowerCase().indexOf(q) > -1 ||
+          (r.material || "").toLowerCase().indexOf(q) > -1 ||
+          (r.colorName || "").toLowerCase().indexOf(q) > -1 ||
+          (r.purchaseSource || "").toLowerCase().indexOf(q) > -1;
+      });
+    }
+
+    var grid = $("refillGrid");
+
+    $("refillCount").textContent = list.length;
+
+    if (!list.length) {
+      grid.innerHTML = '<div class="empty"><h3>No refills yet</h3><p>Add refills to track filament rolls without spool housing.</p></div>';
+      return;
+    }
+
+    grid.innerHTML = list.map(function (r) {
+      var colorSwatch = r.colorHex ? '<span class="log-swatch" style="background:' + r.colorHex + '"></span>' : '';
+      var savings = r.originalPrice > 0 ? (r.originalPrice - r.pricePaid) : 0;
+      return '<div class="card" data-id="' + r.id + '">' +
+        '<div class="card-body">' +
+          '<div class="card-title">' + colorSwatch + escapeHtml(r.brand || "Unlabeled") + ' — ' + escapeHtml(r.line || r.material || "") + '</div>' +
+          '<div class="card-sub">' + escapeHtml(r.colorName || "No color") + (r.colorName && r.material ? " · " : "") + escapeHtml(r.material || "") + '</div>' +
+          '<div class="card-metrics">' +
+            '<div class="metric"><span class="m-lbl">Amount</span><span class="m-val">' + fmtNum(r.amount) + 'g</span></div>' +
+            '<div class="metric"><span class="m-lbl">Price</span><span class="m-val">' + fmtMoney(r.pricePaid) + '</span></div>' +
+            (r.purchaseSource ? '<div class="metric"><span class="m-lbl">From</span><span class="m-val">' + escapeHtml(r.purchaseSource) + '</span></div>' : '') +
+          '</div>' +
+          (r.purchaseDate ? '<div class="card-sub" style="margin-top:6px;">Purchased: ' + r.purchaseDate + '</div>' : '') +
+          (savings > 0 ? '<div class="card-sub" style="margin-top:4px; color:var(--green);">Saved ' + fmtMoney(savings) + ' on this purchase</div>' : '') +
+          (r.notes ? '<div class="card-sub" style="margin-top:4px;">' + escapeHtml(r.notes) + '</div>' : '') +
+          '<div class="card-actions">' +
+            '<button class="btn btn-sm btn-quiet editRefillBtn">Edit</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+
+    grid.querySelectorAll(".editRefillBtn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.closest(".card").getAttribute("data-id");
+        openRefillModal(id);
+      });
     });
   }
 
@@ -1255,13 +2207,506 @@
     }
   }
 
+  function updateBulkActionBar() {
+    var bar = $("bulkActionsBar");
+    var count = state.selectedSpools.size;
+    $("bulkSelectedCount").textContent = count + " selected";
+    if (count > 0) {
+      bar.classList.add("show");
+    } else {
+      bar.classList.remove("show");
+    }
+  }
+
+  // ============================================================
+  // Analytics
+  // ============================================================
+  function renderAnalytics() {
+    if (state.analyticsView === "simple") renderSimpleAnalytics();
+    if (state.analyticsView === "advanced") {
+      renderSavedQueries();
+    }
+  }
+
+  function getAllFilament() {
+    var items = [];
+    Store.spools.filter(function (s) { return !s.archived; }).forEach(function (s) {
+      items.push({
+        type: "spool",
+        brand: s.brand,
+        line: s.line,
+        material: s.material,
+        colorName: s.colorName,
+        colorHex: s.colorHex,
+        weight: s.netWeightG || 0,
+        pricePaid: s.pricePaid || 0,
+        originalPrice: s.originalPrice || 0,
+        purchaseSource: s.purchaseSource,
+        purchaseDate: s.purchaseDate,
+        isSale: (s.originalPrice || 0) > 0,
+        saleUnit: s.saleUnit,
+        bundleInfo: s.bundleInfo
+      });
+    });
+    Store.refills.filter(function (r) { return !r.archived; }).forEach(function (r) {
+      items.push({
+        type: "refill",
+        brand: r.brand,
+        line: r.line,
+        material: r.material,
+        colorName: r.colorName,
+        colorHex: r.colorHex,
+        weight: r.amount || 0,
+        pricePaid: r.pricePaid || 0,
+        originalPrice: r.originalPrice || 0,
+        purchaseSource: r.purchaseSource,
+        purchaseDate: r.purchaseDate,
+        isSale: (r.originalPrice || 0) > 0,
+        saleUnit: r.saleUnit,
+        bundleInfo: r.bundleInfo
+      });
+    });
+    return items;
+  }
+
+  function renderSimpleAnalytics() {
+    var items = getAllFilament();
+    var container = $("simpleStats");
+
+    if (items.length === 0) {
+      container.innerHTML = '<div class="empty"><h3>No data yet</h3><p>Add some spools or refills to see analytics.</p></div>';
+      return;
+    }
+
+    // Calculate key metrics
+    var totalSpent = items.reduce(function (sum, item) { return sum + item.pricePaid; }, 0);
+    var totalOriginal = items.reduce(function (sum, item) { return sum + item.originalPrice; }, 0);
+    var totalSavings = totalOriginal - totalSpent;
+    var totalWeight = items.reduce(function (sum, item) { return sum + item.weight; }, 0);
+    var saleCount = items.filter(function (item) { return item.isSale; }).length;
+    var avgPricePerKg = totalWeight > 0 ? (totalSpent / (totalWeight / 1000)) : 0;
+
+    // Calculate savings only for items with original prices
+    var itemsWithOriginalPrice = items.filter(function (item) { return item.originalPrice > 0; });
+    var actualSavings = itemsWithOriginalPrice.reduce(function (sum, item) { return sum + (item.originalPrice - item.pricePaid); }, 0);
+    saleCount = itemsWithOriginalPrice.length;
+
+    // Source breakdown
+    var bySource = {};
+    items.forEach(function (item) {
+      var source = item.purchaseSource || "Unknown";
+      bySource[source] = bySource[source] || { count: 0, cost: 0, weight: 0 };
+      bySource[source].count++;
+      bySource[source].cost += item.pricePaid;
+      bySource[source].weight += item.weight;
+    });
+
+    // Material breakdown
+    var byMaterial = {};
+    items.forEach(function (item) {
+      var material = item.material || "Unknown";
+      byMaterial[material] = byMaterial[material] || { count: 0, cost: 0, weight: 0 };
+      byMaterial[material].count++;
+      byMaterial[material].cost += item.pricePaid;
+      byMaterial[material].weight += item.weight;
+    });
+
+    // Brand breakdown
+    var byBrand = {};
+    items.forEach(function (item) {
+      var brand = item.brand || "Unknown";
+      byBrand[brand] = byBrand[brand] || { count: 0, cost: 0, weight: 0 };
+      byBrand[brand].count++;
+      byBrand[brand].cost += item.pricePaid;
+      byBrand[brand].weight += item.weight;
+    });
+
+    // Color breakdown
+    var byColor = {};
+    items.forEach(function (item) {
+      var color = item.colorName || "Unknown";
+      byColor[color] = byColor[color] || { count: 0, cost: 0, weight: 0 };
+      byColor[color].count++;
+      byColor[color].cost += item.pricePaid;
+      byColor[color].weight += item.weight;
+    });
+
+    var topSource = Object.keys(bySource).sort(function (a, b) { return bySource[b].count - bySource[a].count; })[0];
+    var topMaterial = Object.keys(byMaterial).sort(function (a, b) { return byMaterial[b].count - byMaterial[a].count; })[0];
+    var topBrand = Object.keys(byBrand).sort(function (a, b) { return byBrand[b].count - byBrand[a].count; })[0];
+    var topColor = Object.keys(byColor).sort(function (a, b) { return byColor[b].count - byColor[a].count; })[0];
+
+    var html = '<div class="simple-stats-grid">' +
+      '<div class="stat-card"><h3>Total spent</h3><div class="value">' + fmtMoney(totalSpent) + '</div><div class="sub">' + items.length + ' purchases</div></div>' +
+      (saleCount > 0 ? '<div class="stat-card"><h3>Total savings</h3><div class="value" style="color:var(--green);">' + fmtMoney(actualSavings) + '</div><div class="sub">' + saleCount + ' sale purchases</div></div>' : '') +
+      '<div class="stat-card"><h3>Total filament</h3><div class="value">' + fmtNum(totalWeight / 1000, 2) + ' kg</div><div class="sub">Combined weight</div></div>' +
+      '<div class="stat-card"><h3>Avg price/kg</h3><div class="value">' + fmtMoney(avgPricePerKg) + '</div><div class="sub">All purchases</div></div>' +
+      '<div class="stat-card"><h3>Top source</h3><div class="value">' + escapeHtml(topSource) + '</div><div class="sub">' + bySource[topSource].count + ' purchases</div></div>' +
+      '<div class="stat-card"><h3>Top brand</h3><div class="value">' + escapeHtml(topBrand) + '</div><div class="sub">' + byBrand[topBrand].count + ' purchases</div></div>' +
+      '<div class="stat-card"><h3>Top material</h3><div class="value">' + escapeHtml(topMaterial) + '</div><div class="sub">' + byMaterial[topMaterial].count + ' purchases</div></div>' +
+      '<div class="stat-card"><h3>Top color</h3><div class="value">' + escapeHtml(topColor) + '</div><div class="sub">' + byColor[topColor].count + ' purchases</div></div>' +
+      '<div class="stat-card"><h3>Sale rate</h3><div class="value">' + Math.round((saleCount / items.length) * 100) + '%</div><div class="sub">Of all purchases</div></div>' +
+      '</div>';
+
+    // Add breakdown sections
+    html += '<div class="panel"><h2>Purchases by source</h2>';
+    html += '<table class="query-results-table"><thead><tr><th>Source</th><th>Purchases</th><th>Spent</th><th>Weight</th></tr></thead><tbody>';
+    Object.keys(bySource).sort(function (a, b) { return bySource[b].count - bySource[a].count; }).forEach(function (source) {
+      html += '<tr><td>' + escapeHtml(source) + '</td><td>' + bySource[source].count + '</td><td>' + fmtMoney(bySource[source].cost) + '</td><td>' + fmtNum(bySource[source].weight / 1000, 2) + ' kg</td></tr>';
+    });
+    html += '</tbody></table></div>';
+
+    html += '<div class="panel"><h2>Purchases by brand</h2>';
+    html += '<table class="query-results-table"><thead><tr><th>Brand</th><th>Purchases</th><th>Spent</th><th>Weight</th></tr></thead><tbody>';
+    Object.keys(byBrand).sort(function (a, b) { return byBrand[b].count - byBrand[a].count; }).forEach(function (brand) {
+      html += '<tr><td>' + escapeHtml(brand) + '</td><td>' + byBrand[brand].count + '</td><td>' + fmtMoney(byBrand[brand].cost) + '</td><td>' + fmtNum(byBrand[brand].weight / 1000, 2) + ' kg</td></tr>';
+    });
+    html += '</tbody></table></div>';
+
+    html += '<div class="panel"><h2>Purchases by material</h2>';
+    html += '<table class="query-results-table"><thead><tr><th>Material</th><th>Purchases</th><th>Spent</th><th>Weight</th></tr></thead><tbody>';
+    Object.keys(byMaterial).sort(function (a, b) { return byMaterial[b].count - byMaterial[a].count; }).forEach(function (material) {
+      html += '<tr><td>' + escapeHtml(material) + '</td><td>' + byMaterial[material].count + '</td><td>' + fmtMoney(byMaterial[material].cost) + '</td><td>' + fmtNum(byMaterial[material].weight / 1000, 2) + ' kg</td></tr>';
+    });
+    html += '</tbody></table></div>';
+
+    container.innerHTML = html;
+  }
+
+
+
+  function runAdvancedQuery() {
+    var dataSource = $("advDataSource").value;
+    var filtersStr = $("advFilters").value.trim();
+    var groupBy = $("advGroupBy").value;
+    var aggregate = $("advAggregate").value;
+    var sortBy = $("advSortBy").value;
+    var sortOrder = $("advSortOrder").value;
+    var visualization = $("advVisualization").value;
+
+    var items = getAllFilament();
+    if (dataSource === "spools") items = items.filter(function (i) { return i.type === "spool"; });
+    if (dataSource === "refills") items = items.filter(function (i) { return i.type === "refill"; });
+    if (dataSource === "usage") {
+      items = Store.usage.map(function (u) {
+        var s = Store.spools.find(function (sp) { return sp.id === u.spoolId; });
+        return {
+          type: "usage",
+          amount: u.amount || 0,
+          date: u.date,
+          project: u.project,
+          spoolBrand: s ? s.brand : "Unknown",
+          spoolMaterial: s ? s.material : "Unknown"
+        };
+      });
+    }
+
+    // Apply filters
+    if (filtersStr) {
+      try {
+        var filters = JSON.parse(filtersStr);
+        items = items.filter(function (item) {
+          return Object.keys(filters).every(function (key) {
+            var filterVal = filters[key];
+            var itemVal = item[key];
+            if (typeof filterVal === "object" && filterVal !== null) {
+              if (filterVal.$gt) return itemVal > filterVal.$gt;
+              if (filterVal.$lt) return itemVal < filterVal.$lt;
+              if (filterVal.$eq) return itemVal === filterVal.$eq;
+              if (filterVal.$ne) return itemVal !== filterVal.$ne;
+              return true;
+            }
+            return itemVal === filterVal;
+          });
+        });
+      } catch (e) {
+        showToast("Invalid filter JSON: " + e.message);
+        return;
+      }
+    }
+
+    // Group and aggregate
+    var grouped = {};
+    items.forEach(function (item) {
+      var key = groupBy ? (item[groupBy] || "Unknown") : "all";
+      grouped[key] = grouped[key] || { items: [], count: 0, totalWeight: 0, totalCost: 0, totalOriginal: 0, totalAmount: 0 };
+      grouped[key].items.push(item);
+      grouped[key].count++;
+      if (item.weight) grouped[key].totalWeight += item.weight;
+      if (item.pricePaid) grouped[key].totalCost += item.pricePaid;
+      if (item.originalPrice) grouped[key].totalOriginal += item.originalPrice;
+      if (item.amount) grouped[key].totalAmount += item.amount;
+    });
+
+    var results = [];
+    Object.keys(grouped).forEach(function (key) {
+      var group = grouped[key];
+      var value;
+      switch (aggregate) {
+        case "count": value = group.count; break;
+        case "sumWeight": value = group.totalWeight; break;
+        case "sumCost": value = group.totalCost; break;
+        case "avgCost": value = group.count > 0 ? group.totalCost / group.count : 0; break;
+        case "avgWeight": value = group.count > 0 ? group.totalWeight / group.count : 0; break;
+        case "savings": value = group.totalOriginal > 0 ? group.totalOriginal - group.totalCost : 0; break;
+        case "savingsPercent": value = group.totalOriginal > 0 ? ((group.totalOriginal - group.totalCost) / group.totalOriginal * 100) : 0; break;
+        default: value = group.count;
+      }
+      results.push({ name: key, value: value, count: group.count, weight: group.totalWeight, cost: group.totalCost });
+    });
+
+    // Sort
+    results.sort(function (a, b) {
+      var valA = sortBy === "name" ? a.name : a.value;
+      var valB = sortBy === "name" ? b.name : b.value;
+      return sortOrder === "asc" ? valA - valB : valB - valA;
+    });
+
+    var container = $("advancedResults");
+    var html = "";
+
+    if (visualization === "table" || visualization === "both") {
+      html += '<table class="query-results-table"><thead><tr><th>Name</th><th>Value</th><th>Count</th></tr></thead><tbody>';
+      results.forEach(function (r) {
+        var displayValue = typeof r.value === "number" ? fmtNum(r.value, 2) : r.value;
+        html += '<tr><td>' + escapeHtml(r.name) + '</td><td>' + displayValue + '</td><td>' + r.count + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    if (visualization === "bar" || visualization === "both") {
+      html += '<div class="chart-container"><h3>Bar Chart</h3>';
+      var maxValue = Math.max.apply(null, results.map(function (r) { return r.value; }));
+      html += '<div class="bars">';
+      results.forEach(function (r) {
+        var height = maxValue > 0 ? Math.max(2, (r.value / maxValue) * 100) : 2;
+        html += '<div class="bar-col"><div class="bar" style="height:' + height + '%" title="' + fmtNum(r.value, 2) + '"></div><div class="bar-lbl">' + escapeHtml(r.name.substring(0, 8)) + '</div></div>';
+      });
+      html += '</div></div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  function renderSavedQueries() {
+    var container = $("savedQueries");
+    var advancedQueries = state.savedQueries.filter(function (q) { return q.type === "advanced"; });
+    if (advancedQueries.length === 0) {
+      container.innerHTML = '<div class="empty"><h3>No saved queries</h3><p>Create and save queries for quick access.</p></div>';
+      return;
+    }
+
+    var html = '<h3>Saved queries</h3>';
+    advancedQueries.forEach(function (query) {
+      var actualIndex = state.savedQueries.indexOf(query);
+      html += '<div class="saved-query-item">' +
+        '<div><div class="name">' + escapeHtml(query.name) + '</div><div class="desc">' + escapeHtml(query.description) + '</div></div>' +
+        '<div class="actions">' +
+          '<button class="btn btn-sm" onclick="loadQuery(' + actualIndex + ')">Load</button>' +
+          '<button class="btn btn-sm btn-danger" onclick="deleteQuery(' + actualIndex + ')">Delete</button>' +
+        '</div>' +
+        '</div>';
+    });
+    container.innerHTML = html;
+  }
+
+  function saveQuery(type) {
+    var name = prompt("Query name:");
+    if (!name) return;
+    var description = prompt("Description (optional):") || "";
+
+    var query = {
+      name: name,
+      description: description,
+      type: type,
+      createdAt: new Date().toISOString()
+    };
+
+    if (type === "advanced") {
+      query.dataSource = $("advDataSource").value;
+      query.filters = $("advFilters").value;
+      query.groupBy = $("advGroupBy").value;
+      query.aggregate = $("advAggregate").value;
+      query.sortBy = $("advSortBy").value;
+      query.sortOrder = $("advSortOrder").value;
+      query.visualization = $("advVisualization").value;
+    }
+
+    state.savedQueries.push(query);
+    try {
+      localStorage.setItem("filamentlog_queries", JSON.stringify(state.savedQueries));
+      showToast("Query saved.");
+      renderSavedQueries();
+    } catch (e) {
+      showToast("Couldn't save query.");
+    }
+  }
+
+  function loadQuery(index) {
+    var query = state.savedQueries[index];
+    if (!query) return;
+
+    if (query.type === "advanced") {
+      $("advDataSource").value = query.dataSource;
+      $("advFilters").value = query.filters;
+      $("advGroupBy").value = query.groupBy;
+      $("advAggregate").value = query.aggregate;
+      $("advSortBy").value = query.sortBy;
+      $("advSortOrder").value = query.sortOrder;
+      $("advVisualization").value = query.visualization;
+      $("advancedQueryBuilder").style.display = "block";
+      state.analyticsView = "advanced";
+      document.querySelectorAll("#view-analytics .tab").forEach(function (t) { t.classList.remove("active"); });
+      document.querySelectorAll(".analytics-view").forEach(function (v) { v.classList.remove("active"); });
+      document.querySelector('[data-analytics="advanced"]').classList.add("active");
+      $("analytics-advanced").classList.add("active");
+      runAdvancedQuery();
+    }
+  }
+
+  function deleteQuery(index) {
+    if (!confirm("Delete this saved query?")) return;
+    state.savedQueries.splice(index, 1);
+    try {
+      localStorage.setItem("filamentlog_queries", JSON.stringify(state.savedQueries));
+      showToast("Query deleted.");
+      renderSavedQueries();
+    } catch (e) {
+      showToast("Couldn't delete query.");
+    }
+  }
+
+  // Make functions globally available for onclick handlers
+  window.loadQuery = loadQuery;
+  window.deleteQuery = deleteQuery;
+
+  // ============================================================
+  // Alerts
+  // ============================================================
+  // NOTE: Alert system is not currently working properly. The generateAlerts()
+  // function runs and console logs show it's being called, but alerts are not
+  // appearing in the UI. The alertsList container exists in the DOM but may have
+  // layout/visibility issues. This needs further debugging to resolve.
+  function generateAlerts() {
+    console.log("generateAlerts called");
+    var active = Store.spools.filter(function (s) { return !s.archived; });
+    console.log("Active spools:", active.length);
+
+    // Remove alerts for archived spools
+    var activeSpoolIds = new Set(active.map(function (s) { return s.id; }));
+    state.alerts = state.alerts.filter(function (a) { return activeSpoolIds.has(a.spoolId); });
+
+    // Generate new alerts for low stock spools
+    active.forEach(function (s) {
+      var pct = spoolPct(s) * 100;
+      var threshold = s.lowStockPct || 15;
+      var critThreshold = 5;
+
+      if (pct <= critThreshold) {
+        var existingAlert = state.alerts.find(function (a) { return a.spoolId === s.id; });
+        if (existingAlert) {
+          // Update existing alert if type changed
+          if (existingAlert.type !== "crit") {
+            existingAlert.type = "crit";
+            existingAlert.message = "Nearly empty (" + fmtNum(spoolRemaining(s)) + " " + spoolUnit(s) + " remaining)";
+            existingAlert.createdAt = new Date().toISOString();
+          }
+        } else {
+          // Add new critical alert
+          state.alerts.push({
+            id: s.id,
+            type: "crit",
+            spoolId: s.id,
+            spoolName: (s.brand || "Unlabeled") + " — " + (s.colorName || "No color"),
+            message: "Nearly empty (" + fmtNum(spoolRemaining(s)) + " " + spoolUnit(s) + " remaining)",
+            createdAt: new Date().toISOString()
+          });
+        }
+      } else if (pct <= threshold) {
+        var existingAlert = state.alerts.find(function (a) { return a.spoolId === s.id; });
+        if (existingAlert) {
+          // Update existing alert with new percentage
+          existingAlert.message = "Running low (" + Math.round(pct) + "% remaining)";
+          existingAlert.createdAt = new Date().toISOString();
+        } else {
+          // Add new low stock alert
+          state.alerts.push({
+            id: s.id,
+            type: "low",
+            spoolId: s.id,
+            spoolName: (s.brand || "Unlabeled") + " — " + (s.colorName || "No color"),
+            message: "Running low (" + Math.round(pct) + "% remaining)",
+            createdAt: new Date().toISOString()
+          });
+        }
+      }
+    });
+
+    console.log("Total alerts after processing:", state.alerts.length);
+
+    // Save alerts
+    try {
+      localStorage.setItem("filamentlog_alerts", JSON.stringify(state.alerts));
+    } catch (e) {}
+  }
+
+  function renderAlerts() {
+    console.log("renderAlerts called");
+    var container = $("alertsList");
+    console.log("Container found:", !!container);
+    if (!container) {
+      console.error("alertsList container not found in DOM");
+      return;
+    }
+
+    console.log("Alerts to render:", state.alerts.length);
+
+    if (state.alerts.length === 0) {
+      container.innerHTML = '<div class="empty">No alerts</div>';
+      return;
+    }
+
+    var html = "";
+    state.alerts.forEach(function (alert) {
+      var time = new Date(alert.createdAt);
+      var timeStr = time.toLocaleDateString() + " " + time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      html += '<div class="alert-item ' + alert.type + '">' +
+        '<div class="alert-title">' + (alert.type === "crit" ? "⚠️ Critical" : "Low stock") + '</div>' +
+        '<div class="alert-message">' + escapeHtml(alert.spoolName) + '<br>' + escapeHtml(alert.message) + '</div>' +
+        '<div class="alert-time">' + timeStr + '</div>' +
+        '</div>';
+    });
+    container.innerHTML = html;
+    console.log("Alerts rendered");
+  }
+
+  function clearAlerts() {
+    state.alerts = [];
+    try {
+      localStorage.setItem("filamentlog_alerts", JSON.stringify(state.alerts));
+    } catch (e) {}
+    renderAlerts();
+  }
+
+  $("btnClearAlerts").addEventListener("click", clearAlerts);
+
   function renderAll() {
     renderStats();
     renderMaterialFilterOptions();
     renderSpoolGrid();
+    renderRefillGrid();
     renderLogFilterOptions();
     renderLogTable();
     if (state.activeView === "stats") renderStatsView();
+    if (state.activeView === "inventory") {
+      renderSpoolGrid();
+      renderRefillGrid();
+    }
+    if (state.activeView === "analytics") {
+      renderAnalytics();
+    }
+    generateAlerts();
+    renderAlerts();
   }
   Store.onChange = renderAll;
 
@@ -1270,13 +2715,31 @@
   // ============================================================
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () {
-      document.querySelectorAll(".tab").forEach(function (t) { t.classList.remove("active"); });
-      document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
-      tab.classList.add("active");
-      var view = tab.getAttribute("data-view");
-      state.activeView = view;
-      $("view-" + view).classList.add("active");
-      if (view === "stats") renderStatsView();
+      var viewType = tab.getAttribute("data-view");
+      if (viewType) {
+        document.querySelectorAll(".tab").forEach(function (t) { t.classList.remove("active"); });
+        document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
+        tab.classList.add("active");
+        state.activeView = viewType;
+        $("view-" + viewType).classList.add("active");
+        if (viewType === "stats") renderStatsView();
+        if (viewType === "inventory") {
+          renderSpoolGrid();
+          renderRefillGrid();
+        }
+        if (viewType === "analytics") renderAnalytics();
+      } else {
+        var analyticsType = tab.getAttribute("data-analytics");
+        if (analyticsType) {
+          document.querySelectorAll("#view-analytics .tab").forEach(function (t) { t.classList.remove("active"); });
+          document.querySelectorAll(".analytics-view").forEach(function (v) { v.classList.remove("active"); });
+          tab.classList.add("active");
+          state.analyticsView = analyticsType;
+          $("analytics-" + analyticsType).classList.add("active");
+          if (analyticsType === "simple") renderSimpleAnalytics();
+          if (analyticsType === "advanced") renderSavedQueries();
+        }
+      }
     });
   });
 
@@ -1284,15 +2747,130 @@
   // Filters
   // ============================================================
   $("searchInput").addEventListener("input", function (e) { state.search = e.target.value; renderSpoolGrid(); });
+  $("refillSearchInput").addEventListener("input", function (e) { state.refillSearch = e.target.value; renderRefillGrid(); });
   $("materialFilter").addEventListener("change", function (e) { state.materialFilter = e.target.value; renderSpoolGrid(); });
+  $("sortFilter").addEventListener("change", function (e) { state.sortFilter = e.target.value; renderSpoolGrid(); });
   $("lowStockOnly").addEventListener("change", function (e) { state.lowStockOnly = e.target.checked; renderSpoolGrid(); });
   $("logSpoolFilter").addEventListener("change", function (e) { state.logSpoolFilter = e.target.value; renderLogTable(); });
+
+  // ============================================================
+  // Analytics event listeners
+  // ============================================================
+  $("btnRefreshSimple").addEventListener("click", renderSimpleAnalytics);
+  $("btnExportSimple").addEventListener("click", function () {
+    var items = getAllFilament();
+    var csv = "Type,Brand,Material,Color,Weight(g),Price($),Original Price($),Source,Date\n";
+    items.forEach(function (item) {
+      csv += item.type + "," + (item.brand || "") + "," + (item.material || "") + "," + (item.colorName || "") + "," +
+        item.weight + "," + item.pricePaid + "," + item.originalPrice + "," + (item.purchaseSource || "") + "," +
+        (item.purchaseDate || "") + "\n";
+    });
+    var blob = new Blob([csv], { type: "text/csv" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "filament-analytics-" + todayStr() + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast("Analytics exported.");
+  });
+
+  $("btnNewAdvancedQuery").addEventListener("click", function () {
+    $("advancedQueryBuilder").style.display = "block";
+    $("advancedResults").innerHTML = "";
+  });
+  $("btnLoadSavedQuery").addEventListener("click", function () {
+    $("advancedQueryBuilder").style.display = "none";
+    renderSavedQueries();
+  });
+  $("btnExportAdvanced").addEventListener("click", function () {
+    var table = $("advancedResults").querySelector("table");
+    if (!table) { showToast("Run a query first."); return; }
+    var csv = "";
+    table.querySelectorAll("tr").forEach(function (row) {
+      var cells = row.querySelectorAll("th, td");
+      var rowText = [];
+      cells.forEach(function (cell) { rowText.push(cell.textContent); });
+      csv += rowText.join(",") + "\n";
+    });
+    var blob = new Blob([csv], { type: "text/csv" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "advanced-query-" + todayStr() + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast("Results exported.");
+  });
+  $("btnCancelAdvanced").addEventListener("click", function () { $("advancedQueryBuilder").style.display = "none"; });
+  $("btnRunAdvancedQuery").addEventListener("click", runAdvancedQuery);
+  $("btnSaveAdvancedQuery").addEventListener("click", function () { saveQuery("advanced"); });
+
+  // Bulk actions
+  $("btnBulkCancel").addEventListener("click", function () {
+    state.selectedSpools.clear();
+    updateBulkActionBar();
+    renderSpoolGrid();
+  });
+
+  $("btnBulkDelete").addEventListener("click", function () {
+    if (!confirm("Delete " + state.selectedSpools.size + " spool(s) and their usage history? This can't be undone.")) return;
+    state.selectedSpools.forEach(function (id) {
+      Store.deleteSpool(id);
+    });
+    state.selectedSpools.clear();
+    updateBulkActionBar();
+    showToast("Spools deleted.");
+  });
+
+  $("btnBulkEdit").addEventListener("click", function () {
+    if (state.selectedSpools.size === 0) return;
+    $("bulkEditOverlay").classList.add("open");
+  });
 
   // ============================================================
   // Spool modal
   // ============================================================
   function populatePresetSelect() {
     var sel = $("presetSelect");
+    var groups = {};
+    FILAMENT_DB.forEach(function (p, i) {
+      groups[p.brand] = groups[p.brand] || [];
+      groups[p.brand].push({ p: p, i: i });
+    });
+    var html = '<option value="">Custom / not listed</option>';
+    Object.keys(groups).sort().forEach(function (brand) {
+      html += '<optgroup label="' + escapeHtml(brand) + '">';
+      groups[brand].forEach(function (entry) {
+        html += '<option value="' + entry.i + '">' + escapeHtml(entry.p.line) + '</option>';
+      });
+      html += '</optgroup>';
+    });
+    sel.innerHTML = html;
+  }
+
+  function populateBulkPresetSelect() {
+    var sel = $("bulkPresetSelect");
+    var groups = {};
+    FILAMENT_DB.forEach(function (p, i) {
+      groups[p.brand] = groups[p.brand] || [];
+      groups[p.brand].push({ p: p, i: i });
+    });
+    var html = '<option value="">Custom / not listed</option>';
+    Object.keys(groups).sort().forEach(function (brand) {
+      html += '<optgroup label="' + escapeHtml(brand) + '">';
+      groups[brand].forEach(function (entry) {
+        html += '<option value="' + entry.i + '">' + escapeHtml(entry.p.line) + '</option>';
+      });
+      html += '</optgroup>';
+    });
+    sel.innerHTML = html;
+  }
+
+  function populateRefillPresetSelect() {
+    var sel = $("rPresetSelect");
     var groups = {};
     FILAMENT_DB.forEach(function (p, i) {
       groups[p.brand] = groups[p.brand] || [];
@@ -1347,10 +2925,48 @@
     }
   });
 
+  $("bulkPresetSelect").addEventListener("change", function (e) {
+    if (e.target.value === "") return;
+    var p = FILAMENT_DB[Number(e.target.value)];
+    $("bulkBrand").value = p.brand;
+    $("bulkMaterial").value = p.material;
+    if (p.type === "resin") {
+      $("bulkNetWeight").value = p.netVolumeMl;
+      $("bulkPrice").value = (p.pricePerL * (p.netVolumeMl / 1000)).toFixed(2);
+    } else {
+      $("bulkNetWeight").value = p.netWeightG;
+      $("bulkPrice").value = (p.pricePerKg * (p.netWeightG / 1000)).toFixed(2);
+      $("bulkNozzleMin").value = p.nozzle[0];
+      $("bulkNozzleMax").value = p.nozzle[1];
+      $("bulkBedMin").value = p.bed[0];
+      $("bulkBedMax").value = p.bed[1];
+    }
+  });
+
+  $("rPresetSelect").addEventListener("change", function (e) {
+    if (e.target.value === "") return;
+    var p = FILAMENT_DB[Number(e.target.value)];
+    $("rBrand").value = p.brand;
+    $("rLine").value = p.line;
+    $("rMaterial").value = p.material;
+    if (p.type === "resin") {
+      $("rAmount").value = p.netVolumeMl;
+      $("rPrice").value = (p.pricePerL * (p.netVolumeMl / 1000)).toFixed(2);
+    } else {
+      $("rAmount").value = p.netWeightG;
+      $("rPrice").value = (p.pricePerKg * (p.netWeightG / 1000)).toFixed(2);
+      $("rNozzleMin").value = p.nozzle[0];
+      $("rNozzleMax").value = p.nozzle[1];
+      $("rBedMin").value = p.bed[0];
+      $("rBedMax").value = p.bed[1];
+    }
+  });
+
   function openSpoolModal(id) {
     state.editingSpoolId = id || null;
     $("presetSelect").value = "";
-    document.querySelectorAll(".field input, .field textarea").forEach(function (i) { i.value = ""; });
+    document.querySelectorAll(".field input, .field textarea, .field select").forEach(function (i) { i.value = ""; });
+    document.querySelectorAll(".field input[type='checkbox']").forEach(function (i) { i.checked = false; });
     $("fColorHex").value = "#8a8f89";
     $("fLowStock").value = 15;
     $("fPurchaseDate").value = todayStr();
@@ -1370,6 +2986,9 @@
       $("fPrice").value = s.pricePaid || "";
       $("fPurchaseDate").value = s.purchaseDate || todayStr();
       $("fSource").value = s.purchaseSource || "";
+      $("fOriginalPrice").value = s.originalPrice || "";
+      $("fSaleUnit").value = s.saleUnit || "";
+      $("fBundleInfo").value = s.bundleInfo || "";
       $("fNozzleMin").value = s.nozzleMin || "";
       $("fNozzleMax").value = s.nozzleMax || "";
       $("fBedMin").value = s.bedMin || "";
@@ -1387,7 +3006,299 @@
   }
   function closeSpoolModal() { $("spoolOverlay").classList.remove("open"); }
 
+  // ============================================================
+  // Bulk add modal
+  // ============================================================
+  function openBulkAddModal() {
+    document.querySelectorAll("#bulkAddOverlay .field input").forEach(function (i) { i.value = ""; });
+    document.querySelectorAll("#bulkAddOverlay .field select").forEach(function (i) { i.value = ""; });
+    document.querySelectorAll("#bulkAddOverlay .field input[type='checkbox']").forEach(function (i) { i.checked = false; });
+    $("bulkItems").innerHTML = '<div class="bulk-item">' +
+      '<div class="field"><input type="text" class="bulk-color-name" placeholder="Color name"></div>' +
+      '<div class="field"><input type="color" class="bulk-color-hex" value="#8a8f89" style="width: 36px; height: 28px; padding: 2px;"></div>' +
+      '<button class="btn btn-sm btn-remove" onclick="this.parentElement.remove()">Remove</button>' +
+      '</div>';
+    $("bulkAddOverlay").classList.add("open");
+  }
+  function closeBulkAddModal() { $("bulkAddOverlay").classList.remove("open"); }
+
+  $("btnAddBulkItem").addEventListener("click", function () {
+    var item = document.createElement("div");
+    item.className = "bulk-item";
+    item.innerHTML = '<div class="field"><input type="text" class="bulk-color-name" placeholder="Color name"></div>' +
+      '<div class="field"><input type="color" class="bulk-color-hex" value="#8a8f89" style="width: 36px; height: 28px; padding: 2px;"></div>' +
+      '<button class="btn btn-sm btn-remove" onclick="this.parentElement.remove()">Remove</button>';
+    $("bulkItems").appendChild(item);
+  });
+
+  $("btnCancelBulkAdd").addEventListener("click", closeBulkAddModal);
+  $("bulkAddOverlay").addEventListener("click", function (e) { if (e.target === e.currentTarget) closeBulkAddModal(); });
+
+  $("btnSaveBulkAdd").addEventListener("click", function () {
+    var brand = $("bulkBrand").value.trim();
+    if (!brand) { showToast("Enter a brand."); $("bulkBrand").focus(); return; }
+
+    var material = $("bulkMaterial").value.trim();
+    var netWeight = parseFloat($("bulkNetWeight").value) || 1000;
+    var price = parseFloat($("bulkPrice").value) || 0;
+    var source = $("bulkSource").value.trim();
+    var nozzleMin = parseFloat($("bulkNozzleMin").value) || null;
+    var nozzleMax = parseFloat($("bulkNozzleMax").value) || null;
+    var bedMin = parseFloat($("bulkBedMin").value) || null;
+    var bedMax = parseFloat($("bulkBedMax").value) || null;
+    var originalPrice = parseFloat($("bulkOriginalPrice").value) || 0;
+    var saleUnit = $("bulkSaleUnit").value;
+    var bundleInfo = $("bulkBundleInfo").value.trim();
+
+    var items = document.querySelectorAll(".bulk-item");
+    if (items.length === 0) { showToast("Add at least one color."); return; }
+
+    var added = 0;
+    items.forEach(function (item) {
+      var colorName = item.querySelector(".bulk-color-name").value.trim();
+      var colorHex = item.querySelector(".bulk-color-hex").value;
+      if (!colorName) return;
+
+      var data = {
+        type: "filament",
+        brand: brand,
+        line: material,
+        material: material,
+        colorName: colorName,
+        colorHex: colorHex,
+        netWeightG: netWeight,
+        remainingG: netWeight,
+        pricePaid: price,
+        purchaseDate: todayStr(),
+        purchaseSource: source,
+        nozzleMin: nozzleMin,
+        nozzleMax: nozzleMax,
+        bedMin: bedMin,
+        bedMax: bedMax,
+        originalPrice: originalPrice,
+        saleUnit: saleUnit,
+        bundleInfo: bundleInfo,
+        isSale: originalPrice > 0,
+        lowStockPct: 15,
+        archived: false
+      };
+
+      Store.addSpool(data);
+      added++;
+    });
+
+    if (added > 0) {
+      showToast(added + " spool(s) added.");
+      closeBulkAddModal();
+      generateAlerts();
+      renderAlerts();
+    } else {
+      showToast("Enter color names for the spools you want to add.");
+    }
+  });
+
+  // ============================================================
+  // Bulk edit modal
+  // ============================================================
+  function openBulkEditModal() {
+    document.querySelectorAll("#bulkEditOverlay .field input").forEach(function (i) { i.value = ""; });
+    $("bulkEditOverlay").classList.add("open");
+  }
+  function closeBulkEditModal() { $("bulkEditOverlay").classList.remove("open"); }
+
+  $("btnCancelBulkEdit").addEventListener("click", closeBulkEditModal);
+  $("bulkEditOverlay").addEventListener("click", function (e) { if (e.target === e.currentTarget) closeBulkEditModal(); });
+
+  $("btnSaveBulkEdit").addEventListener("click", function () {
+    var brand = $("bulkEditBrand").value.trim();
+    var material = $("bulkEditMaterial").value.trim();
+    var source = $("bulkEditSource").value.trim();
+    var price = parseFloat($("bulkEditPrice").value);
+    var lowStock = parseFloat($("bulkEditLowStock").value);
+
+    var updated = 0;
+    state.selectedSpools.forEach(function (id) {
+      var s = Store.spools.find(function (x) { return x.id === id; });
+      if (!s) return;
+
+      var data = Object.assign({}, s);
+      delete data.id;
+
+      if (brand) data.brand = brand;
+      if (material) data.material = material;
+      if (source) data.purchaseSource = source;
+      if (!isNaN(price)) data.pricePaid = price;
+      if (!isNaN(lowStock)) data.lowStockPct = lowStock;
+
+      Store.updateSpool(id, data);
+      updated++;
+    });
+
+    if (updated > 0) {
+      showToast(updated + " spool(s) updated.");
+      state.selectedSpools.clear();
+      updateBulkActionBar();
+      closeBulkEditModal();
+      generateAlerts();
+      renderAlerts();
+    }
+  });
+
+  // ============================================================
+  // Refill modal
+  // ============================================================
+  function openRefillModal(id) {
+    state.editingRefillId = id || null;
+    document.querySelectorAll("#refillOverlay .field input, #refillOverlay .field textarea").forEach(function (i) { i.value = ""; });
+    document.querySelectorAll("#refillOverlay .field select").forEach(function (i) { i.value = ""; });
+    document.querySelectorAll("#refillOverlay .field input[type='checkbox']").forEach(function (i) { i.checked = false; });
+    $("rColorHex").value = "#8a8f89";
+    $("rLowStock").value = 15;
+    $("rPurchaseDate").value = todayStr();
+
+    if (id) {
+      var r = Store.refills.find(function (x) { return x.id === id; });
+      if (!r) return;
+      $("refillModalTitle").textContent = "Edit refill";
+      $("rBrand").value = r.brand || "";
+      $("rLine").value = r.line || "";
+      $("rMaterial").value = r.material || "";
+      $("rColorName").value = r.colorName || "";
+      $("rColorHex").value = r.colorHex || "#8a8f89";
+      $("rAmount").value = r.amount || "";
+      $("rPrice").value = r.pricePaid || "";
+      $("rPurchaseDate").value = r.purchaseDate || todayStr();
+      $("rSource").value = r.purchaseSource || "";
+      $("rNozzleMin").value = r.nozzleMin || "";
+      $("rNozzleMax").value = r.nozzleMax || "";
+      $("rBedMin").value = r.bedMin || "";
+      $("rBedMax").value = r.bedMax || "";
+      $("rLowStock").value = r.lowStockPct || 15;
+      $("rNotes").value = r.notes || "";
+      $("rOriginalPrice").value = r.originalPrice || "";
+      $("rSaleUnit").value = r.saleUnit || "";
+      $("rBundleInfo").value = r.bundleInfo || "";
+      $("btnDeleteRefill").style.display = "";
+      $("btnConvertToSpool").style.display = "";
+    } else {
+      $("refillModalTitle").textContent = "Add refill";
+      $("btnDeleteRefill").style.display = "none";
+      $("btnConvertToSpool").style.display = "none";
+    }
+    $("refillOverlay").classList.add("open");
+  }
+  function closeRefillModal() { $("refillOverlay").classList.remove("open"); }
+
+  $("btnAddRefill").addEventListener("click", function () { openRefillModal(); });
+  $("btnAddRefillTab").addEventListener("click", function () { openRefillModal(); });
+  $("btnCancelRefill").addEventListener("click", closeRefillModal);
+  $("refillOverlay").addEventListener("click", function (e) { if (e.target === e.currentTarget) closeRefillModal(); });
+
+  $("btnSaveRefill").addEventListener("click", function () {
+    var brand = $("rBrand").value.trim();
+    var line = $("rLine").value.trim();
+    var material = $("rMaterial").value.trim();
+    var amount = parseFloat($("rAmount").value);
+    if (!brand) { showToast("Enter a brand."); $("rBrand").focus(); return; }
+    if (!material) { showToast("Enter a material."); $("rMaterial").focus(); return; }
+    if (!amount || amount <= 0) { showToast("Enter the amount."); $("rAmount").focus(); return; }
+
+    var data = {
+      brand: brand,
+      line: $("rLine").value.trim(),
+      material: material,
+      colorName: $("rColorName").value.trim(),
+      colorHex: $("rColorHex").value,
+      amount: amount,
+      pricePaid: parseFloat($("rPrice").value) || 0,
+      purchaseDate: $("rPurchaseDate").value || todayStr(),
+      purchaseSource: $("rSource").value.trim(),
+      nozzleMin: parseFloat($("rNozzleMin").value) || null,
+      nozzleMax: parseFloat($("rNozzleMax").value) || null,
+      bedMin: parseFloat($("rBedMin").value) || null,
+      bedMax: parseFloat($("rBedMax").value) || null,
+      lowStockPct: parseFloat($("rLowStock").value) || 15,
+      originalPrice: parseFloat($("rOriginalPrice").value) || 0,
+      saleUnit: $("rSaleUnit").value,
+      bundleInfo: $("rBundleInfo").value.trim(),
+      isSale: (parseFloat($("rOriginalPrice").value) || 0) > 0,
+      notes: $("rNotes").value.trim(),
+      archived: false
+    };
+
+    try {
+      if (state.editingRefillId) {
+        Store.updateRefill(state.editingRefillId, data);
+        showToast("Refill updated.");
+      } else {
+        Store.addRefill(data);
+        showToast("Refill added.");
+      }
+      closeRefillModal();
+      generateAlerts();
+      renderAlerts();
+    } catch (e) {
+      showToast("Couldn't save — try again.");
+    }
+  });
+
+  $("btnDeleteRefill").addEventListener("click", function () {
+    if (!state.editingRefillId) return;
+    if (!confirm("Delete this refill? This can't be undone.")) return;
+    try {
+      Store.deleteRefill(state.editingRefillId);
+      showToast("Refill deleted.");
+      closeRefillModal();
+    } catch (e) { showToast("Couldn't delete — try again."); }
+  });
+
+  $("btnConvertToSpool").addEventListener("click", function () {
+    if (!state.editingRefillId) return;
+    var r = Store.refills.find(function (x) { return x.id === state.editingRefillId; });
+    if (!r) return;
+
+    if (!confirm("Convert this refill to a spool? This will remove the refill and create a new spool with the same specifications.")) return;
+
+    var spoolData = {
+      type: "filament",
+      brand: r.brand,
+      line: r.line || r.material,
+      material: r.material,
+      colorName: r.colorName,
+      colorHex: r.colorHex,
+      netWeightG: r.amount,
+      remainingG: r.amount,
+      pricePaid: r.pricePaid,
+      purchaseDate: r.purchaseDate,
+      purchaseSource: r.purchaseSource,
+      nozzleMin: r.nozzleMin,
+      nozzleMax: r.nozzleMax,
+      bedMin: r.bedMin,
+      bedMax: r.bedMax,
+      lowStockPct: r.lowStockPct || 15,
+      originalPrice: r.originalPrice,
+      saleUnit: r.saleUnit,
+      bundleInfo: r.bundleInfo,
+      isSale: r.isSale,
+      notes: r.notes,
+      archived: false
+    };
+
+    try {
+      Store.convertRefillToSpool(state.editingRefillId, spoolData);
+      showToast("Refill converted to spool.");
+      closeRefillModal();
+      generateAlerts();
+      renderAlerts();
+    } catch (e) {
+      showToast("Couldn't convert — try again.");
+    }
+  });
+
   $("btnAddSpool").addEventListener("click", function () { openSpoolModal(); });
+  $("btnAddRefill").addEventListener("click", function () { openRefillModal(); });
+  $("btnAddRefillTab").addEventListener("click", function () { openRefillModal(); });
+  $("btnBulkAdd").addEventListener("click", function () { openBulkAddModal(); });
   $("btnCancelSpool").addEventListener("click", closeSpoolModal);
   $("spoolOverlay").addEventListener("click", function (e) { if (e.target === e.currentTarget) closeSpoolModal(); });
 
@@ -1405,6 +3316,10 @@
       pricePaid: parseFloat($("fPrice").value) || 0,
       purchaseDate: $("fPurchaseDate").value || todayStr(),
       purchaseSource: $("fSource").value.trim(),
+      originalPrice: parseFloat($("fOriginalPrice").value) || 0,
+      saleUnit: $("fSaleUnit").value,
+      bundleInfo: $("fBundleInfo").value.trim(),
+      isSale: (parseFloat($("fOriginalPrice").value) || 0) > 0,
       lowStockPct: parseFloat($("fLowStock").value) || 15,
       notes: $("fNotes").value.trim(),
       archived: false
@@ -1431,6 +3346,8 @@
         showToast("Spool added.");
       }
       closeSpoolModal();
+      generateAlerts();
+      renderAlerts();
     } catch (e) {
       showToast("Couldn't save — try again.");
     }
@@ -1518,6 +3435,8 @@
       Store.updateSpool(spoolId, updatedSpool);
       showToast("Print logged.");
       closeUsageModal();
+      generateAlerts();
+      renderAlerts();
     } catch (e) {
       showToast("Couldn't log it — try again.");
     }
@@ -1621,9 +3540,24 @@
   // Boot
   // ============================================================
   populatePresetSelect();
+  populateBulkPresetSelect();
+  populateRefillPresetSelect();
   setFormType("filament");
+
+  // Load saved queries
+  try {
+    state.savedQueries = JSON.parse(localStorage.getItem("filamentlog_queries") || "[]");
+  } catch (e) { state.savedQueries = []; }
+
+  // Load alerts
+  try {
+    state.alerts = JSON.parse(localStorage.getItem("filamentlog_alerts") || "[]");
+  } catch (e) { state.alerts = []; }
+
   renderAll();
   Store.init();
+  generateAlerts();
+  renderAlerts();
 
 })();
 </script>
