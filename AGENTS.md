@@ -98,3 +98,27 @@ Every pull request must include:
 - Optional cloud sync via Firebase
 - Privacy-focused (no accounts required)
 - Progressive enhancement approach
+
+## Spoolman Integration
+
+### Available Tools
+The project includes sync tools in `tools/spoolman-sync/` for integrating with Spoolman filament management:
+
+- **sync-filament-log-to-spoolman.py**: Syncs filament inventory from Filament Log to Spoolman
+- **add-print-log.py**: Adds print usage logs to both Filament Log and Spoolman systems
+- **spoolman_id_mapping.json**: Maps Filament Log spool IDs to Spoolman spool IDs
+
+### Workflow for Adding Print Logs
+When adding print logs from screenshots or printer data:
+
+1. **Export current Filament Log data** from http://3dworkshop.local/pages/filament-log.html
+2. **Run sync tool** to ensure Spoolman is up-to-date: `python tools/spoolman-sync/sync-filament-log-to-spoolman.py <export.json>`
+3. **Check for duplicates** - the tool will identify similar existing entries
+4. **Add print log** using: `python tools/spoolman-sync/add-print-log.py --spool-id <id> --amount <g> --date <YYYY-MM-DD> --project "<name>"`
+5. **Import updated data** back into Filament Log web app
+
+### Important Notes
+- Filament Log app is the source of truth for filament inventory
+- Spoolman is used for advanced filament management and integrations
+- Always check for duplicates before adding new print logs
+- The ID mapping file must be preserved for future operations
