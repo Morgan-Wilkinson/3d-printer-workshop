@@ -724,6 +724,14 @@
   <div class="view" id="view-log">
     <div class="filterbar">
       <select id="logSpoolFilter"><option value="">All spools</option></select>
+      <select id="logSort">
+        <option value="date-desc">Newest first</option>
+        <option value="date-asc">Oldest first</option>
+        <option value="project-asc">Project A–Z</option>
+        <option value="project-desc">Project Z–A</option>
+        <option value="total-desc">Most used</option>
+        <option value="total-asc">Least used</option>
+      </select>
       <button class="btn btn-sm" id="btnLogUsageTab">+ Log a print</button>
     </div>
     <div id="logTableWrap"></div>
@@ -1939,6 +1947,7 @@
     lowStockOnly: false,
     buildPlateFilter: "",
     logSpoolFilter: "",
+    logSort: "date-desc",
     editingSpoolId: null,
     editingRefillId: null,
     formType: "filament",
@@ -2193,12 +2202,32 @@
       return '<option value="' + s.id + '">' + escapeHtml(s.brand + " — " + (s.line || s.material) + (s.colorName ? " (" + s.colorName + ")" : "")) + '</option>';
     }).join("");
     sel.value = Store.spools.some(function (s) { return s.id === current; }) ? current : "";
+    $("logSort").value = state.logSort || "date-desc";
+  }
+
+  function sortLogList(list) {
+    var sort = state.logSort;
+    if (sort === "date-desc") list.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+    else if (sort === "date-asc") list.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+    else if (sort === "project-asc") list.sort(function (a, b) { return (a.project || "").localeCompare(b.project || ""); });
+    else if (sort === "project-desc") list.sort(function (a, b) { return (b.project || "").localeCompare(a.project || ""); });
+    else if (sort === "total-desc") list.sort(function (a, b) {
+      var ta = (a.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
+      var tb = (b.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
+      return tb - ta;
+    });
+    else if (sort === "total-asc") list.sort(function (a, b) {
+      var ta = (a.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
+      var tb = (b.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
+      return ta - tb;
+    });
+    return list;
   }
 
   function renderLogTable() {
     var list = Store.prints.slice();
     if (state.logSpoolFilter) list = list.filter(function (p) { return (p.filaments || []).some(function (f) { return f.spoolId === state.logSpoolFilter; }); });
-    list.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+    sortLogList(list);
 
     var wrap = $("logTableWrap");
     if (!list.length) {
@@ -2762,6 +2791,7 @@
   $("sortFilter").addEventListener("change", function (e) { state.sortFilter = e.target.value; renderSpoolGrid(); });
   $("lowStockOnly").addEventListener("change", function (e) { state.lowStockOnly = e.target.checked; renderSpoolGrid(); });
   $("logSpoolFilter").addEventListener("change", function (e) { state.logSpoolFilter = e.target.value; renderLogTable(); });
+  $("logSort").addEventListener("change", function (e) { state.logSort = e.target.value; renderLogTable(); });
 
   // ============================================================
   // Analytics event listeners
