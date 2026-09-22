@@ -274,6 +274,19 @@
   }
   .low-flag.crit { color: var(--red); background: var(--red-bg); }
 
+  .compatibility-badges {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+  }
+  .compatibility-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600; color: var(--ink);
+    padding: 3px 8px; border-radius: 12px;
+    border: 1px solid var(--line);
+  }
+  .compatibility-badge.cool-plate { background: #E3F2FD; border-color: #4A90E2; color: #1565C0; }
+  .compatibility-badge.engineering-plate { background: #FFF3E0; border-color: #F5A623; color: #E65100; }
+  .compatibility-badge.texture-pei-plate { background: #7ED321; border-color: #4A8A1B; color: #1A4314; }
+
   .empty {
     border: 1px dashed var(--line-strong);
     border-radius: var(--radius-md);
@@ -295,6 +308,10 @@
   .log-table td.num, .log-table th.num { font-family: var(--font-mono); text-align: right; }
   .log-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; border: 1px solid rgba(0,0,0,0.15); }
   .log-table tr:last-child td { border-bottom: none; }
+  @media (max-width: 768px) {
+    .log-table { font-size: 11px; }
+    .log-table th, .log-table td { padding: 6px 8px; }
+  }
 
   /* ---------- Stats view ---------- */
   .panel {
@@ -523,88 +540,9 @@
     gap: 6px;
   }
 
-  .alerts-panel {
-    width: 280px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    padding: 12px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 0;
-  }
-
-  .alerts-panel h3 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .alerts-panel .clear-btn {
-    font-size: 11px;
-    padding: 2px 8px;
-    background: var(--line);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-
-  .alerts-panel .clear-btn:hover {
-    background: var(--ink-faint);
-  }
-
-  .alert-item {
-    background: var(--surface-alt);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    padding: 10px;
-    margin-bottom: 8px;
-    font-size: 12px;
-  }
-
-  .alert-item.low {
-    border-left: 3px solid var(--warn);
-  }
-
-  .alert-item.crit {
-    border-left: 3px solid var(--danger);
-  }
-
-  .alert-item .alert-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  .alert-item .alert-message {
-    color: var(--ink-faint);
-    line-height: 1.4;
-  }
-
-  .alert-item .alert-time {
-    font-size: 10px;
-    color: var(--ink-faint);
-    margin-top: 4px;
-  }
-
-  .alerts-panel .empty {
-    text-align: center;
-    color: var(--ink-faint);
-    font-size: 12px;
-    padding: 20px 0;
-  }
-
   .main-content {
     flex: 1;
     min-width: 0;
-  }
-
-  .content-with-alerts {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
   }
 
   .toast {
@@ -628,6 +566,9 @@
 <div class="wrap">
   <div class="hdr">
     <div>
+      <a href="../index.html" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-bottom: 8px;">
+        <span>← Back to Workshop</span>
+      </a>
       <h1>Filament log</h1>
       <div class="tagline">Spools, resin, and what they're costing you</div>
     </div>
@@ -645,7 +586,7 @@
 
   <div class="stats" id="statsRow"></div>
 
-  <div class="content-with-alerts">
+  <div class="content">
     <div class="main-content">
       <div class="tabs">
         <button class="tab active" data-view="inventory">Inventory</button>
@@ -658,6 +599,7 @@
     <div class="filterbar">
       <input type="search" id="searchInput" placeholder="Search brand, color, material...">
       <select id="materialFilter"><option value="">All materials</option></select>
+      <select id="buildPlateFilter"><option value="">All build plates</option></select>
       <select id="sortFilter"><option value="name">Sort by name</option><option value="brand">Sort by brand</option><option value="source">Sort by source</option><option value="price">Sort by price</option></select>
       <label class="chk-lowstock"><input type="checkbox" id="lowStockOnly"> Running low only</label>
     </div>
@@ -706,7 +648,7 @@
               <option value="all">All data (spools + refills)</option>
               <option value="spools">Spools only</option>
               <option value="refills">Refills only</option>
-              <option value="usage">Usage data only</option>
+              <option value="prints">Prints (filament usage)</option>
             </select>
           </div>
           <div class="field">
@@ -782,7 +724,16 @@
   <div class="view" id="view-log">
     <div class="filterbar">
       <select id="logSpoolFilter"><option value="">All spools</option></select>
+      <select id="logSort">
+        <option value="date-desc">Newest first</option>
+        <option value="date-asc">Oldest first</option>
+        <option value="project-asc">Project A–Z</option>
+        <option value="project-desc">Project Z–A</option>
+        <option value="total-desc">Most used</option>
+        <option value="total-asc">Least used</option>
+      </select>
       <button class="btn btn-sm" id="btnLogUsageTab">+ Log a print</button>
+      <button class="btn btn-sm" id="btnAutoPrints">Auto prints</button>
     </div>
     <div id="logTableWrap"></div>
   </div>
@@ -790,13 +741,6 @@
   <div class="view" id="view-stats"></div>
     </div>
 
-    <div class="alerts-panel">
-      <h3>
-        Alerts
-        <button class="clear-btn" id="btnClearAlerts">Clear all</button>
-      </h3>
-      <div id="alertsList"></div>
-    </div>
   </div>
 </div>
 
@@ -940,7 +884,14 @@
     </details>
 
     <div class="field">
-      <label for="fLowStock">Low stock alert below (%)</label>
+      <label>Compatible build plates</label>
+      <div id="fCompatiblePlates" style="font-size: 12px; color: var(--ink-soft); padding: 8px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--line);">
+        Enter a material to see compatible build plates
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="fLowStock">Low stock threshold (%)</label>
       <input type="number" id="fLowStock" min="1" max="90" value="15">
     </div>
 
@@ -961,41 +912,89 @@
   </div>
 </div>
 
-<!-- Log usage modal -->
+<!-- Log print modal -->
 <div class="overlay" id="usageOverlay">
-  <div class="modal">
+  <div class="modal" style="max-width: 700px;">
     <h2>Log a print</h2>
-    <div class="modal-sub">Records what you used and updates the spool's remaining amount.</div>
+    <div class="modal-sub">Records what you used and updates each spool's remaining amount.</div>
 
     <div class="field">
-      <label for="uSpool">Spool</label>
-      <select id="uSpool"></select>
+      <label for="uProject">Project</label>
+      <input type="text" id="uProject" placeholder="What did you print?">
     </div>
     <div class="field-row">
-      <div class="field">
-        <label id="uAmountLabel" for="uAmount">Amount used (g)</label>
-        <input type="number" id="uAmount" min="0" step="1" placeholder="35">
-      </div>
       <div class="field">
         <label for="uDate">Date</label>
         <input type="date" id="uDate">
       </div>
+      <div class="field">
+        <label for="uPlateName">Plate name / number</label>
+        <input type="text" id="uPlateName" placeholder="e.g., Plate 1 - Box Bottom">
+      </div>
     </div>
-    <div class="field">
-      <label for="uProject">Project</label>
-      <input type="text" id="uProject" placeholder="What did you print?">
+    <div class="field-row">
+      <div class="field">
+        <label for="uBuildPlate">Build plate used</label>
+        <select id="uBuildPlate">
+          <option value="">Select build plate</option>
+          <option value="cool_plate">Cool Plate</option>
+          <option value="engineering_plate">Engineering Plate</option>
+          <option value="texture_pei_plate">Textured PEI Plate</option>
+        </select>
+      </div>
+      <div class="field" style="display:none;">
+        <input type="text" id="uPlateNumber" placeholder="e.g., 1, 2, 3, A, B">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="uStartTime">Start time</label>
+        <input type="datetime-local" id="uStartTime" step="60">
+      </div>
+      <div class="field">
+        <label for="uEndTime">End time</label>
+        <input type="datetime-local" id="uEndTime" step="60">
+      </div>
     </div>
     <div class="field">
       <label for="uNotes">Notes</label>
       <input type="text" id="uNotes" placeholder="Optional">
     </div>
-    <div class="field-hint" id="uRemainingPreview" style="margin-bottom: 4px;"></div>
+
+    <div class="field">
+      <label>Filaments used</label>
+      <div id="uFilaments" style="margin-bottom: 8px;"></div>
+      <button class="btn btn-sm" id="btnAddFilamentRow" type="button">+ Add another filament</button>
+    </div>
 
     <div class="modal-actions">
       <div class="left"></div>
       <div class="right">
         <button class="btn" id="btnCancelUsage">Cancel</button>
         <button class="btn btn-primary" id="btnSaveUsage">Log print</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Auto prints modal -->
+<div class="overlay" id="autoPrintOverlay">
+  <div class="modal" style="max-width: 720px;">
+    <h2>Auto-detected prints</h2>
+    <div class="modal-sub">Imports prints detected by the print tracker. Choose a spool for each filament used, then save.</div>
+    <div class="field">
+      <label for="autoPrintUrl">Source URL</label>
+      <input type="text" id="autoPrintUrl" value="/print-tracker/pending-prints.json" placeholder="/print-tracker/pending-prints.json">
+      <div class="field-hint">The endpoint or file the print tracker writes to. Adjust if you host it elsewhere.</div>
+    </div>
+    <div id="autoPrintList" style="max-height: 360px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 12px;"></div>
+    <div class="modal-actions">
+      <div class="left">
+        <button class="btn" id="btnLoadAutoPrints">Refresh</button>
+      </div>
+      <div class="right">
+        <button class="btn" id="btnCancelAutoPrints">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveAutoPrints">Add selected</button>
       </div>
     </div>
   </div>
@@ -1142,7 +1141,7 @@
         <input type="number" id="bulkEditPrice" min="0" step="0.01" placeholder="Leave blank to keep current">
       </div>
       <div class="field">
-        <label for="bulkEditLowStock">Low stock alert below (%)</label>
+        <label for="bulkEditLowStock">Low stock threshold (%)</label>
         <input type="number" id="bulkEditLowStock" min="1" max="90" placeholder="Leave blank to keep current">
       </div>
     </div>
@@ -1286,7 +1285,7 @@
     </details>
 
     <div class="field">
-      <label for="rLowStock">Low stock alert below (%)</label>
+      <label for="rLowStock">Low stock threshold (%)</label>
       <input type="number" id="rLowStock" min="1" max="90" value="15">
     </div>
 
@@ -1447,6 +1446,75 @@
   ];
 
   // ============================================================
+  // Build plates and nozzle configuration for X2D printer
+  // ============================================================
+  var BUILD_PLATES = [
+    {
+      id: "cool_plate",
+      name: "Cool Plate",
+      type: "cool",
+      color: "#4A90E2",
+      description: "Standard cool plate for PLA and other low-temp materials",
+      compatibleMaterials: ["PLA", "PLA-CF", "PETG", "PETG-CF", "TPU"],
+      bedTempRange: [0, 60]
+    },
+    {
+      id: "engineering_plate",
+      name: "Engineering Plate", 
+      type: "engineering",
+      color: "#F5A623",
+      description: "High-temp plate for ABS, ASA, and engineering materials. Can also work with PLA but not optimal.",
+      compatibleMaterials: ["PLA", "PLA-CF", "ABS", "ABS-GF", "ASA", "ASA-CF", "Polycarbonate", "Nylon-CF", "Nylon-GF", "PET-CF", "PPA-CF", "PPS-CF"],
+      bedTempRange: [80, 120]
+    },
+    {
+      id: "texture_pei_plate",
+      name: "Textured PEI Plate",
+      type: "texture-pei",
+      color: "#7ED321",
+      description: "Textured PEI surface - the standard plate that came with X2D. Excellent all-rounder for most materials.",
+      compatibleMaterials: ["PLA", "PLA-CF", "PETG", "PETG-CF", "ABS", "ASA", "TPU"],
+      bedTempRange: [0, 100]
+    }
+  ];
+
+  var NOZZLES = [
+    {
+      id: "standard_0.4",
+      name: "Standard 0.4mm",
+      diameter: 0.4,
+      description: "Standard nozzle that came with X2D",
+      compatibleMaterials: ["PLA", "PLA-CF", "PETG", "PETG-CF", "ABS", "ABS-GF", "ASA", "ASA-CF", "TPU", "Polycarbonate", "Nylon-CF", "Nylon-GF", "PET-CF", "PPA-CF", "PPS-CF"]
+    }
+  ];
+
+  // Function to get compatible build plates for a material
+  function getCompatibleBuildPlates(material) {
+    if (!material) return [];
+    return BUILD_PLATES.filter(function (plate) {
+      return plate.compatibleMaterials.some(function (mat) {
+        return material.toLowerCase().indexOf(mat.toLowerCase()) > -1;
+      });
+    });
+  }
+
+  // Function to get compatible build plate IDs for a material
+  function getCompatibleBuildPlateIds(material) {
+    return getCompatibleBuildPlates(material).map(function (plate) {
+      return plate.id;
+    });
+  }
+
+  // Function to check if a material is compatible with a specific build plate
+  function isMaterialCompatibleWithPlate(material, plateId) {
+    var plate = BUILD_PLATES.find(function (p) { return p.id === plateId; });
+    if (!plate || !material) return false;
+    return plate.compatibleMaterials.some(function (mat) {
+      return material.toLowerCase().indexOf(mat.toLowerCase()) > -1;
+    });
+  }
+
+  // ============================================================
   // Cloud sync (optional) — Firebase Firestore. Off by default;
   // the app is fully local until you connect one. When connected,
   // every device using the same Firebase project + sync code reads
@@ -1497,7 +1565,7 @@
     disconnect: function () {
       if (this.unsubSpools) this.unsubSpools();
       if (this.unsubRefills) this.unsubRefills();
-      if (this.unsubUsage) this.unsubUsage();
+      if (this.unsubPrints) this.unsubPrints();
       this.connected = false;
       this.db = null;
       this.code = null;
@@ -1508,7 +1576,7 @@
       var self = this;
       var preSpools = Store.spools.slice();
       var preRefills = Store.refills.slice();
-      var preUsage = Store.usage.slice();
+      var prePrints = Store.prints.slice();
       var announced = false;
 
       self.unsubSpools = self.db.collection(self.basePath() + "/spools").onSnapshot(function (snap) {
@@ -1518,9 +1586,9 @@
         if (!announced) {
           announced = true;
           cb(true, null);
-          if (self.firstSnapshotSpools && snap.docs.length === 0 && (preSpools.length || preRefills.length || preUsage.length)) {
+          if (self.firstSnapshotSpools && snap.docs.length === 0 && (preSpools.length || preRefills.length || prePrints.length)) {
             self.firstSnapshotSpools = false;
-            setTimeout(function () { self._offerMigration(preSpools, preRefills, preUsage); }, 150);
+            setTimeout(function () { self._offerMigration(preSpools, preRefills, prePrints); }, 150);
           }
         }
       }, function (err) {
@@ -1534,19 +1602,19 @@
         Store.onChange();
       }, function (err) { showToast("Cloud sync error: " + err.message); });
 
-      self.unsubUsage = self.db.collection(self.basePath() + "/usage").onSnapshot(function (snap) {
-        Store.usage = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+      self.unsubPrints = self.db.collection(self.basePath() + "/prints").onSnapshot(function (snap) {
+        Store.prints = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
         Store.persist();
         Store.onChange();
       }, function (err) { showToast("Cloud sync error: " + err.message); });
     },
 
-    _offerMigration: function (preSpools, preRefills, preUsage) {
+    _offerMigration: function (preSpools, preRefills, prePrints) {
       var self = this;
       if (!confirm("This sync code has no data in it yet, but this browser has " + preSpools.length + " spool(s) saved locally.\n\nUpload the local data to the cloud now?")) return;
       var spoolCol = self.db.collection(self.basePath() + "/spools");
       var refillCol = self.db.collection(self.basePath() + "/refills");
-      var usageCol = self.db.collection(self.basePath() + "/usage");
+      var printsCol = self.db.collection(self.basePath() + "/prints");
       var idMap = {};
       var writes = preSpools.map(function (s) {
         var copy = Object.assign({}, s);
@@ -1562,13 +1630,15 @@
         });
         return Promise.all(refillWrites);
       }).then(function () {
-        var usageWrites = preUsage.map(function (u) {
-          var copy = Object.assign({}, u);
+        var printWrites = prePrints.map(function (p) {
+          var copy = Object.assign({}, p);
           delete copy.id;
-          if (idMap[copy.spoolId]) copy.spoolId = idMap[copy.spoolId];
-          return usageCol.add(copy);
+          (copy.filaments || []).forEach(function (f) {
+            if (idMap[f.spoolId]) f.spoolId = idMap[f.spoolId];
+          });
+          return printsCol.add(copy);
         });
-        return Promise.all(usageWrites);
+        return Promise.all(printWrites);
       }).then(function () {
         showToast("Local data uploaded to the cloud.");
       }).catch(function (e) {
@@ -1589,15 +1659,15 @@
   var Store = {
     spools: [],
     refills: [],
-    usage: [],
+    prints: [],
     onChange: function () {},
 
     init: function () {
       try {
         this.spools = JSON.parse(localStorage.getItem("filamentlog_spools") || "[]");
         this.refills = JSON.parse(localStorage.getItem("filamentlog_refills") || "[]");
-        this.usage = JSON.parse(localStorage.getItem("filamentlog_usage") || "[]");
-      } catch (e) { this.spools = []; this.refills = []; this.usage = []; }
+        this.prints = JSON.parse(localStorage.getItem("filamentlog_prints") || "[]");
+      } catch (e) { this.spools = []; this.refills = []; this.prints = []; }
       this.onChange();
 
       var saved = CloudSync.loadSaved();
@@ -1614,7 +1684,7 @@
       try {
         localStorage.setItem("filamentlog_spools", JSON.stringify(this.spools));
         localStorage.setItem("filamentlog_refills", JSON.stringify(this.refills));
-        localStorage.setItem("filamentlog_usage", JSON.stringify(this.usage));
+        localStorage.setItem("filamentlog_prints", JSON.stringify(this.prints));
         return true;
       } catch (e) {
         showToast("Storage is full or unavailable — export a backup if you can.");
@@ -1651,34 +1721,41 @@
         var base = CloudSync.basePath();
         CloudSync.db.collection(base + "/spools").doc(id).delete()
           .catch(function (e) { showToast("Couldn't delete from cloud: " + e.message); });
-        CloudSync.db.collection(base + "/usage").where("spoolId", "==", id).get().then(function (snap) {
-          snap.forEach(function (doc) { doc.ref.delete(); });
-        });
         return;
       }
       this.spools = this.spools.filter(function (s) { return s.id !== id; });
-      this.usage = this.usage.filter(function (u) { return u.spoolId !== id; });
       this.persist();
       this.onChange();
     },
-    addUsage: function (data) {
+    addPrint: function (data) {
       if (CloudSync.connected) {
-        CloudSync.db.collection(CloudSync.basePath() + "/usage").add(data)
+        CloudSync.db.collection(CloudSync.basePath() + "/prints").add(data)
           .catch(function (e) { showToast("Couldn't save to cloud: " + e.message); });
         return;
       }
       data.id = this.genId();
-      this.usage.unshift(data);
+      this.prints.unshift(data);
       this.persist();
       this.onChange();
     },
-    deleteUsage: function (id) {
+    updatePrint: function (id, data) {
       if (CloudSync.connected) {
-        CloudSync.db.collection(CloudSync.basePath() + "/usage").doc(id).delete()
+        CloudSync.db.collection(CloudSync.basePath() + "/prints").doc(id).set(data)
+          .catch(function (e) { showToast("Couldn't save to cloud: " + e.message); });
+        return;
+      }
+      var idx = this.prints.findIndex(function (p) { return p.id === id; });
+      if (idx > -1) this.prints[idx] = Object.assign({ id: id }, data);
+      this.persist();
+      this.onChange();
+    },
+    deletePrint: function (id) {
+      if (CloudSync.connected) {
+        CloudSync.db.collection(CloudSync.basePath() + "/prints").doc(id).delete()
           .catch(function (e) { showToast("Couldn't delete from cloud: " + e.message); });
         return;
       }
-      this.usage = this.usage.filter(function (u) { return u.id !== id; });
+      this.prints = this.prints.filter(function (p) { return p.id !== id; });
       this.persist();
       this.onChange();
     },
@@ -1730,12 +1807,12 @@
     },
 
     exportJson: function () {
-      return JSON.stringify({ spools: this.spools, refills: this.refills, usage: this.usage, exportedAt: new Date().toISOString(), version: 5 }, null, 2);
+      return JSON.stringify({ spools: this.spools, refills: this.refills, prints: this.prints, exportedAt: new Date().toISOString(), version: 6 }, null, 2);
     },
     importJson: function (text, mode) {
       var data;
       try { data = JSON.parse(text); } catch (e) { throw new Error("That file isn't valid JSON."); }
-      if (!data || !Array.isArray(data.spools) || !Array.isArray(data.usage)) {
+      if (!data || !Array.isArray(data.spools) || (!Array.isArray(data.prints) && !Array.isArray(data.usage))) {
         throw new Error("That file doesn't look like a Filament Log backup.");
       }
 
@@ -1791,10 +1868,31 @@
         data.version = 5;
       }
 
+      // Migration from version 5 (spool-centric usage) to version 6 (print-centric prints)
+      if (data.version === 5 && Array.isArray(data.usage)) {
+        data.prints = data.usage.map(function (u) {
+          return {
+            id: u.id,
+            date: u.date,
+            startTime: u.loggedAt ? u.loggedAt.slice(0, 16) : u.date,
+            endTime: null,
+            project: u.project || "",
+            buildPlate: u.buildPlate || "",
+            plateName: u.plateNumber || "",
+            notes: u.notes || "",
+            filaments: [{ spoolId: u.spoolId, amount: u.amount }]
+          };
+        });
+        delete data.usage;
+        data.version = 6;
+      }
+
+      data.prints = data.prints || [];
+
       if (mode === "replace") {
         this.spools = data.spools;
         this.refills = data.refills || [];
-        this.usage = data.usage;
+        this.prints = data.prints;
       } else {
         var existingIds = {};
         this.spools.forEach(function (s) { existingIds[s.id] = true; });
@@ -1802,9 +1900,9 @@
         var existingRefillIds = {};
         this.refills.forEach(function (r) { existingRefillIds[r.id] = true; });
         (data.refills || []).forEach(function (r) { if (!existingRefillIds[r.id]) this.refills.push(r); }, this);
-        var existingUsageIds = {};
-        this.usage.forEach(function (u) { existingUsageIds[u.id] = true; });
-        data.usage.forEach(function (u) { if (!existingUsageIds[u.id]) this.usage.push(u); }, this);
+        var existingPrintIds = {};
+        this.prints.forEach(function (p) { existingPrintIds[p.id] = true; });
+        data.prints.forEach(function (p) { if (!existingPrintIds[p.id]) this.prints.push(p); }, this);
       }
       this.persist();
       this.onChange();
@@ -1828,16 +1926,25 @@
     if (!total) return 0;
     return clamp(spoolRemaining(s) / total, 0, 1);
   }
-  function usageForSpool(spoolId) {
-    return Store.usage.filter(function (u) { return u.spoolId === spoolId; });
+  function filamentsForSpool(spoolId) {
+    var out = [];
+    Store.prints.forEach(function (p) {
+      (p.filaments || []).forEach(function (f) {
+        if (f.spoolId === spoolId) out.push({ print: p, amount: f.amount, date: p.date });
+      });
+    });
+    return out;
+  }
+  function totalForSpool(spoolId) {
+    return filamentsForSpool(spoolId).reduce(function (sum, x) { return sum + (Number(x.amount) || 0); }, 0);
   }
 
   function estDaysRemaining(s) {
-    var logs = usageForSpool(s.id).slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+    var logs = filamentsForSpool(s.id).slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
     if (logs.length < 2) return null;
     var first = new Date(logs[0].date), last = new Date(logs[logs.length - 1].date);
     var days = Math.max(1, (last - first) / 86400000);
-    var totalUsed = logs.reduce(function (sum, u) { return sum + (Number(u.amount) || 0); }, 0);
+    var totalUsed = logs.reduce(function (sum, x) { return sum + (Number(x.amount) || 0); }, 0);
     if (totalUsed <= 0) return null;
     var perDay = totalUsed / days;
     if (perDay <= 0) return null;
@@ -1862,14 +1969,15 @@
     materialFilter: "",
     sortFilter: "name",
     lowStockOnly: false,
+    buildPlateFilter: "",
     logSpoolFilter: "",
+    logSort: "date-desc",
     editingSpoolId: null,
     editingRefillId: null,
     formType: "filament",
     selectedSpools: new Set(),
     analyticsView: "simple",
-    savedQueries: [],
-    alerts: []
+    savedQueries: []
   };
 
   function ringSvg(pct, color, size) {
@@ -1914,9 +2022,23 @@
     sel.value = mats.indexOf(current) > -1 ? current : "";
   }
 
+  function renderBuildPlateFilterOptions() {
+    var sel = $("buildPlateFilter");
+    var current = sel.value;
+    sel.innerHTML = '<option value="">All build plates</option>' + BUILD_PLATES.map(function (plate) {
+      return '<option value="' + plate.id + '">' + plate.name + '</option>';
+    }).join("");
+    sel.value = current;
+  }
+
   function renderSpoolGrid() {
     var list = Store.spools.filter(function (s) { return !s.archived; });
     if (state.materialFilter) list = list.filter(function (s) { return s.material === state.materialFilter; });
+    if (state.buildPlateFilter) {
+      list = list.filter(function (s) {
+        return isMaterialCompatibleWithPlate(s.material, state.buildPlateFilter);
+      });
+    }
     if (state.search) {
       var q = state.search.toLowerCase();
       list = list.filter(function (s) {
@@ -1996,6 +2118,11 @@
       var days = estDaysRemaining(s);
       var isSelected = state.selectedSpools.has(s.id);
       var savings = s.originalPrice > 0 ? (s.originalPrice - s.pricePaid) : 0;
+      var compatiblePlates = getCompatibleBuildPlates(s.material);
+      var compatibilityBadges = compatiblePlates.length > 0 ? 
+        '<div class="compatibility-badges">' + compatiblePlates.map(function (plate) {
+          return '<span class="compatibility-badge ' + plate.type + '-plate">' + escapeHtml(plate.name) + '</span>';
+        }).join('') + '</div>' : '';
       return '<div class="card' + (low ? '' : '') + '" data-id="' + s.id + '">' +
         '<div class="ring-wrap">' + ringSvg(pct, s.colorHex || "#8a8f89") +
           '<div class="ring-pct">' + pctInt + '%</div></div>' +
@@ -2007,6 +2134,7 @@
             (ppk ? '<div class="metric"><span class="m-lbl">Price</span><span class="m-val">' + fmtMoney(ppk) + '/kg' + '</span></div>' : '') +
             (s.purchaseSource ? '<div class="metric"><span class="m-lbl">From</span><span class="m-val">' + escapeHtml(s.purchaseSource) + '</span></div>' : '') +
           '</div>' +
+          compatibilityBadges +
           (savings > 0 ? '<div class="card-sub" style="margin-top:6px; color:var(--green);">Saved ' + fmtMoney(savings) + ' on this purchase</div>' : '') +
           (days !== null ? '<div class="card-sub" style="margin-top:6px;">~' + Math.round(days) + ' days left at current pace</div>' : '') +
           (low ? '<div class="low-flag' + (crit ? ' crit' : '') + '">' + (crit ? "Nearly empty" : "Running low") + '</div>' : '') +
@@ -2098,12 +2226,32 @@
       return '<option value="' + s.id + '">' + escapeHtml(s.brand + " — " + (s.line || s.material) + (s.colorName ? " (" + s.colorName + ")" : "")) + '</option>';
     }).join("");
     sel.value = Store.spools.some(function (s) { return s.id === current; }) ? current : "";
+    $("logSort").value = state.logSort || "date-desc";
+  }
+
+  function sortLogList(list) {
+    var sort = state.logSort;
+    if (sort === "date-desc") list.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+    else if (sort === "date-asc") list.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+    else if (sort === "project-asc") list.sort(function (a, b) { return (a.project || "").localeCompare(b.project || ""); });
+    else if (sort === "project-desc") list.sort(function (a, b) { return (b.project || "").localeCompare(a.project || ""); });
+    else if (sort === "total-desc") list.sort(function (a, b) {
+      var ta = (a.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
+      var tb = (b.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
+      return tb - ta;
+    });
+    else if (sort === "total-asc") list.sort(function (a, b) {
+      var ta = (a.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
+      var tb = (b.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
+      return ta - tb;
+    });
+    return list;
   }
 
   function renderLogTable() {
-    var list = Store.usage.slice();
-    if (state.logSpoolFilter) list = list.filter(function (u) { return u.spoolId === state.logSpoolFilter; });
-    list.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+    var list = Store.prints.slice();
+    if (state.logSpoolFilter) list = list.filter(function (p) { return (p.filaments || []).some(function (f) { return f.spoolId === state.logSpoolFilter; }); });
+    sortLogList(list);
 
     var wrap = $("logTableWrap");
     if (!list.length) {
@@ -2114,17 +2262,28 @@
     Store.spools.forEach(function (s) { bySpool[s.id] = s; });
 
     wrap.innerHTML = '<table class="log-table"><thead><tr>' +
-      '<th>Date</th><th>Spool</th><th>Project</th><th class="num">Amount</th><th></th>' +
+      '<th style="min-width: 110px; white-space: nowrap;">Date</th><th>Project</th><th>Build Plate</th><th>Plate</th><th class="num" style="min-width: 90px; white-space: nowrap;">Total</th><th style="min-width: 260px;">Filaments</th><th></th>' +
       '</tr></thead><tbody>' +
-      list.map(function (u) {
-        var s = bySpool[u.spoolId];
-        var swatch = s ? '<span class="log-swatch" style="background:' + (s.colorHex || "#999") + '"></span>' : "";
-        var label = s ? (s.brand + " — " + (s.line || s.material)) : "(deleted spool)";
-        return '<tr data-id="' + u.id + '">' +
-          '<td>' + (u.date || "") + '</td>' +
-          '<td>' + swatch + escapeHtml(label) + '</td>' +
-          '<td>' + escapeHtml(u.project || "") + (u.notes ? '<div class="card-sub">' + escapeHtml(u.notes) + '</div>' : '') + '</td>' +
-          '<td class="num">' + fmtNum(u.amount) + (s ? " " + spoolUnit(s) : " g") + '</td>' +
+      list.map(function (p) {
+        var buildPlateLabel = "";
+        if (p.buildPlate) {
+          var plate = BUILD_PLATES.find(function (bp) { return bp.id === p.buildPlate; });
+          buildPlateLabel = plate ? plate.name : p.buildPlate;
+        }
+        var total = (p.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
+        var filamentsHtml = (p.filaments || []).map(function (f) {
+          var s = bySpool[f.spoolId];
+          var swatch = s ? '<span class="log-swatch" style="background:' + (s.colorHex || "#999") + '"></span>' : "";
+          var label = s ? (s.brand + " — " + (s.line || s.material)) : "(deleted spool)";
+          return '<div>' + swatch + escapeHtml(label) + ' <strong>' + fmtNum(f.amount) + (s ? " " + spoolUnit(s) : " g") + '</strong></div>';
+        }).join("");
+        return '<tr data-id="' + p.id + '">' +
+          '<td>' + (p.date || "") + '</td>' +
+          '<td>' + escapeHtml(p.project || "") + (p.notes ? '<div class="card-sub">' + escapeHtml(p.notes) + '</div>' : '') + '</td>' +
+          '<td>' + escapeHtml(buildPlateLabel) + '</td>' +
+          '<td>' + escapeHtml(p.plateName || "") + '</td>' +
+          '<td class="num">' + fmtNum(total) + ' g</td>' +
+          '<td>' + filamentsHtml + '</td>' +
           '<td><button class="btn btn-sm btn-quiet btn-danger delUsageBtn">Delete</button></td>' +
           '</tr>';
       }).join("") + '</tbody></table>';
@@ -2132,8 +2291,8 @@
     wrap.querySelectorAll(".delUsageBtn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var id = btn.closest("tr").getAttribute("data-id");
-        if (confirm("Delete this log entry? This won't add the material back to the spool automatically.")) {
-          Store.deleteUsage(id);
+        if (confirm("Delete this print log? This won't add the material back to the spool automatically.")) {
+          Store.deletePrint(id);
         }
       });
     });
@@ -2150,10 +2309,11 @@
       var start = new Date(now); start.setDate(now.getDate() - (i * 7 + now.getDay()));
       weeks.push({ start: start, total: 0, label: (start.getMonth() + 1) + "/" + start.getDate() });
     }
-    Store.usage.forEach(function (u) {
-      var d = new Date(u.date);
+    Store.prints.forEach(function (p) {
+      var d = new Date(p.date);
+      var total = (p.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
       for (var i = weeks.length - 1; i >= 0; i--) {
-        if (d >= weeks[i].start) { weeks[i].total += (Number(u.amount) || 0); break; }
+        if (d >= weeks[i].start) { weeks[i].total += total; break; }
       }
     });
     var maxWeek = Math.max.apply(null, weeks.map(function (w) { return w.total; }).concat([1]));
@@ -2187,8 +2347,8 @@
       '</div>' +
       '<div class="panel"><h2>Overview</h2>' +
         '<div class="mat-row"><div class="mat-name">Total invested</div><div class="mat-bar-bg" style="visibility:hidden;"></div><div class="mat-val">' + fmtMoney(totalSpent) + '</div></div>' +
-        '<div class="mat-row"><div class="mat-name">Prints logged</div><div class="mat-bar-bg" style="visibility:hidden;"></div><div class="mat-val">' + Store.usage.length + '</div></div>' +
-        '<div class="mat-row"><div class="mat-name">Total used</div><div class="mat-bar-bg" style="visibility:hidden;"></div><div class="mat-val">' + fmtNum(Store.usage.reduce(function (s, u) { return s + (Number(u.amount) || 0); }, 0) / 1000, 2) + ' kg</div></div>' +
+        '<div class="mat-row"><div class="mat-name">Prints logged</div><div class="mat-bar-bg" style="visibility:hidden;"></div><div class="mat-val">' + Store.prints.length + '</div></div>' +
+        '<div class="mat-row"><div class="mat-name">Total used</div><div class="mat-bar-bg" style="visibility:hidden;"></div><div class="mat-val">' + fmtNum(Store.prints.reduce(function (s, p) { return s + (p.filaments || []).reduce(function (t, f) { return t + (Number(f.amount) || 0); }, 0); }, 0) / 1000, 2) + ' kg</div></div>' +
       '</div>';
   }
 
@@ -2387,17 +2547,20 @@
     var items = getAllFilament();
     if (dataSource === "spools") items = items.filter(function (i) { return i.type === "spool"; });
     if (dataSource === "refills") items = items.filter(function (i) { return i.type === "refill"; });
-    if (dataSource === "usage") {
-      items = Store.usage.map(function (u) {
-        var s = Store.spools.find(function (sp) { return sp.id === u.spoolId; });
-        return {
-          type: "usage",
-          amount: u.amount || 0,
-          date: u.date,
-          project: u.project,
-          spoolBrand: s ? s.brand : "Unknown",
-          spoolMaterial: s ? s.material : "Unknown"
-        };
+    if (dataSource === "prints") {
+      items = [];
+      Store.prints.forEach(function (p) {
+        (p.filaments || []).forEach(function (f) {
+          var s = Store.spools.find(function (sp) { return sp.id === f.spoolId; });
+          items.push({
+            type: "print",
+            amount: f.amount || 0,
+            date: p.date,
+            project: p.project,
+            spoolBrand: s ? s.brand : "Unknown",
+            spoolMaterial: s ? s.material : "Unknown"
+          });
+        });
       });
     }
 
@@ -2581,118 +2744,18 @@
   window.deleteQuery = deleteQuery;
 
   // ============================================================
-  // Alerts
+  // View rendering
   // ============================================================
-  // NOTE: Alert system is not currently working properly. The generateAlerts()
-  // function runs and console logs show it's being called, but alerts are not
-  // appearing in the UI. The alertsList container exists in the DOM but may have
-  // layout/visibility issues. This needs further debugging to resolve.
-  function generateAlerts() {
-    console.log("generateAlerts called");
-    var active = Store.spools.filter(function (s) { return !s.archived; });
-    console.log("Active spools:", active.length);
 
-    // Remove alerts for archived spools
-    var activeSpoolIds = new Set(active.map(function (s) { return s.id; }));
-    state.alerts = state.alerts.filter(function (a) { return activeSpoolIds.has(a.spoolId); });
 
-    // Generate new alerts for low stock spools
-    active.forEach(function (s) {
-      var pct = spoolPct(s) * 100;
-      var threshold = s.lowStockPct || 15;
-      var critThreshold = 5;
 
-      if (pct <= critThreshold) {
-        var existingAlert = state.alerts.find(function (a) { return a.spoolId === s.id; });
-        if (existingAlert) {
-          // Update existing alert if type changed
-          if (existingAlert.type !== "crit") {
-            existingAlert.type = "crit";
-            existingAlert.message = "Nearly empty (" + fmtNum(spoolRemaining(s)) + " " + spoolUnit(s) + " remaining)";
-            existingAlert.createdAt = new Date().toISOString();
-          }
-        } else {
-          // Add new critical alert
-          state.alerts.push({
-            id: s.id,
-            type: "crit",
-            spoolId: s.id,
-            spoolName: (s.brand || "Unlabeled") + " — " + (s.colorName || "No color"),
-            message: "Nearly empty (" + fmtNum(spoolRemaining(s)) + " " + spoolUnit(s) + " remaining)",
-            createdAt: new Date().toISOString()
-          });
-        }
-      } else if (pct <= threshold) {
-        var existingAlert = state.alerts.find(function (a) { return a.spoolId === s.id; });
-        if (existingAlert) {
-          // Update existing alert with new percentage
-          existingAlert.message = "Running low (" + Math.round(pct) + "% remaining)";
-          existingAlert.createdAt = new Date().toISOString();
-        } else {
-          // Add new low stock alert
-          state.alerts.push({
-            id: s.id,
-            type: "low",
-            spoolId: s.id,
-            spoolName: (s.brand || "Unlabeled") + " — " + (s.colorName || "No color"),
-            message: "Running low (" + Math.round(pct) + "% remaining)",
-            createdAt: new Date().toISOString()
-          });
-        }
-      }
-    });
 
-    console.log("Total alerts after processing:", state.alerts.length);
 
-    // Save alerts
-    try {
-      localStorage.setItem("filamentlog_alerts", JSON.stringify(state.alerts));
-    } catch (e) {}
-  }
-
-  function renderAlerts() {
-    console.log("renderAlerts called");
-    var container = $("alertsList");
-    console.log("Container found:", !!container);
-    if (!container) {
-      console.error("alertsList container not found in DOM");
-      return;
-    }
-
-    console.log("Alerts to render:", state.alerts.length);
-
-    if (state.alerts.length === 0) {
-      container.innerHTML = '<div class="empty">No alerts</div>';
-      return;
-    }
-
-    var html = "";
-    state.alerts.forEach(function (alert) {
-      var time = new Date(alert.createdAt);
-      var timeStr = time.toLocaleDateString() + " " + time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      html += '<div class="alert-item ' + alert.type + '">' +
-        '<div class="alert-title">' + (alert.type === "crit" ? "⚠️ Critical" : "Low stock") + '</div>' +
-        '<div class="alert-message">' + escapeHtml(alert.spoolName) + '<br>' + escapeHtml(alert.message) + '</div>' +
-        '<div class="alert-time">' + timeStr + '</div>' +
-        '</div>';
-    });
-    container.innerHTML = html;
-    console.log("Alerts rendered");
-  }
-
-  function clearAlerts() {
-    state.alerts = [];
-    try {
-      localStorage.setItem("filamentlog_alerts", JSON.stringify(state.alerts));
-    } catch (e) {}
-    renderAlerts();
-  }
-
-  $("btnClearAlerts").addEventListener("click", clearAlerts);
 
   function renderAll() {
     renderStats();
     renderMaterialFilterOptions();
+    renderBuildPlateFilterOptions();
     renderSpoolGrid();
     renderRefillGrid();
     renderLogFilterOptions();
@@ -2705,8 +2768,7 @@
     if (state.activeView === "analytics") {
       renderAnalytics();
     }
-    generateAlerts();
-    renderAlerts();
+
   }
   Store.onChange = renderAll;
 
@@ -2749,9 +2811,11 @@
   $("searchInput").addEventListener("input", function (e) { state.search = e.target.value; renderSpoolGrid(); });
   $("refillSearchInput").addEventListener("input", function (e) { state.refillSearch = e.target.value; renderRefillGrid(); });
   $("materialFilter").addEventListener("change", function (e) { state.materialFilter = e.target.value; renderSpoolGrid(); });
+  $("buildPlateFilter").addEventListener("change", function (e) { state.buildPlateFilter = e.target.value; renderSpoolGrid(); });
   $("sortFilter").addEventListener("change", function (e) { state.sortFilter = e.target.value; renderSpoolGrid(); });
   $("lowStockOnly").addEventListener("change", function (e) { state.lowStockOnly = e.target.checked; renderSpoolGrid(); });
   $("logSpoolFilter").addEventListener("change", function (e) { state.logSpoolFilter = e.target.value; renderLogTable(); });
+  $("logSort").addEventListener("change", function (e) { state.logSort = e.target.value; renderLogTable(); });
 
   // ============================================================
   // Analytics event listeners
@@ -2923,7 +2987,10 @@
       $("fBedMin").value = p.bed[0];
       $("fBedMax").value = p.bed[1];
     }
+    updateCompatiblePlatesDisplay();
   });
+
+  $("fMaterial").addEventListener("input", updateCompatiblePlatesDisplay);
 
   $("bulkPresetSelect").addEventListener("change", function (e) {
     if (e.target.value === "") return;
@@ -3002,9 +3069,31 @@
       setFormType("filament");
       $("btnDeleteSpool").style.display = "none";
     }
+    updateCompatiblePlatesDisplay();
     $("spoolOverlay").classList.add("open");
   }
   function closeSpoolModal() { $("spoolOverlay").classList.remove("open"); }
+
+  function updateCompatiblePlatesDisplay() {
+    var material = $("fMaterial").value.trim();
+    var display = $("fCompatiblePlates");
+    
+    if (!material) {
+      display.innerHTML = "Enter a material to see compatible build plates";
+      return;
+    }
+    
+    var compatiblePlates = getCompatibleBuildPlates(material);
+    if (compatiblePlates.length === 0) {
+      display.innerHTML = "No compatible build plates found for this material";
+      display.style.color = "var(--red)";
+    } else {
+      display.innerHTML = compatiblePlates.map(function (plate) {
+        return '<span class="compatibility-badge ' + plate.type + '-plate">' + escapeHtml(plate.name) + '</span>';
+      }).join(' ');
+      display.style.color = "var(--ink-soft)";
+    }
+  }
 
   // ============================================================
   // Bulk add modal
@@ -3090,8 +3179,7 @@
     if (added > 0) {
       showToast(added + " spool(s) added.");
       closeBulkAddModal();
-      generateAlerts();
-      renderAlerts();
+
     } else {
       showToast("Enter color names for the spools you want to add.");
     }
@@ -3139,8 +3227,7 @@
       state.selectedSpools.clear();
       updateBulkActionBar();
       closeBulkEditModal();
-      generateAlerts();
-      renderAlerts();
+
     }
   });
 
@@ -3235,8 +3322,7 @@
         showToast("Refill added.");
       }
       closeRefillModal();
-      generateAlerts();
-      renderAlerts();
+
     } catch (e) {
       showToast("Couldn't save — try again.");
     }
@@ -3288,8 +3374,7 @@
       Store.convertRefillToSpool(state.editingRefillId, spoolData);
       showToast("Refill converted to spool.");
       closeRefillModal();
-      generateAlerts();
-      renderAlerts();
+
     } catch (e) {
       showToast("Couldn't convert — try again.");
     }
@@ -3346,8 +3431,7 @@
         showToast("Spool added.");
       }
       closeSpoolModal();
-      generateAlerts();
-      renderAlerts();
+
     } catch (e) {
       showToast("Couldn't save — try again.");
     }
@@ -3364,44 +3448,42 @@
   });
 
   // ============================================================
-  // Usage modal
+  // Print modal
   // ============================================================
-  function renderUsageSpoolSelect(preselect) {
-    var sel = $("uSpool");
+  function spoolSelectHtml(selectedId) {
     var active = Store.spools.filter(function (s) { return !s.archived; });
-    sel.innerHTML = active.map(function (s) {
-      return '<option value="' + s.id + '">' + escapeHtml(s.brand + " — " + (s.line || s.material) + (s.colorName ? " (" + s.colorName + ")" : "")) + '</option>';
-    }).join("");
-    if (preselect) sel.value = preselect;
-    updateUsageLabel();
+    return '<select class="u-filament-spool">' + active.map(function (s) {
+      return '<option value="' + s.id + '"' + (s.id === selectedId ? ' selected' : '') + '>' + escapeHtml(s.brand + " — " + (s.line || s.material) + (s.colorName ? " (" + s.colorName + ")" : "")) + '</option>';
+    }).join("") + '</select>';
   }
-  function updateUsageLabel() {
-    var s = Store.spools.find(function (x) { return x.id === $("uSpool").value; });
-    var isResin = s && s.type === "resin";
-    $("uAmountLabel").textContent = "Amount used (" + (isResin ? "mL" : "g") + ")";
-    updateUsagePreview();
+  function renderFilamentRow(selectedId, amount) {
+    var row = document.createElement('div');
+    row.className = 'field-row filament-row';
+    row.style.marginBottom = '8px';
+    row.innerHTML = '<div class="field">' + spoolSelectHtml(selectedId) + '</div>' +
+      '<div class="field"><input type="number" class="u-filament-amount" min="0" step="0.01" placeholder="Amount (g)" value="' + (amount || '') + '"></div>' +
+      '<div class="field" style="display:flex;align-items:center;"><button class="btn btn-sm btn-quiet btn-remove-filament" type="button" title="Remove">×</button></div>';
+    row.querySelector('.btn-remove-filament').addEventListener('click', function () { row.remove(); });
+    return row;
   }
-  function updateUsagePreview() {
-    var s = Store.spools.find(function (x) { return x.id === $("uSpool").value; });
-    var amt = parseFloat($("uAmount").value) || 0;
-    if (!s) { $("uRemainingPreview").textContent = ""; return; }
-    var remaining = spoolRemaining(s) - amt;
-    $("uRemainingPreview").textContent = "Leaves " + fmtNum(Math.max(0, remaining)) + " " + spoolUnit(s) + " on the spool.";
+  function addFilamentRow(selectedId, amount) {
+    $("uFilaments").appendChild(renderFilamentRow(selectedId, amount));
   }
-  $("uSpool").addEventListener("change", updateUsageLabel);
-  $("uAmount").addEventListener("input", updateUsagePreview);
 
   function openUsageModal(spoolId) {
     if (!Store.spools.filter(function (s) { return !s.archived; }).length) {
       showToast("Add a spool first.");
       return;
     }
-    renderUsageSpoolSelect(spoolId);
-    $("uAmount").value = "";
     $("uProject").value = "";
     $("uNotes").value = "";
     $("uDate").value = todayStr();
-    updateUsagePreview();
+    $("uBuildPlate").value = "";
+    $("uPlateName").value = "";
+    $("uStartTime").value = "";
+    $("uEndTime").value = "";
+    $("uFilaments").innerHTML = "";
+    addFilamentRow(spoolId, "");
     $("usageOverlay").classList.add("open");
   }
   function closeUsageModal() { $("usageOverlay").classList.remove("open"); }
@@ -3409,34 +3491,47 @@
   $("btnLogUsageTab").addEventListener("click", function () { openUsageModal(); });
   $("btnCancelUsage").addEventListener("click", closeUsageModal);
   $("usageOverlay").addEventListener("click", function (e) { if (e.target === e.currentTarget) closeUsageModal(); });
+  $("btnAddFilamentRow").addEventListener("click", function () { addFilamentRow("", ""); });
 
   $("btnSaveUsage").addEventListener("click", function () {
-    var spoolId = $("uSpool").value;
-    var amount = parseFloat($("uAmount").value);
-    if (!spoolId) { showToast("Pick a spool."); return; }
-    if (!amount || amount <= 0) { showToast("Enter how much you used."); $("uAmount").focus(); return; }
-    var s = Store.spools.find(function (x) { return x.id === spoolId; });
-    if (!s) return;
+    var rows = document.querySelectorAll("#uFilaments .filament-row");
+    var filaments = [];
+    var spoolUpdates = {};
+    for (var i = 0; i < rows.length; i++) {
+      var spoolId = rows[i].querySelector(".u-filament-spool").value;
+      var amount = parseFloat(rows[i].querySelector(".u-filament-amount").value);
+      if (!spoolId || !amount || amount <= 0) { showToast("Pick a spool and amount for every filament."); return; }
+      filaments.push({ spoolId: spoolId, amount: amount });
+      var s = Store.spools.find(function (x) { return x.id === spoolId; });
+      if (!s) { showToast("Spool not found."); return; }
+      var newRemaining = Math.max(0, spoolRemaining(s) - amount);
+      var updatedSpool = Object.assign({}, s);
+      if (s.type === "resin") updatedSpool.remainingMl = newRemaining; else updatedSpool.remainingG = newRemaining;
+      delete updatedSpool.id;
+      spoolUpdates[spoolId] = updatedSpool;
+    }
 
-    var newRemaining = Math.max(0, spoolRemaining(s) - amount);
-    var updatedSpool = Object.assign({}, s);
-    if (s.type === "resin") updatedSpool.remainingMl = newRemaining; else updatedSpool.remainingG = newRemaining;
-    delete updatedSpool.id;
+    var project = $("uProject").value.trim();
+    if (!project) { showToast("Enter a project name."); $("uProject").focus(); return; }
 
     try {
-      Store.addUsage({
-        spoolId: spoolId,
-        amount: amount,
-        project: $("uProject").value.trim(),
+      Store.addPrint({
+        project: project,
         notes: $("uNotes").value.trim(),
         date: $("uDate").value || todayStr(),
-        loggedAt: new Date().toISOString()
+        buildPlate: $("uBuildPlate").value,
+        plateName: $("uPlateName").value.trim() || $("uPlateNumber").value.trim(),
+        startTime: $("uStartTime").value || null,
+        endTime: $("uEndTime").value || null,
+        loggedAt: new Date().toISOString(),
+        filaments: filaments
       });
-      Store.updateSpool(spoolId, updatedSpool);
+      Object.keys(spoolUpdates).forEach(function (spoolId) {
+        Store.updateSpool(spoolId, spoolUpdates[spoolId]);
+      });
       showToast("Print logged.");
       closeUsageModal();
-      generateAlerts();
-      renderAlerts();
+
     } catch (e) {
       showToast("Couldn't log it — try again.");
     }
@@ -3537,6 +3632,142 @@
   });
 
   // ============================================================
+  // Auto print tracker import
+  // ============================================================
+  var autoPrints = [];
+
+  function openAutoPrintsModal() {
+    $("autoPrintOverlay").classList.add("open");
+    loadAutoPrints();
+  }
+
+  function closeAutoPrintsModal() {
+    $("autoPrintOverlay").classList.remove("open");
+  }
+
+  function suggestSpoolForAmount(printObj, amountIdx) {
+    // Try to find a loaded spool that matches the print's project or any un-archived spool
+    var active = Store.spools.filter(function (s) { return !s.archived; });
+    if (!active.length) return null;
+    return active[0].id;
+  }
+
+  function renderAutoPrints() {
+    var container = $("autoPrintList");
+    if (!autoPrints.length) {
+      container.innerHTML = '<div class="empty" style="padding: 20px;"><h3>No pending prints</h3><p>The tracker has not found any completed prints yet.</p></div>';
+      return;
+    }
+
+    var spoolOptions = '<option value="">— pick spool —</option>' +
+      Store.spools.filter(function (s) { return !s.archived; }).map(function (s) {
+        var label = escapeHtml(s.brand + " — " + (s.line || s.material) + (s.colorName ? " (" + s.colorName + ")" : ""));
+        return '<option value="' + s.id + '">' + label + '</option>';
+      }).join("");
+
+    container.innerHTML = autoPrints.map(function (p, idx) {
+      var total = (p.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
+      var checked = ' checked';
+      return '<div class="panel" style="margin-bottom: 10px; padding: 12px;">' +
+        '<div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">' +
+          '<input type="checkbox" id="autoPrintCheck_' + idx + '"' + checked + ' style="width:18px; height:18px;">' +
+          '<label for="autoPrintCheck_' + idx + '" style="font-weight:700; font-size:14px;">' + escapeHtml(p.project || "Unknown project") + '</label>' +
+          '<span style="margin-left:auto; font-family:var(--font-mono); font-size:12px; color:var(--ink-faint);">' + (p.date || "") + '</span>' +
+        '</div>' +
+        '<div style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">' + escapeHtml(p.notes || "") + '</div>' +
+        (p.filaments || []).map(function (f, fIdx) {
+          return '<div class="field-row" style="align-items:center; margin-bottom:8px;">' +
+            '<div class="field" style="flex:0 0 120px;">' +
+              '<label>Amount (g)</label>' +
+              '<input type="number" id="autoPrintAmount_' + idx + '_' + fIdx + '" value="' + (Number(f.amount) || 0) + '" step="0.01" min="0">' +
+            '</div>' +
+            '<div class="field" style="flex:1;">' +
+              '<label>Spool</label>' +
+              '<select id="autoPrintSpool_' + idx + '_' + fIdx + '">' + spoolOptions + '</select>' +
+            '</div>' +
+          '</div>';
+        }).join("") +
+        '<div style="font-size:12px; color:var(--ink-faint); text-align:right;">Total: ' + fmtNum(total) + ' g</div>' +
+      '</div>';
+    }).join("");
+
+    autoPrints.forEach(function (p, idx) {
+      (p.filaments || []).forEach(function (f, fIdx) {
+        var sel = $("autoPrintSpool_" + idx + "_" + fIdx);
+        if (sel) sel.value = f.spoolId || suggestSpoolForAmount(p, fIdx) || "";
+      });
+    });
+  }
+
+  function loadAutoPrints() {
+    var url = $("autoPrintUrl").value.trim() || "/print-tracker/pending-prints.json";
+    if (!url.startsWith("http") && !url.startsWith("/")) {
+      url = "/" + url;
+    }
+
+    fetch(url)
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!Array.isArray(data)) data = data.prints || [];
+        autoPrints = data;
+        renderAutoPrints();
+        showToast("Loaded " + autoPrints.length + " pending print(s).");
+      })
+      .catch(function (err) {
+        console.error(err);
+        showToast("Could not load auto prints. " + err.message);
+        autoPrints = [];
+        renderAutoPrints();
+      });
+  }
+
+  function saveAutoPrints() {
+    var added = 0;
+    autoPrints.forEach(function (p, idx) {
+      if (!$("autoPrintCheck_" + idx) || !$("autoPrintCheck_" + idx).checked) return;
+
+      var filaments = [];
+      (p.filaments || []).forEach(function (f, fIdx) {
+        var spoolId = $("autoPrintSpool_" + idx + "_" + fIdx).value;
+        var amount = Number($("autoPrintAmount_" + idx + "_" + fIdx).value) || 0;
+        if (spoolId && amount > 0) {
+          filaments.push({ spoolId: spoolId, amount: amount });
+        }
+      });
+
+      if (!filaments.length) return;
+
+      var print = {
+        id: p.id || Store.genId(),
+        date: p.date || todayStr(),
+        startTime: p.startTime || "",
+        endTime: p.endTime || "",
+        project: p.project || "",
+        buildPlate: p.buildPlate || "",
+        plateName: p.plateName || "",
+        notes: (p.notes || "") + (p.source ? " [" + p.source + "]" : ""),
+        filaments: filaments
+      };
+      Store.addPrint(print);
+      added++;
+    });
+
+    if (added) {
+      showToast("Added " + added + " print(s).");
+      closeAutoPrintsModal();
+      renderAll();
+    } else {
+      showToast("No prints were selected or matched to spools.");
+    }
+  }
+
+  $("btnAutoPrints").addEventListener("click", openAutoPrintsModal);
+  $("btnCancelAutoPrints").addEventListener("click", closeAutoPrintsModal);
+  $("autoPrintOverlay").addEventListener("click", function (e) { if (e.target === e.currentTarget) closeAutoPrintsModal(); });
+  $("btnLoadAutoPrints").addEventListener("click", loadAutoPrints);
+  $("btnSaveAutoPrints").addEventListener("click", saveAutoPrints);
+
+  // ============================================================
   // Boot
   // ============================================================
   populatePresetSelect();
@@ -3549,15 +3780,9 @@
     state.savedQueries = JSON.parse(localStorage.getItem("filamentlog_queries") || "[]");
   } catch (e) { state.savedQueries = []; }
 
-  // Load alerts
-  try {
-    state.alerts = JSON.parse(localStorage.getItem("filamentlog_alerts") || "[]");
-  } catch (e) { state.alerts = []; }
-
   renderAll();
   Store.init();
-  generateAlerts();
-  renderAlerts();
+
 
 })();
 </script>

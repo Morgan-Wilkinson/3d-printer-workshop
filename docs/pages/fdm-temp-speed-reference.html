@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FDM Temperature &amp; Speed Reference</title>
+<style>
+  :root {
+    --bg: #1c1a17;
+    --bg-raised: #262320;
+    --bg-card: #211e1b;
+    --line: #3a352f;
+    --ink: #ece6da;
+    --ink-dim: #a89f8f;
+    --ink-faint: #6f6759;
+    --amber: #e8874a;
+    --amber-dim: #b8663a;
+    --red: #c65b5b;
+    --green: #7bb87a;
+    --spool-pla: #7bb87a;
+    --spool-petg: #5a9bc4;
+    --spool-abs: #c65b5b;
+    --spool-tpu: #b98cd6;
+    --spool-nylon: #d6c25a;
+    --spool-pc: #8a8a8a;
+    --spool-asa: #d68a4a;
+    --spool-pva: #9fc9d1;
+    --spool-hips: #e0a3a3;
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-mono: "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  :root[data-theme="light"] {
+    --bg: #f7f4ee;
+    --bg-raised: #eeeae1;
+    --bg-card: #fbf9f5;
+    --line: #d9d2c4;
+    --ink: #221f1a;
+    --ink-dim: #56503f;
+    --ink-faint: #8a8270;
+    --amber: #b8642f;
+    --amber-dim: #d68a4a;
+    --spool-pc: #6b6b6b;
+    --red: #a8433f;
+    --green: #4f8a52;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-padding-top: 76px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .theme-toggle {
+    position: fixed;
+    top: calc(18px + env(safe-area-inset-top, 0px));
+    right: 18px;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg-raised);
+    color: var(--ink-dim);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { border-color: var(--amber-dim); color: var(--ink); }
+
+  header.hero {
+    position: relative;
+    padding: 64px 24px 40px;
+    max-width: 1040px;
+    margin: 0 auto;
+    z-index: 1;
+  }
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--amber);
+    letter-spacing: 0.02em;
+    margin-bottom: 14px;
+  }
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2rem, 4.6vw, 3.1rem);
+    line-height: 1.1;
+    margin: 0 0 18px;
+    max-width: 18ch;
+  }
+  .hero p.sub {
+    font-size: 1.03rem;
+    color: var(--ink-dim);
+    max-width: 62ch;
+    margin: 0;
+  }
+
+  nav.jumpnav {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(28, 26, 23, 0.92);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 24px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  }
+  :root[data-theme="light"] nav.jumpnav { background: rgba(247, 244, 238, 0.92); }
+  nav.jumpnav .inner {
+    max-width: 1040px;
+    margin: 0 auto;
+    display: flex;
+    gap: 18px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+  }
+  nav.jumpnav a {
+    color: var(--ink-faint);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: 4px 0;
+    border-bottom: 2px solid transparent;
+  }
+  nav.jumpnav a:hover { color: var(--amber); border-color: var(--amber-dim); }
+
+  main {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  section { margin-bottom: 56px; scroll-margin-top: 76px; }
+
+  h2.section-head {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.7rem;
+    margin: 0 0 6px;
+  }
+  p.section-note {
+    color: var(--ink-dim);
+    margin: 0 0 24px;
+    max-width: 66ch;
+    font-size: 0.96rem;
+  }
+
+  /* spec cards */
+  .spec-card {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--card-accent, var(--amber));
+    background: var(--bg-card);
+    border-radius: 3px;
+    padding: 22px 26px;
+    margin-bottom: 16px;
+    scroll-margin-top: 76px;
+  }
+  .spec-card h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.3rem;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+  }
+  .spec-card h3 .dot { width: 11px; height: 11px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
+  .spec-card .subtitle { color: var(--ink-faint); font-size: 0.82rem; margin: 0 0 16px; }
+
+  .full-spec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .full-spec-grid .spec-cell {
+    background: var(--bg-raised);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .full-spec-grid .k {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .full-spec-grid .v {
+    font-family: var(--font-mono);
+    font-size: 0.92rem;
+    color: var(--ink);
+  }
+  .spec-footnote {
+    margin-top: 14px;
+    font-size: 0.86rem;
+    color: var(--ink-dim);
+  }
+
+  /* troubleshooting cards */
+  .fix-card {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--red);
+    background: var(--bg-card);
+    border-radius: 3px;
+    padding: 22px 26px;
+    margin-bottom: 16px;
+    scroll-margin-top: 76px;
+  }
+  .fix-card .problem {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .fix-card .problem h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.28rem;
+    margin: 0;
+  }
+  .fix-card .applies {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--ink-faint);
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .fix-card .desc {
+    color: var(--ink-dim);
+    font-size: 0.92rem;
+    margin: 0 0 16px;
+    max-width: 70ch;
+  }
+  .fix-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: fixstep;
+  }
+  .fix-list li {
+    counter-increment: fixstep;
+    display: flex;
+    gap: 12px;
+    padding: 9px 0;
+    border-top: 1px solid var(--line);
+    font-size: 0.94rem;
+  }
+  .fix-list li:first-child { border-top: none; }
+  .fix-list li::before {
+    content: counter(fixstep);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--bg);
+    background: var(--amber);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .fix-list li .fix-text strong { color: var(--ink); font-weight: 600; }
+  .fix-list li .fix-text span.why { display: block; color: var(--ink-faint); font-size: 0.85rem; margin-top: 2px; }
+
+  .callout {
+    border: 1px solid var(--amber-dim);
+    background: rgba(232, 135, 74, 0.07);
+    border-radius: 3px;
+    padding: 18px 22px;
+    font-size: 0.94rem;
+  }
+  .callout strong { color: var(--amber); font-weight: 600; }
+
+  footer {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+    color: var(--ink-faint);
+    font-size: 0.8rem;
+    font-family: var(--font-mono);
+  }
+
+  @media print {
+    .theme-toggle, nav.jumpnav { display: none !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+    body::before { display: none; }
+    .spec-card, .fix-card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" type="button" onclick="toggleTheme()">
+  <span class="icon" id="themeIcon">☀</span>
+  <span id="themeLabel">Light mode</span>
+</button>
+
+<header class="hero">
+  <a href="../index.html" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-bottom: 16px; font-family: var(--font-mono);">
+    <span>← Back to Workshop</span>
+  </a>
+  <div class="kicker">FDM SETTINGS REFERENCE</div>
+  <h1 class="title">Temperature, speed &amp; what to change when it goes wrong</h1>
+  <p class="sub">Starting-point slicer settings for the common filaments, plus a symptom-first troubleshooting guide: find what you're seeing, work down the list in order.</p>
+</header>
+
+<nav class="jumpnav">
+  <div class="inner">
+    <a href="#specs">Material specs</a>
+    <a href="#pla-s">PLA</a>
+    <a href="#petg-s">PETG</a>
+    <a href="#abs-s">ABS</a>
+    <a href="#asa-s">ASA</a>
+    <a href="#tpu-s">TPU</a>
+    <a href="#nylon-s">Nylon</a>
+    <a href="#pc-s">PC</a>
+    <a href="#pva-s">PVA</a>
+    <a href="#hips-s">HIPS</a>
+    <a href="#troubleshoot">Troubleshooting</a>
+  </div>
+</nav>
+
+<main>
+
+  <section id="specs">
+    <h2 class="section-head">Material specs</h2>
+    <p class="section-note">All values are reasonable starting ranges for a stock 0.4mm brass or hardened-steel nozzle. Every brand's actual spec sheet overrides this &mdash; treat these as where to start tuning, not gospel.</p>
+    
+    <div class="callout" style="margin-bottom:28px;">
+      <strong><strong>IMPORTANT: Printer-Specific Calculations</strong></strong><br>
+      The volumetric flow and acceleration values below are <strong>calculated specifically for the Bambu Lab X2D with the standard hotend</strong> (max 40 mm³/s flow, 20,000 mm/s² acceleration). Values are set to 60-90% of maximum depending on material characteristics to balance speed with print quality. If you upgrade to a high-flow hotend or switch printers, these values will need adjustment. Contact me to expand this document with additional hotend specifications.
+    </div>
+
+    <div class="callout" style="margin-bottom:28px;">
+      <strong>Reading the retraction row:</strong> Bowden setups need more retraction distance at higher speed because of tube slack and filament compression; direct-drive setups need far less because the gear sits right at the heatbreak. Both are listed as <span class="mono">distance @ speed</span>.
+    </div>
+
+    <div class="spec-card" id="pla-s" style="--card-accent: var(--spool-pla)">
+      <h3><span class="dot" style="background:var(--spool-pla)"></span>PLA</h3>
+      <p class="subtitle">Bambu / Prusament / generic PLA and PLA+ &mdash; ranges are near-identical between the two</p>
+      <div class="full-spec-grid">
+        <div class="spec-cell"><span class="k">Nozzle</span><span class="v">200&ndash;220&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Bed</span><span class="v">50&ndash;60&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Chamber</span><span class="v">none / ambient</span></div>
+        <div class="spec-cell"><span class="k">First layer temp</span><span class="v">+5&deg;C nozzle</span></div>
+        <div class="spec-cell"><span class="k">Fan</span><span class="v">0% layer 1, 100% after</span></div>
+        <div class="spec-cell"><span class="k">Max vol. flow</span><span class="v">24&ndash;36 mm&sup3;/s</span></div>
+        <div class="spec-cell"><span class="k">Retraction</span><span class="v">Bowden 4&ndash;7mm @40&ndash;60mm/s<br>Direct 0.4&ndash;1.2mm @25&ndash;45mm/s</span></div>
+        <div class="spec-cell"><span class="k">Print speed</span><span class="v">80&ndash;200mm/s</span></div>
+        <div class="spec-cell"><span class="k">First-layer speed</span><span class="v">20&ndash;30mm/s</span></div>
+        <div class="spec-cell"><span class="k">Travel speed</span><span class="v">200&ndash;400mm/s</span></div>
+        <div class="spec-cell"><span class="k">Acceleration</span><span class="v">12,000&ndash;18,000mm/s&sup2;</span></div>
+        <div class="spec-cell"><span class="k">Drying temp</span><span class="v">45&ndash;55&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Drying duration</span><span class="v">4&ndash;6 hrs (rarely needed)</span></div>
+      </div>
+      <p class="spec-footnote">Widest tolerance of any material here &mdash; if a setting looks wrong, it's probably still fine. The X2D's standard hotend can handle high-speed PLA well; the ranges above reflect 60-90% of the 40 mm&sup3;/s maximum for quality. With a high-flow hotend (65 mm&sup3;/s max), you could push these ranges significantly higher.</p>
+    </div>
+
+    <div class="spec-card" id="petg-s" style="--card-accent: var(--spool-petg)">
+      <h3><span class="dot" style="background:var(--spool-petg)"></span>PETG</h3>
+      <p class="subtitle">Standard and CF-filled PETG &mdash; CF blends run 5&ndash;10&deg;C hotter and need a hardened nozzle</p>
+      <div class="full-spec-grid">
+        <div class="spec-cell"><span class="k">Nozzle</span><span class="v">230&ndash;250&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Bed</span><span class="v">70&ndash;85&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Chamber</span><span class="v">none required; keep &lt;45&deg;C</span></div>
+        <div class="spec-cell"><span class="k">First layer temp</span><span class="v">+5&deg;C nozzle, +5&deg;C bed</span></div>
+        <div class="spec-cell"><span class="k">Fan</span><span class="v">0&ndash;20% layer 1&ndash;2, 30&ndash;50% after</span></div>
+        <div class="spec-cell"><span class="k">Max vol. flow</span><span class="v">20&ndash;30 mm&sup3;/s</span></div>
+        <div class="spec-cell"><span class="k">Retraction</span><span class="v">Bowden 5&ndash;7mm @30&ndash;50mm/s<br>Direct 0.6&ndash;1.5mm @25&ndash;35mm/s</span></div>
+        <div class="spec-cell"><span class="k">Print speed</span><span class="v">60&ndash;150mm/s</span></div>
+        <div class="spec-cell"><span class="k">First-layer speed</span><span class="v">20&ndash;25mm/s</span></div>
+        <div class="spec-cell"><span class="k">Travel speed</span><span class="v">200&ndash;350mm/s</span></div>
+        <div class="spec-cell"><span class="k">Acceleration</span><span class="v">10,000&ndash;15,000mm/s&sup2;</span></div>
+        <div class="spec-cell"><span class="k">Drying temp</span><span class="v">65&ndash;70&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Drying duration</span><span class="v">4&ndash;6 hrs</span></div>
+      </div>
+      <p class="spec-footnote">Too much cooling fan on PETG weakens layer bonding rather than helping &mdash; the opposite of PLA. Keep fan modest and lean on temperature/speed for overhangs instead. The ranges above use 50-75% of the X2D's max flow to balance stringing control with print speed.</p>
+    </div>
+
+    <div class="spec-card" id="abs-s" style="--card-accent: var(--spool-abs)">
+      <h3><span class="dot" style="background:var(--spool-abs)"></span>ABS</h3>
+      <p class="subtitle">Standard ABS &mdash; ABS+ and impact-modified blends sit in the same range</p>
+      <div class="full-spec-grid">
+        <div class="spec-cell"><span class="k">Nozzle</span><span class="v">230&ndash;250&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Bed</span><span class="v">95&ndash;110&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Chamber</span><span class="v">40&ndash;60&deg;C, enclosed</span></div>
+        <div class="spec-cell"><span class="k">First layer temp</span><span class="v">+5&deg;C nozzle, +5&ndash;10&deg;C bed</span></div>
+        <div class="spec-cell"><span class="k">Fan</span><span class="v">0&ndash;20% (bridges only)</span></div>
+        <div class="spec-cell"><span class="k">Max vol. flow</span><span class="v">20&ndash;28 mm&sup3;/s</span></div>
+        <div class="spec-cell"><span class="k">Retraction</span><span class="v">Bowden 4&ndash;6mm @30&ndash;45mm/s<br>Direct 0.4&ndash;1mm @25&ndash;35mm/s</span></div>
+        <div class="spec-cell"><span class="k">Print speed</span><span class="v">60&ndash;120mm/s</span></div>
+        <div class="spec-cell"><span class="k">First-layer speed</span><span class="v">15&ndash;25mm/s</span></div>
+        <div class="spec-cell"><span class="k">Travel speed</span><span class="v">180&ndash;300mm/s</span></div>
+        <div class="spec-cell"><span class="k">Acceleration</span><span class="v">8,000&ndash;12,000mm/s&sup2;</span></div>
+        <div class="spec-cell"><span class="k">Drying temp</span><span class="v">70&ndash;80&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Drying duration</span><span class="v">2&ndash;4 hrs</span></div>
+      </div>
+      <p class="spec-footnote">Lower acceleration than PLA/PETG is deliberate &mdash; ABS is more prone to ringing and to layer-bond cracking (delamination) under the vibration and rapid direction changes that high accel causes. The X2D's CoreXY design handles these speeds well, but the material properties still limit how aggressive you can be without quality loss.</p>
+    </div>
+
+    <div class="spec-card" id="asa-s" style="--card-accent: var(--spool-asa)">
+      <h3><span class="dot" style="background:var(--spool-asa)"></span>ASA</h3>
+      <p class="subtitle">Prints almost identically to ABS; treat it as ABS with better UV stability</p>
+      <div class="full-spec-grid">
+        <div class="spec-cell"><span class="k">Nozzle</span><span class="v">235&ndash;255&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Bed</span><span class="v">95&ndash;110&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Chamber</span><span class="v">45&ndash;60&deg;C, enclosed</span></div>
+        <div class="spec-cell"><span class="k">First layer temp</span><span class="v">+5&deg;C nozzle, +5&ndash;10&deg;C bed</span></div>
+        <div class="spec-cell"><span class="k">Fan</span><span class="v">0&ndash;20% (bridges only)</span></div>
+        <div class="spec-cell"><span class="k">Max vol. flow</span><span class="v">20&ndash;28 mm&sup3;/s</span></div>
+        <div class="spec-cell"><span class="k">Retraction</span><span class="v">Bowden 4&ndash;6mm @30&ndash;45mm/s<br>Direct 0.4&ndash;1mm @25&ndash;35mm/s</span></div>
+        <div class="spec-cell"><span class="k">Print speed</span><span class="v">60&ndash;120mm/s</span></div>
+        <div class="spec-cell"><span class="k">First-layer speed</span><span class="v">15&ndash;25mm/s</span></div>
+        <div class="spec-cell"><span class="k">Travel speed</span><span class="v">180&ndash;300mm/s</span></div>
+        <div class="spec-cell"><span class="k">Acceleration</span><span class="v">8,000&ndash;12,000mm/s&sup2;</span></div>
+        <div class="spec-cell"><span class="k">Drying temp</span><span class="v">70&ndash;80&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Drying duration</span><span class="v">4&ndash;6 hrs</span></div>
+      </div>
+      <p class="spec-footnote">Slightly less warping-prone than ABS in practice, but don't skip the enclosure &mdash; a draft across an open build plate will still cause corner lift.</p>
+    </div>
+
+    <div class="spec-card" id="tpu-s" style="--card-accent: var(--spool-tpu)">
+      <h3><span class="dot" style="background:var(--spool-tpu)"></span>TPU</h3>
+      <p class="subtitle">Standard 95A shore hardness &mdash; softer shore values (85A and below) need slower everything</p>
+      <div class="full-spec-grid">
+        <div class="spec-cell"><span class="k">Nozzle</span><span class="v">210&ndash;230&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Bed</span><span class="v">30&ndash;60&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Chamber</span><span class="v">none / ambient</span></div>
+        <div class="spec-cell"><span class="k">First layer temp</span><span class="v">+5&deg;C nozzle</span></div>
+        <div class="spec-cell"><span class="k">Fan</span><span class="v">50&ndash;100%</span></div>
+        <div class="spec-cell"><span class="k">Max vol. flow</span><span class="v">8&ndash;12 mm&sup3;/s</span></div>
+        <div class="spec-cell"><span class="k">Retraction</span><span class="v">Direct drive only recommended: 0.5&ndash;2mm @20&ndash;30mm/s<br>Bowden: minimal/off, buckles easily</span></div>
+        <div class="spec-cell"><span class="k">Print speed</span><span class="v">25&ndash;50mm/s</span></div>
+        <div class="spec-cell"><span class="k">First-layer speed</span><span class="v">15&ndash;20mm/s</span></div>
+        <div class="spec-cell"><span class="k">Travel speed</span><span class="v">80&ndash;120mm/s</span></div>
+        <div class="spec-cell"><span class="k">Acceleration</span><span class="v">3,000&ndash;5,000mm/s&sup2;</span></div>
+        <div class="spec-cell"><span class="k">Drying temp</span><span class="v">60&ndash;70&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Drying duration</span><span class="v">6&ndash;8 hrs</span></div>
+      </div>
+      <p class="spec-footnote">Speed is the limiting factor, not temperature &mdash; the material is soft enough to buckle in a Bowden tube or compress against the drive gear if pushed too fast. The X2D's direct-drive extruder handles TPU much better than Bowden setups, but the ranges above remain conservative (20-30% of max flow) for reliability.</p>
+    </div>
+
+    <div class="spec-card" id="nylon-s" style="--card-accent: var(--spool-nylon)">
+      <h3><span class="dot" style="background:var(--spool-nylon)"></span>Nylon <span style="color:var(--ink-faint); font-size:0.7em; font-family:var(--font-body);">(PA / PA-CF)</span></h3>
+      <p class="subtitle">Unfilled PA; carbon-fiber-filled runs 10&ndash;20&deg;C hotter and requires a hardened nozzle</p>
+      <div class="full-spec-grid">
+        <div class="spec-cell"><span class="k">Nozzle</span><span class="v">250&ndash;270&deg;C (PA-CF 260&ndash;285&deg;C)</span></div>
+        <div class="spec-cell"><span class="k">Bed</span><span class="v">70&ndash;100&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Chamber</span><span class="v">40&ndash;60&deg;C, enclosed</span></div>
+        <div class="spec-cell"><span class="k">First layer temp</span><span class="v">+5&deg;C nozzle</span></div>
+        <div class="spec-cell"><span class="k">Fan</span><span class="v">0&ndash;20%</span></div>
+        <div class="spec-cell"><span class="k">Max vol. flow</span><span class="v">18&ndash;26 mm&sup3;/s</span></div>
+        <div class="spec-cell"><span class="k">Retraction</span><span class="v">Bowden 5&ndash;7mm @30&ndash;40mm/s<br>Direct 0.6&ndash;1.2mm @25&ndash;35mm/s</span></div>
+        <div class="spec-cell"><span class="k">Print speed</span><span class="v">50&ndash;100mm/s</span></div>
+        <div class="spec-cell"><span class="k">First-layer speed</span><span class="v">15&ndash;20mm/s</span></div>
+        <div class="spec-cell"><span class="k">Travel speed</span><span class="v">150&ndash;250mm/s</span></div>
+        <div class="spec-cell"><span class="k">Acceleration</span><span class="v">6,000&ndash;10,000mm/s&sup2;</span></div>
+        <div class="spec-cell"><span class="k">Drying temp</span><span class="v">70&ndash;80&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Drying duration</span><span class="v">8&ndash;12 hrs (24 hrs if visibly wet)</span></div>
+      </div>
+      <p class="spec-footnote">The most moisture-sensitive material on this page. A partially dried spool will print worse than a fresh one that was stored properly &mdash; if quality is inconsistent, dry it again before changing anything else. The ranges above use 45-65% of the X2D's max flow since Nylon benefits from slower, more controlled extrusion for strength.</p>
+    </div>
+
+    <div class="spec-card" id="pc-s" style="--card-accent: var(--spool-pc)">
+      <h3><span class="dot" style="background:var(--spool-pc)"></span>PC</h3>
+      <p class="subtitle">Standard and PC-blend filaments &mdash; pure PC needs the top end of these ranges</p>
+      <div class="full-spec-grid">
+        <div class="spec-cell"><span class="k">Nozzle</span><span class="v">270&ndash;310&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Bed</span><span class="v">100&ndash;130&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Chamber</span><span class="v">60&ndash;90&deg;C, fully enclosed</span></div>
+        <div class="spec-cell"><span class="k">First layer temp</span><span class="v">+5&ndash;10&deg;C nozzle</span></div>
+        <div class="spec-cell"><span class="k">Fan</span><span class="v">0&ndash;10%</span></div>
+        <div class="spec-cell"><span class="k">Max vol. flow</span><span class="v">15&ndash;22 mm&sup3;/s</span></div>
+        <div class="spec-cell"><span class="k">Retraction</span><span class="v">Bowden 5&ndash;7mm @25&ndash;35mm/s<br>Direct 0.6&ndash;1.2mm @20&ndash;30mm/s</span></div>
+        <div class="spec-cell"><span class="k">Print speed</span><span class="v">40&ndash;80mm/s</span></div>
+        <div class="spec-cell"><span class="k">First-layer speed</span><span class="v">10&ndash;20mm/s</span></div>
+        <div class="spec-cell"><span class="k">Travel speed</span><span class="v">120&ndash;200mm/s</span></div>
+        <div class="spec-cell"><span class="k">Acceleration</span><span class="v">4,000&ndash;7,000mm/s&sup2;</span></div>
+        <div class="spec-cell"><span class="k">Drying temp</span><span class="v">80&ndash;90&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Drying duration</span><span class="v">8&ndash;12 hrs (up to 24 if wet)</span></div>
+      </div>
+      <p class="spec-footnote">Needs the hottest hotend and chamber on this page &mdash; the X2D's standard hotend (max 300&deg;C) and chamber (up to 65&deg;C) can handle these ranges. Underheated PC delaminates and is brittle rather than just printing poorly. The ranges above use conservative values (37-55% of max flow) since PC is unforgiving &mdash; you could push higher with experimentation.</p>
+    </div>
+
+    <div class="spec-card" id="pva-s" style="--card-accent: var(--spool-pva)">
+      <h3><span class="dot" style="background:var(--spool-pva)"></span>PVA</h3>
+      <p class="subtitle">Support material for PLA/PETG &mdash; match bed temp to whatever the main material needs</p>
+      <div class="full-spec-grid">
+        <div class="spec-cell"><span class="k">Nozzle</span><span class="v">190&ndash;210&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Bed</span><span class="v">match main material</span></div>
+        <div class="spec-cell"><span class="k">Chamber</span><span class="v">none</span></div>
+        <div class="spec-cell"><span class="k">First layer temp</span><span class="v">+5&deg;C nozzle</span></div>
+        <div class="spec-cell"><span class="k">Fan</span><span class="v">30&ndash;50%</span></div>
+        <div class="spec-cell"><span class="k">Max vol. flow</span><span class="v">12&ndash;18 mm&sup3;/s</span></div>
+        <div class="spec-cell"><span class="k">Retraction</span><span class="v">Bowden 5&ndash;7mm @30&ndash;40mm/s<br>Direct 0.6&ndash;1mm @25&ndash;35mm/s</span></div>
+        <div class="spec-cell"><span class="k">Print speed</span><span class="v">40&ndash;70mm/s</span></div>
+        <div class="spec-cell"><span class="k">First-layer speed</span><span class="v">15&ndash;20mm/s</span></div>
+        <div class="spec-cell"><span class="k">Travel speed</span><span class="v">120&ndash;200mm/s</span></div>
+        <div class="spec-cell"><span class="k">Acceleration</span><span class="v">6,000&ndash;10,000mm/s&sup2;</span></div>
+        <div class="spec-cell"><span class="k">Drying temp</span><span class="v">50&ndash;55&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Drying duration</span><span class="v">4&ndash;6 hrs, more if gummy</span></div>
+      </div>
+      <p class="spec-footnote">Extremely hygroscopic &mdash; a spool left on the printer overnight uncovered can turn soft and unusable. Keep it sealed with desiccant between prints, not just before drying. The ranges above use 30-45% of the X2D's max flow since PVA is water-soluble and benefits from gentle handling.</p>
+    </div>
+
+    <div class="spec-card" id="hips-s" style="--card-accent: var(--spool-hips)">
+      <h3><span class="dot" style="background:var(--spool-hips)"></span>HIPS</h3>
+      <p class="subtitle">Support material for ABS, or a standalone machinable material</p>
+      <div class="full-spec-grid">
+        <div class="spec-cell"><span class="k">Nozzle</span><span class="v">230&ndash;250&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Bed</span><span class="v">90&ndash;110&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Chamber</span><span class="v">40&ndash;60&deg;C, enclosed</span></div>
+        <div class="spec-cell"><span class="k">First layer temp</span><span class="v">+5&deg;C nozzle</span></div>
+        <div class="spec-cell"><span class="k">Fan</span><span class="v">0&ndash;20%</span></div>
+        <div class="spec-cell"><span class="k">Max vol. flow</span><span class="v">20&ndash;28 mm&sup3;/s</span></div>
+        <div class="spec-cell"><span class="k">Retraction</span><span class="v">Bowden 4&ndash;6mm @30&ndash;45mm/s<br>Direct 0.4&ndash;1mm @25&ndash;35mm/s</span></div>
+        <div class="spec-cell"><span class="k">Print speed</span><span class="v">60&ndash;120mm/s</span></div>
+        <div class="spec-cell"><span class="k">First-layer speed</span><span class="v">15&ndash;25mm/s</span></div>
+        <div class="spec-cell"><span class="k">Travel speed</span><span class="v">180&ndash;300mm/s</span></div>
+        <div class="spec-cell"><span class="k">Acceleration</span><span class="v">8,000&ndash;12,000mm/s&sup2;</span></div>
+        <div class="spec-cell"><span class="k">Drying temp</span><span class="v">70&ndash;80&deg;C</span></div>
+        <div class="spec-cell"><span class="k">Drying duration</span><span class="v">2&ndash;4 hrs</span></div>
+      </div>
+      <p class="spec-footnote">Dissolves in limonene rather than water, which is why it pairs with ABS instead of PVA &mdash; both print at similar temperatures, so nothing has to change between the two on the same print. The ranges above match ABS since they're often used together on multi-material prints.</p>
+    </div>
+  </section>
+
+  <section id="troubleshoot">
+    <h2 class="section-head">If X happens &rarr; change Y</h2>
+    <p class="section-note">Ordered by what's most likely to be the actual cause and easiest to test first. Change one thing at a time and reprint a small test piece before stacking more changes &mdash; it's the only way to know which fix actually worked.</p>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Stringing / wispy hairs between parts</h3><span class="applies">mostly PETG, TPU, PLA at high temp</span></div>
+      <p class="desc">Fine strings of plastic left behind whenever the nozzle travels over open space.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Dry the filament.</strong><span class="why">Moisture boiling inside the nozzle is the single most common stringing cause on PETG, Nylon, and TPU &mdash; test this before touching any slicer setting.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce nozzle temperature</strong> in 5&deg;C steps.<span class="why">Too hot makes the filament runnier and more prone to ooze during travel.</span></div></li>
+        <li><div class="fix-text"><strong>Increase retraction distance</strong> slightly (0.5&ndash;1mm on direct drive, 1&ndash;2mm on Bowden).<span class="why">Pulls the molten tip back far enough that it doesn't drool out during travel.</span></div></li>
+        <li><div class="fix-text"><strong>Increase retraction speed.</strong><span class="why">A faster retraction clears the nozzle tip before pressure has a chance to push more filament out.</span></div></li>
+        <li><div class="fix-text"><strong>Enable/increase &ldquo;wipe on retract&rdquo; and coasting.</strong><span class="why">Wipe moves the nozzle a short distance before lifting, dragging the string back onto the part instead of leaving it hanging in the air.</span></div></li>
+        <li><div class="fix-text"><strong>Increase travel speed.</strong><span class="why">Less time in the air over the gap means less time for ooze to stretch into a visible string.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Poor overhangs &amp; sagging bridges</h3><span class="applies">all materials, worst on PETG/ABS/Nylon</span></div>
+      <p class="desc">Drooping, rough, or stringy undersides on angled surfaces and unsupported spans.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Increase part cooling fan</strong> on the overhang region specifically.<span class="why">Cooling the plastic faster lets each layer support the next one instead of sagging under its own weight before it sets.</span></div></li>
+        <li><div class="fix-text"><strong>Slow down the outer wall and overhang speed.</strong><span class="why">Gives the fan more time to cool each bit of plastic before the next layer lands on top of it.</span></div></li>
+        <li><div class="fix-text"><strong>Lower the layer height.</strong><span class="why">Thinner layers bridge and cool more reliably, and each one has less weight for the layer below to support.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce nozzle temperature</strong> slightly.<span class="why">Cooler, stiffer plastic holds its shape on an overhang instead of drooping while still soft.</span></div></li>
+        <li><div class="fix-text"><strong>Add supports</strong> below ~40&ndash;45&deg; from vertical.<span class="why">Some geometry is unprintable bridge-free regardless of tuning &mdash; supports are the honest fix past a certain angle.</span></div></li>
+        <li><div class="fix-text"><strong>For ABS/ASA/Nylon/PC specifically: don't over-cool.</strong><span class="why">These materials rely on some retained heat for layer bonding; excess fan trades away strength to fix an overhang &mdash; reduce speed/temperature first instead.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Under-extrusion at high speed</h3><span class="applies">all materials, especially high-flow/CF filaments</span></div>
+      <p class="desc">Prints fine at low speed, but walls thin out, gaps appear, or layers sound "starved" once speed goes up.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Increase nozzle temperature</strong> in 5&ndash;10&deg;C steps toward the top of the material's range.<span class="why">Hotter plastic flows more easily, raising how much the nozzle can push through per second.</span></div></li>
+        <li><div class="fix-text"><strong>Raise the max volumetric flow limit</strong> in the slicer if it's currently capping speed.<span class="why">Slicers automatically slow down when a move would exceed this number &mdash; if it's set too conservatively, you're leaving speed on the table or, if set too high, forcing an unachievable flow rate.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce print speed</strong> for that feature (usually thin walls or small text) back to where flow can keep up.<span class="why">Sometimes the honest fix is that the hotend simply can't melt plastic fast enough at that speed &mdash; slower is the reliable answer.</span></div></li>
+        <li><div class="fix-text"><strong>Check for partial nozzle clogs or wear.</strong><span class="why">A partially blocked or worn (oversized/undersized) nozzle opening reduces real flow capacity below what the slicer assumes.</span></div></li>
+        <li><div class="fix-text"><strong>Increase hotend heater power / check thermistor calibration</strong> if using a high-flow nozzle.<span class="why">Some upgraded hotends need more sustained wattage than stock to hold temperature under high flow &mdash; temperature can sag mid-print without you seeing it on the display.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Under-extrusion (general) &mdash; gaps, weak layers, thin walls</h3><span class="applies">all materials</span></div>
+      <p class="desc">Visible gaps between extrusion lines, weak layer bonding, or walls that look thinner than specified, independent of speed.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Check filament diameter consistency and E-steps calibration.</strong><span class="why">If the extruder isn't feeding the amount of filament it thinks it is, every other setting is compensating for the wrong problem.</span></div></li>
+        <li><div class="fix-text"><strong>Increase flow rate / extrusion multiplier</strong> by 2&ndash;5%.<span class="why">Corrects for filament that's slightly undersized or a hotend that melts less efficiently than assumed.</span></div></li>
+        <li><div class="fix-text"><strong>Increase nozzle temperature</strong> slightly.<span class="why">Under-melted plastic is more viscous and harder to push through consistently.</span></div></li>
+        <li><div class="fix-text"><strong>Check the extruder gear tension and for grinding.</strong><span class="why">Too loose slips on the filament; too tight can crush it &mdash; both reduce how much actually reaches the nozzle.</span></div></li>
+        <li><div class="fix-text"><strong>Inspect for a partially clogged nozzle.</strong><span class="why">Debris or carbonized residue narrows the opening without fully blocking it, which looks exactly like under-extrusion.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Over-extrusion &mdash; blobs, rough surface, oversized dimensions</h3><span class="applies">all materials</span></div>
+      <p class="desc">Parts print slightly oversized, surfaces look lumpy, or corners/seams bulge outward.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Reduce flow rate / extrusion multiplier</strong> by 2&ndash;5%.<span class="why">Most direct fix &mdash; too much plastic is being pushed out relative to how far the nozzle travels.</span></div></li>
+        <li><div class="fix-text"><strong>Re-check filament diameter and E-steps calibration.</strong><span class="why">A miscalibrated extruder or oversized filament feeds more material than the slicer assumes, independent of the flow setting.</span></div></li>
+        <li><div class="fix-text"><strong>Lower nozzle temperature</strong> slightly.<span class="why">Overly hot, runny plastic tends to ooze extra volume out at corners and seams.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce line width</strong> if it's set above the nozzle diameter by a large margin.<span class="why">An overly wide line width setting tells the slicer to push out more plastic per pass than the geometry needs.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Warping &amp; lifting corners</h3><span class="applies">ABS, ASA, Nylon, PC &mdash; occasionally large PETG parts</span></div>
+      <p class="desc">Corners or edges curl up off the bed mid-print, sometimes popping the whole part loose.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Increase bed temperature</strong> toward the top of the material's range.<span class="why">Keeps the bottom layers hot enough that they don't shrink and pull away as they cool.</span></div></li>
+        <li><div class="fix-text"><strong>Close/add an enclosure and eliminate drafts.</strong><span class="why">A sudden temperature drop across the part &mdash; from an AC vent, an open door, or a cooling fan &mdash; is the most common trigger for uneven shrinkage.</span></div></li>
+        <li><div class="fix-text"><strong>Add a brim or increase brim width.</strong><span class="why">Extra anchoring material at the base resists the corner's pull more than the part alone can.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce or disable the part-cooling fan</strong> for the first several layers.<span class="why">Active cooling on a material that needs to cool slowly (ABS/ASA/Nylon/PC) accelerates the uneven shrinkage that causes warping.</span></div></li>
+        <li><div class="fix-text"><strong>Clean the bed surface</strong> and consider glue stick or specialty adhesive.<span class="why">Weak first-layer adhesion gives the corner somewhere to lift to in the first place.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce chamber-to-room temperature gradient</strong> once the print finishes.<span class="why">Opening an enclosure immediately after a print exposes a still-hot part to cold air and can warp it after the fact.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Elephant's foot (bulging first layers)</h3><span class="applies">all materials, worst with soft/hot first layers</span></div>
+      <p class="desc">The bottom few layers of a part flare outward slightly wider than the rest, most visible on vertical walls near the bed.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Lower the bed temperature slightly</strong> (or the first-layer bed temp specifically).<span class="why">A too-hot bed keeps the bottom layers soft long enough that the weight of the part above squishes them outward.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce first-layer squish / Z-offset.</strong><span class="why">Pressing the first layer too flat forces plastic to spread sideways beyond the intended wall line.</span></div></li>
+        <li><div class="fix-text"><strong>Enable elephant's-foot compensation</strong> in the slicer.<span class="why">Purpose-built setting that insets the first few layers slightly to counteract the bulge directly.</span></div></li>
+        <li><div class="fix-text"><strong>Increase first-layer cooling</strong> (where the material tolerates it &mdash; PLA/PETG, not ABS/ASA/PC).<span class="why">Sets the bottom layer faster so it holds its shape sooner under the weight above.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Poor first-layer adhesion &mdash; won't stick to the bed</h3><span class="applies">all materials</span></div>
+      <p class="desc">The print detaches from the bed early, corners lift immediately, or the first layer looks patchy and translucent in spots.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Clean the bed with isopropyl alcohol.</strong><span class="why">Skin oils and dust are the single most common cause and the easiest to rule out first.</span></div></li>
+        <li><div class="fix-text"><strong>Re-level the bed / re-check Z-offset.</strong><span class="why">A nozzle sitting too far from the bed lays plastic down without pressing it into the surface.</span></div></li>
+        <li><div class="fix-text"><strong>Increase bed temperature</strong> for the first layer specifically.<span class="why">A too-cool bed lets the plastic solidify before it bonds to the surface texture.</span></div></li>
+        <li><div class="fix-text"><strong>Slow down the first layer.</strong><span class="why">More time in contact with the hot bed improves the bond before the nozzle moves on.</span></div></li>
+        <li><div class="fix-text"><strong>Add a glue stick, hairspray, or specialty adhesive</strong> (especially ABS, ASA, Nylon, PC).<span class="why">Some materials don't bond well to bare glass or PEI and need a chemical assist regardless of temperature.</span></div></li>
+        <li><div class="fix-text"><strong>Increase first-layer line width or add a brim/raft.</strong><span class="why">More surface contact area gives the print more to hold onto for small or oddly-shaped footprints.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Layer separation / delamination (cracking between layers)</h3><span class="applies">ABS, ASA, Nylon, PC especially</span></div>
+      <p class="desc">Layers split apart cleanly, sometimes audibly, either during printing or when the part is later stressed.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Increase nozzle temperature.</strong><span class="why">Hotter plastic fuses better to the layer below it &mdash; the most common root cause of weak Z-axis bonding.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce or disable part cooling</strong> (for ABS/ASA/Nylon/PC).<span class="why">Cooling the layer too fast prevents it from properly welding to the next one before it's deposited.</span></div></li>
+        <li><div class="fix-text"><strong>Enclose the printer and raise chamber temperature.</strong><span class="why">A stable warm environment keeps every layer from cooling and contracting unevenly relative to its neighbors.</span></div></li>
+        <li><div class="fix-text"><strong>Dry the filament.</strong><span class="why">Moisture boiling at the nozzle tip creates weak, bubble-filled layers that separate under far less stress than they should.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce print speed / increase layer time.</strong><span class="why">Gives each layer more time to bond thermally with the one beneath before the nozzle moves on.</span></div></li>
+        <li><div class="fix-text"><strong>Reorient the part</strong> so the stress it will experience runs parallel to layers, not across them.<span class="why">No amount of tuning fully closes the gap between in-layer and between-layer strength &mdash; design around it when possible.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Zits &amp; blobs at layer seams</h3><span class="applies">all materials</span></div>
+      <p class="desc">A visible bump or blob running vertically up one side of the print, at the point where each layer starts and stops.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Enable seam hiding</strong> (align to a corner, or use a "scarf"/painted seam) in the slicer.<span class="why">Moves the visible pressure spike from a flat, visible face to a corner or a feathered transition where it's far less noticeable.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce retraction distance and enable wipe.</strong><span class="why">Excess retraction followed by re-priming at the seam is a common source of the small blob at the start of each loop.</span></div></li>
+        <li><div class="fix-text"><strong>Enable coasting</strong> near the end of each perimeter loop.<span class="why">Stops extrusion slightly early so residual pressure in the nozzle doesn't dump extra plastic exactly at the seam.</span></div></li>
+        <li><div class="fix-text"><strong>Lower flow rate slightly.</strong><span class="why">If the whole print runs a bit over-extruded, the seam is where that excess becomes most visible.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Ringing / ghosting (rippling near sharp features)</h3><span class="applies">all materials, worse on lightweight/high-speed printers</span></div>
+      <p class="desc">Faint wave-like ripples on the surface, radiating away from corners, holes, or other abrupt direction changes.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Reduce acceleration and jerk/junction deviation.</strong><span class="why">Ringing comes from the print head vibrating after a sudden direction change &mdash; slowing that change down directly reduces the vibration.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce print speed</strong>, especially outer wall speed.<span class="why">Less momentum at each direction change means less energy available to shake the frame.</span></div></li>
+        <li><div class="fix-text"><strong>Tighten belts and check for loose frame components.</strong><span class="why">A loose belt or wobbly gantry amplifies vibration that tuned acceleration alone can't fully cancel.</span></div></li>
+        <li><div class="fix-text"><strong>Run input shaping calibration</strong> if the printer/firmware supports it.<span class="why">Purpose-built feature that measures the frame's resonant frequency and compensates for it directly, often solving ringing without sacrificing speed.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Layer shifting (X/Y misalignment mid-print)</h3><span class="applies">all materials &mdash; mechanical, not material-related</span></div>
+      <p class="desc">Everything above a certain layer suddenly shifts sideways and stays shifted for the rest of the print.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Reduce acceleration and print/travel speed.</strong><span class="why">The stepper motor is losing steps because it's being asked to move faster than it (or the belt) can reliably keep up with.</span></div></li>
+        <li><div class="fix-text"><strong>Tighten belts and check pulley set screws.</strong><span class="why">A slipping belt or a pulley spinning loose on its shaft causes the exact same symptom as a lost step.</span></div></li>
+        <li><div class="fix-text"><strong>Check for physical obstructions</strong> (a cable snagging, a knocked-loose part) along the axis that shifted.<span class="why">Something physically blocking the head momentarily has the same effect as a motor skipping.</span></div></li>
+        <li><div class="fix-text"><strong>Lower stepper current if it's running hot</strong>, or increase it if it's undersized for the load.<span class="why">A motor running too hot loses torque and skips; one set too low for the axis load does too, from the opposite direction.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Nozzle clogs / heat creep jams</h3><span class="applies">all materials, worse on hygroscopic ones and slow/paused prints</span></div>
+      <p class="desc">Extrusion gradually weakens over a long print, or the extruder starts clicking/skipping as it tries to push filament that won't come out.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Dry the filament.</strong><span class="why">Trapped moisture vaporizing inside the nozzle is a very common, easily overlooked clog contributor.</span></div></li>
+        <li><div class="fix-text"><strong>Check heatbreak cooling (fan and airflow).</strong><span class="why">Heat creeping up past the heatbreak softens filament higher up than intended, where it can jam against the cold end.</span></div></li>
+        <li><div class="fix-text"><strong>Avoid long pauses mid-print</strong> at high nozzle temperature.<span class="why">Stationary hot filament degrades and can carbonize, narrowing or blocking the nozzle opening.</span></div></li>
+        <li><div class="fix-text"><strong>Run a cold pull / nozzle cleaning routine.</strong><span class="why">Physically removes carbonized residue or debris that's already accumulated, rather than just preventing more.</span></div></li>
+        <li><div class="fix-text"><strong>Check for a worn or partially blocked nozzle orifice</strong>, especially after printing abrasive (CF/glass/metal-filled) filament through a brass nozzle.<span class="why">Abrasive fills erode brass quickly; a worn nozzle behaves unpredictably even with fresh, dry filament.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Pillowing / gaps on top surfaces</h3><span class="applies">all materials</span></div>
+      <p class="desc">The top layer looks bubbly, has small gaps, or doesn't fully close over the infill below.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Increase top layer count.</strong><span class="why">More solid layers give the top surface more material to bridge the infill gaps with before it needs to look fully solid.</span></div></li>
+        <li><div class="fix-text"><strong>Increase infill percentage or switch to a supportive infill pattern</strong> (e.g. grid, gyroid) near the top.<span class="why">Denser or better-spaced infill gives the top layers shorter unsupported spans to bridge.</span></div></li>
+        <li><div class="fix-text"><strong>Increase part cooling on top layers.</strong><span class="why">Faster-setting plastic sags less into the gaps between infill lines.</span></div></li>
+        <li><div class="fix-text"><strong>Reduce top layer print speed.</strong><span class="why">Slower top-surface printing gives each pass more time to bond and settle flat before the next one.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Popping / crackling sounds during printing</h3><span class="applies">PETG, Nylon, PC, PVA, TPU &mdash; any hygroscopic filament</span></div>
+      <p class="desc">Audible popping, crackling, or fine spitting sounds coming from the nozzle, often paired with a rough, bubbly surface finish.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Dry the filament</strong> at the material's recommended drying temperature and duration.<span class="why">This sound is almost always trapped moisture boiling and escaping explosively as steam &mdash; it's close to a diagnostic sound on its own.</span></div></li>
+        <li><div class="fix-text"><strong>Store the spool in a sealed container with desiccant going forward.</strong><span class="why">Prevents the problem from recurring rather than just fixing the current spool.</span></div></li>
+        <li><div class="fix-text"><strong>Use a filament dryer that runs during printing</strong> for chronically humid environments or very hygroscopic materials (Nylon, PVA).<span class="why">Some climates re-absorb moisture faster than a one-time dry-out can outpace over a long print.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <div class="problem"><h3>Cracking under load in rigid engineering parts</h3><span class="applies">Nylon, PC, ABS/ASA</span></div>
+      <p class="desc">A functional part fails suddenly along a layer line under stress, well below where the material's bulk properties suggest it should.</p>
+      <ul class="fix-list">
+        <li><div class="fix-text"><strong>Increase nozzle and chamber temperature</strong> toward the top of the range.<span class="why">Better inter-layer fusion is the biggest lever for real-world strength in these materials &mdash; most failures are layer-bond failures, not bulk material failures.</span></div></li>
+        <li><div class="fix-text"><strong>Reorient the part</strong> so the load runs parallel to the layers rather than across them.<span class="why">No FDM part is as strong across layers as it is within one &mdash; design/orientation matters as much as settings here.</span></div></li>
+        <li><div class="fix-text"><strong>Increase wall count</strong> rather than relying on infill for strength.<span class="why">Continuous perimeter walls carry load more reliably than infill patterns, which have their own internal weak points.</span></div></li>
+        <li><div class="fix-text"><strong>Dry the filament before printing the part.</strong><span class="why">Moisture-weakened layers are a common hidden cause of a part that "should" have been strong enough on paper.</span></div></li>
+        <li><div class="fix-text"><strong>Anneal the finished part</strong> (oven or dedicated annealing box, material-dependent temperature) if maximum strength matters.<span class="why">Controlled reheating relieves internal stress and can meaningfully improve layer bonding after the fact for materials like Nylon and PC.</span></div></li>
+      </ul>
+    </div>
+
+  </section>
+
+</main>
+
+<footer>
+  Settings here are calculated specifically for the Bambu Lab X2D with the standard hotend (40 mm&sup3;/s max flow, 20,000 mm/s&sup2; max acceleration). Brand-to-brand variation is real &mdash; always sanity-check against the spool's own spec sheet, especially for ABS, ASA, Nylon, and PC. Contact me to expand this document with specifications for additional hotends or printers.
+</footer>
+
+<script>
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    var icon = document.getElementById('themeIcon');
+    var label = document.getElementById('themeLabel');
+    if (theme === 'light') {
+      icon.textContent = '\u263D';
+      label.textContent = 'Dark mode';
+    } else {
+      icon.textContent = '\u2600';
+      label.textContent = 'Light mode';
+    }
+    try { localStorage.setItem('fdm-ref-theme', theme); } catch (e) {}
+  }
+  function toggleTheme() {
+    var current = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  }
+  (function init() {
+    var saved = null;
+    try { saved = localStorage.getItem('fdm-ref-theme'); } catch (e) {}
+    var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    applyTheme(saved || (prefersLight ? 'light' : 'dark'));
+  })();
+</script>
+
+</body>
+</html>

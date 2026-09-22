@@ -1,0 +1,13 @@
+{
+  "printer_type": "moonraker",
+  "url": "http://printer.local",
+  "api_key": "",
+  "poll_interval": 60,
+  "output_path": "../../../home-server/shared-storage/print-tracker/pending-prints.json",
+  "state_file": "print-tracker-state.json",
+  "gcode_queue_path": "../../../home-server/shared-storage/print-tracker/queue",
+  "track_new_only": true,
+  "spoolman_enabled": false,
+  "spoolman_api": "http://spoolman.local/api/v1",
+  "spoolman_spool_id": null
+}

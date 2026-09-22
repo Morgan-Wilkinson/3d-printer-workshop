@@ -25,8 +25,61 @@ A comprehensive filament and resin inventory management system that helps you:
 - **Sales Tracking**: Track sale prices, original prices, bundle deals, and calculate savings
 - **Advanced Analytics**: Three-tier query system (Simple, Medium, Advanced) for deep data analysis
 - **Usage Analytics**: View usage statistics and material costs over time
+- **Build Plate Compatibility**: Automatic compatibility badges for Bambu Lab X2D build plates (Cool Plate, Engineering Plate, Textured PEI Plate)
+- **Build Plate Filtering**: Filter inventory by compatible build plate
+- **Print Logging Enhancement**: Track which build plate and plate number were used for each print
+- **Auto Print Tracking**: Moonraker / OctoPrint bridge that detects completed prints and lets you import them in one click
 - **Offline-First**: Works entirely offline with localStorage persistence
 - **Optional Cloud Sync**: Firebase integration for cross-device synchronization
+
+### Price Monitor
+Track filament prices and get sale alerts for your favorite products:
+- Monitor prices across multiple retailers
+- Set target prices and receive alerts when items go on sale
+- Track price history and trends
+- Manual price entry with automatic change calculations
+- Configurable alert preferences (in-app, browser, email)
+- Export/import price data
+- Planned automatic price fetching via API integration
+
+**Key Features:**
+- **Watch List**: Track products you're interested in
+- **Price History**: See how prices change over time
+- **Smart Alerts**: Get notified when prices drop below target
+- **Filtering**: View items on sale, with price drops, or below target
+- **Statistics**: Track average price drops and savings
+- **Settings**: Configure check frequency and notification methods
+
+### FDM Temperature & Speed Reference
+A comprehensive guide for FDM 3D printing settings:
+- Material-specific temperature and speed settings
+- Troubleshooting guide organized by symptoms
+- Print parameters for PLA, PETG, ABS, ASA, TPU, Nylon, PC, PVA, HIPS
+- Retraction settings for Bowden and direct-drive systems
+- Drying recommendations for different materials
+- Print speed and acceleration guidelines
+
+**Key Features:**
+- **Quick Reference**: Starting settings for common materials
+- **Troubleshooting**: Symptom-based problem solving
+- **Detailed Specs**: Nozzle, bed, chamber temps, fan speeds
+- **Material Comparison**: Understand differences between filaments
+- **Mobile-Friendly**: Optimized for reference during printing
+
+### Filament Cheatsheet
+A practical guide for choosing the right filament:
+- Material comparison table showing difficulty, strength, heat resistance
+- "I want to make X → use Y" quick lookup
+- Detailed material profiles with pros and cons
+- Best-use recommendations for each material
+- Setting guidelines for each filament type
+
+**Key Features:**
+- **Decision Guide**: Choose materials based on project requirements
+- **Quick Compare**: Easy comparison of material properties
+- **Material Profiles**: Detailed information for each filament type
+- **Use Cases**: Specific recommendations for common applications
+- **Visual Design**: Color-coded materials for easy identification
 
 ## Technical Design
 
@@ -67,9 +120,15 @@ var CloudSync = {
   // Real-time synchronization
 };
 
+// Build Plate Configuration
+var BUILD_PLATES = [
+  // X2D build plates with material compatibility
+];
+
 // UI State Management
 var state = {
   // Current view, filters, selections
+  // buildPlateFilter for filtering by compatible plate
 };
 
 // Rendering Functions
@@ -86,9 +145,12 @@ function renderStats() { }
 3D Printer Workshop/
 ├── README.md
 ├── docs/
-│   ├── index.html              # Main landing page
+│   ├── index.html                         # Main landing page (includes Spoolman link)
 │   └── pages/
-│       └── filament-log.html   # Filament inventory tool
+│       ├── filament-log.html              # Filament inventory tool
+│       ├── price-monitor.html             # Price tracking and alerts
+│       ├── fdm-temp-speed-reference.html  # FDM settings reference
+│       └── filament-cheatsheet.html       # Material selection guide
 ```
 
 ## Technology Stack
@@ -239,6 +301,7 @@ Potential areas for expansion:
   - Material testing database
 
 - **Enhanced Features**:
+  - **Automatic Price Fetching**: API integration for Price Monitor to automatically fetch prices from retailers (Rainforest API for Amazon, official retailer APIs)
   - QR code generation for spool labels
   - Integration with slicer software
   - Advanced analytics and reporting

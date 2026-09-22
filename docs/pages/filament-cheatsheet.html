@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Filament Reference Guide</title>
+<style>
+  :root {
+    --bg: #1c1a17;
+    --bg-raised: #262320;
+    --bg-card: #211e1b;
+    --line: #3a352f;
+    --ink: #ece6da;
+    --ink-dim: #a89f8f;
+    --ink-faint: #6f6759;
+    --amber: #e8874a;
+    --amber-dim: #b8663a;
+    --spool-pla: #7bb87a;
+    --spool-petg: #5a9bc4;
+    --spool-abs: #c65b5b;
+    --spool-tpu: #b98cd6;
+    --spool-nylon: #d6c25a;
+    --spool-pc: #8a8a8a;
+    --spool-asa: #d68a4a;
+    --spool-pva: #9fc9d1;
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-mono: "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  :root[data-theme="light"] {
+    --bg: #f7f4ee;
+    --bg-raised: #eeeae1;
+    --bg-card: #fbf9f5;
+    --line: #d9d2c4;
+    --ink: #221f1a;
+    --ink-dim: #56503f;
+    --ink-faint: #8a8270;
+    --amber: #b8642f;
+    --amber-dim: #d68a4a;
+    --spool-pc: #6b6b6b;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  body, .mat-card, .decision-card, nav.jumpnav, .callout, .spec-grid, table.compare-table {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .theme-toggle {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    top: calc(18px + env(safe-area-inset-top, 0px));
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg-raised);
+    color: var(--ink-dim);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { border-color: var(--amber-dim); color: var(--ink); }
+  .theme-toggle .icon { font-size: 0.9rem; line-height: 1; }
+
+  @media print {
+    .theme-toggle, nav.jumpnav { display: none !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+    body::before { display: none; }
+    section { break-inside: avoid; }
+    .mat-card { break-inside: avoid; }
+  }
+  html { scroll-padding-top: 76px; }
+  html, body { height: auto; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* subtle print-bed texture */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header.hero {
+    position: relative;
+    padding: 64px 24px 40px;
+    max-width: 980px;
+    margin: 0 auto;
+    z-index: 1;
+  }
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--amber);
+    letter-spacing: 0.02em;
+    margin-bottom: 14px;
+  }
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.1rem, 5vw, 3.3rem);
+    line-height: 1.08;
+    margin: 0 0 18px;
+    color: var(--ink);
+    max-width: 14ch;
+  }
+  .hero p.sub {
+    font-size: 1.05rem;
+    color: var(--ink-dim);
+    max-width: 56ch;
+    margin: 0;
+  }
+
+  .spool-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .spool-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--ink-dim);
+    text-decoration: none;
+    background: var(--bg-raised);
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .spool-chip:hover { border-color: var(--amber-dim); color: var(--ink); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+  nav.jumpnav {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(28, 26, 23, 0.92);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 24px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  }
+  nav.jumpnav .inner {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    gap: 18px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+  }
+  nav.jumpnav a {
+    color: var(--ink-faint);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: 4px 0;
+    border-bottom: 2px solid transparent;
+  }
+  nav.jumpnav a:hover { color: var(--amber); border-color: var(--amber-dim); }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  section { margin-bottom: 56px; scroll-margin-top: 76px; }
+  section.compare { margin-bottom: 64px; }
+
+  h2.section-head {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.7rem;
+    color: var(--ink);
+    margin: 0 0 6px;
+  }
+  p.section-note {
+    color: var(--ink-dim);
+    margin: 0 0 24px;
+    max-width: 62ch;
+    font-size: 0.96rem;
+  }
+
+  /* comparison table */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  table.compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    min-width: 760px;
+  }
+  table.compare-table th, table.compare-table td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+  }
+  table.compare-table thead th {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: none;
+    color: var(--ink-faint);
+    background: var(--bg-raised);
+    font-weight: 500;
+  }
+  table.compare-table tbody tr:last-child td { border-bottom: none; }
+  table.compare-table tbody tr:hover { background: rgba(232, 135, 74, 0.05); }
+  table.compare-table td.mat-name { font-weight: 600; white-space: nowrap; }
+  table.compare-table td.mat-name .dot { margin-right: 8px; }
+
+  /* material cards */
+  .mat-card {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--card-accent, var(--amber));
+    background: var(--bg-card);
+    border-radius: 3px;
+    padding: 24px 26px;
+    margin-bottom: 18px;
+    scroll-margin-top: 76px;
+  }
+  .mat-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .mat-head h3 {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 400;
+    margin: 0;
+    color: var(--ink);
+  }
+  .mat-head h3 .dot { margin-right: 10px; }
+  .mat-tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .mat-desc { color: var(--ink-dim); font-size: 0.94rem; margin: 10px 0 18px; max-width: 68ch; }
+
+  .spec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    background: var(--bg-raised);
+    border-radius: 3px;
+  }
+  .spec { display: flex; flex-direction: column; gap: 3px; }
+  .spec .k { font-family: var(--font-mono); font-size: 0.68rem; color: var(--ink-faint); }
+  .spec .v { font-family: var(--font-mono); font-size: 0.88rem; color: var(--ink); }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+  .col-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-faint); margin-bottom: 8px; display: block; }
+  ul.plain { margin: 0; padding: 0; list-style: none; }
+  ul.plain li {
+    font-size: 0.92rem;
+    color: var(--ink-dim);
+    padding-left: 16px;
+    position: relative;
+    margin-bottom: 7px;
+  }
+  ul.plain.good li::before { content: "+"; position: absolute; left: 0; color: var(--spool-pla); font-family: var(--font-mono); }
+  ul.plain.bad li::before { content: "\2212"; position: absolute; left: 0; color: var(--spool-abs); font-family: var(--font-mono); }
+
+  .best-for {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+  }
+  .best-for .col-label { margin-bottom: 6px; }
+  .best-for p { margin: 0; font-size: 0.94rem; color: var(--ink); }
+
+  /* decision guide */
+  .decision-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .decision-card {
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border-radius: 3px;
+    padding: 18px 20px;
+  }
+  .decision-card .need {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+  }
+  .decision-card .answer {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--amber);
+    margin: 0 0 8px;
+  }
+  .decision-card .why { font-size: 0.88rem; color: var(--ink-dim); margin: 0; }
+
+  .callout {
+    border: 1px solid var(--amber-dim);
+    background: rgba(232, 135, 74, 0.07);
+    border-radius: 3px;
+    padding: 18px 22px;
+    font-size: 0.94rem;
+    color: var(--ink);
+  }
+  .callout strong { color: var(--amber); font-weight: 600; }
+
+  footer {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+    color: var(--ink-faint);
+    font-size: 0.8rem;
+    font-family: var(--font-mono);
+  }
+
+  a { color: var(--amber); }
+
+  code, .mono { font-family: var(--font-mono); }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" type="button" onclick="toggleTheme()">
+  <span class="icon" id="themeIcon">☀</span>
+  <span id="themeLabel">Light mode</span>
+</button>
+
+<header class="hero">
+  <a href="../index.html" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-bottom: 16px; font-family: var(--font-mono);">
+    <span>← Back to Workshop</span>
+  </a>
+  <div class="kicker">FDM MATERIAL REFERENCE</div>
+  <h1 class="title">What filament, for what part</h1>
+  <p class="sub">A working cheat sheet for choosing between the common FDM filaments — what each one is actually good at, where it fails, and the settings to start from.</p>
+  <div class="spool-row">
+    <a href="#pla" class="spool-chip"><span class="dot" style="background:var(--spool-pla)"></span>PLA</a>
+    <a href="#petg" class="spool-chip"><span class="dot" style="background:var(--spool-petg)"></span>PETG</a>
+    <a href="#abs" class="spool-chip"><span class="dot" style="background:var(--spool-abs)"></span>ABS</a>
+    <a href="#asa" class="spool-chip"><span class="dot" style="background:var(--spool-asa)"></span>ASA</a>
+    <a href="#tpu" class="spool-chip"><span class="dot" style="background:var(--spool-tpu)"></span>TPU</a>
+    <a href="#nylon" class="spool-chip"><span class="dot" style="background:var(--spool-nylon)"></span>Nylon</a>
+    <a href="#pc" class="spool-chip"><span class="dot" style="background:var(--spool-pc)"></span>PC</a>
+    <a href="#pva-hips" class="spool-chip"><span class="dot" style="background:var(--spool-pva)"></span>PVA / HIPS</a>
+  </div>
+</header>
+
+<nav class="jumpnav">
+  <div class="inner">
+    <a href="#compare">Quick compare</a>
+    <a href="#goal-table">By goal</a>
+    <a href="#pla">PLA</a>
+    <a href="#petg">PETG</a>
+    <a href="#abs">ABS</a>
+    <a href="#asa">ASA</a>
+    <a href="#tpu">TPU</a>
+    <a href="#nylon">Nylon</a>
+    <a href="#pc">PC</a>
+    <a href="#pva-hips">PVA / HIPS</a>
+    <a href="#decision">By project</a>
+    <a href="#general">Good to know</a>
+  </div>
+</nav>
+
+<main>
+
+  <section class="compare" id="compare">
+    <h2 class="section-head">Quick compare</h2>
+    <p class="section-note">Sorted roughly easiest → hardest to print. Use this to shortlist, then read the full entry below before committing a spool.</p>
+    <div class="table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Difficulty</th>
+            <th>Strength</th>
+            <th>Heat resist.</th>
+            <th>Flex</th>
+            <th>UV / outdoor</th>
+            <th>Enclosure</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="mat-name"><span class="dot" style="background:var(--spool-pla)"></span>PLA</td><td>Easy</td><td>Low–med</td><td>Poor (~55&deg;C)</td><td>Rigid</td><td>Degrades</td><td>No</td></tr>
+          <tr><td class="mat-name"><span class="dot" style="background:var(--spool-petg)"></span>PETG</td><td>Easy–med</td><td>Med–high</td><td>Med (~70&deg;C)</td><td>Slight give</td><td>Fair</td><td>No</td></tr>
+          <tr><td class="mat-name"><span class="dot" style="background:var(--spool-tpu)"></span>TPU</td><td>Medium</td><td>Med (tear-resist.)</td><td>Med (~60&deg;C)</td><td>Very flexible</td><td>Fair</td><td>No</td></tr>
+          <tr><td class="mat-name"><span class="dot" style="background:var(--spool-abs)"></span>ABS</td><td>Med–hard</td><td>High</td><td>Good (~95&deg;C)</td><td>Rigid, tough</td><td>Poor</td><td>Yes</td></tr>
+          <tr><td class="mat-name"><span class="dot" style="background:var(--spool-asa)"></span>ASA</td><td>Med–hard</td><td>High</td><td>Good (~95&deg;C)</td><td>Rigid, tough</td><td>Excellent</td><td>Yes</td></tr>
+          <tr><td class="mat-name"><span class="dot" style="background:var(--spool-nylon)"></span>Nylon</td><td>Hard</td><td>Very high</td><td>Good (~80&ndash;120&deg;C)</td><td>Tough, springy</td><td>Fair</td><td>Yes</td></tr>
+          <tr><td class="mat-name"><span class="dot" style="background:var(--spool-pc)"></span>PC</td><td>Hard</td><td>Very high</td><td>Excellent (~110&ndash;140&deg;C)</td><td>Rigid, tough</td><td>Fair</td><td>Yes</td></tr>
+          <tr><td class="mat-name"><span class="dot" style="background:var(--spool-pva)"></span>PVA</td><td>Medium</td><td>n/a (support)</td><td>Poor</td><td>Rigid</td><td>n/a</td><td>No</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="goal-table">
+    <h2 class="section-head">I want to make X &rarr; use Y</h2>
+    <p class="section-note">The fastest lookup in this doc. For the reasoning behind each pick, see the full write-ups below.</p>
+    <div class="table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr><th>I want to make&hellip;</th><th>Use&hellip;</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Miniatures / display models</td><td><span class="dot" style="background:var(--spool-pla)"></span>PLA</td></tr>
+          <tr><td>Cosplay props / armor</td><td><span class="dot" style="background:var(--spool-pla)"></span>PLA (ABS if vapor-smoothing)</td></tr>
+          <tr><td>Quick prototype / fit-check part</td><td><span class="dot" style="background:var(--spool-pla)"></span>PLA</td></tr>
+          <tr><td>First print on a new printer</td><td><span class="dot" style="background:var(--spool-pla)"></span>PLA</td></tr>
+          <tr><td>Electronics enclosure (indoor)</td><td><span class="dot" style="background:var(--spool-petg)"></span>PETG</td></tr>
+          <tr><td>Tool holder / jig / fixture</td><td><span class="dot" style="background:var(--spool-petg)"></span>PETG</td></tr>
+          <tr><td>Kitchen utensil holder (dry goods only)</td><td><span class="dot" style="background:var(--spool-petg)"></span>PETG</td></tr>
+          <tr><td>Snap-fit clip or latch</td><td><span class="dot" style="background:var(--spool-petg)"></span>PETG (Nylon for heavy use)</td></tr>
+          <tr><td>Garden planter / short-term outdoor part</td><td><span class="dot" style="background:var(--spool-petg)"></span>PETG</td></tr>
+          <tr><td>Signage, mailbox parts, permanent outdoor mount</td><td><span class="dot" style="background:var(--spool-asa)"></span>ASA</td></tr>
+          <tr><td>Automotive interior / under-hood-adjacent part</td><td><span class="dot" style="background:var(--spool-abs)"></span>ABS</td></tr>
+          <tr><td>Housing near a heat source or motor</td><td><span class="dot" style="background:var(--spool-abs)"></span>ABS or <span class="dot" style="background:var(--spool-pc)"></span>PC</td></tr>
+          <tr><td>Clear, high-heat lens or cover</td><td><span class="dot" style="background:var(--spool-pc)"></span>PC (clear grade)</td></tr>
+          <tr><td>Phone case / protective bumper</td><td><span class="dot" style="background:var(--spool-tpu)"></span>TPU</td></tr>
+          <tr><td>Cable grommet / vibration damper</td><td><span class="dot" style="background:var(--spool-tpu)"></span>TPU</td></tr>
+          <tr><td>Wearable strap</td><td><span class="dot" style="background:var(--spool-tpu)"></span>TPU</td></tr>
+          <tr><td>RC tires / bumpers</td><td><span class="dot" style="background:var(--spool-tpu)"></span>TPU</td></tr>
+          <tr><td>Gears, hinges, drone frame</td><td><span class="dot" style="background:var(--spool-nylon)"></span>Nylon (PA / PA-CF)</td></tr>
+          <tr><td>Load-bearing bracket, repeated stress cycles</td><td><span class="dot" style="background:var(--spool-nylon)"></span>Nylon</td></tr>
+          <tr><td>Complex overhangs / cavities in one print</td><td><span class="dot" style="background:var(--spool-pva)"></span>PVA or HIPS support</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="pla">
+    <div class="mat-card" style="--card-accent: var(--spool-pla)">
+      <div class="mat-head">
+        <h3><span class="dot" style="background:var(--spool-pla)"></span>PLA <span style="color:var(--ink-faint); font-size:0.7em;">(Polylactic Acid)</span></h3>
+        <span class="mat-tag">baseline material</span>
+      </div>
+      <p class="mat-desc">The default. Made from cornstarch or sugarcane, low-odor, barely warps, and forgiving of a mediocre setup. The ceiling on mechanical performance and heat resistance is the trade-off for how easy it is.</p>
+
+      <div class="spec-grid">
+        <div class="spec"><span class="k">NOZZLE</span><span class="v">190&ndash;220&deg;C</span></div>
+        <div class="spec"><span class="k">BED</span><span class="v">50&ndash;60&deg;C</span></div>
+        <div class="spec"><span class="k">FAN</span><span class="v">100%</span></div>
+        <div class="spec"><span class="k">ENCLOSURE</span><span class="v">no</span></div>
+        <div class="spec"><span class="k">DRY BEFORE?</span><span class="v">rarely needed</span></div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <span class="col-label">STRENGTHS</span>
+          <ul class="plain good">
+            <li>Prints clean, crisp detail with minimal tuning</li>
+            <li>No enclosure, no fumes, safe in shared/living spaces</li>
+            <li>Cheap, wide color and specialty-finish selection</li>
+          </ul>
+        </div>
+        <div>
+          <span class="col-label">LIMITS</span>
+          <ul class="plain bad">
+            <li>Softens well below 60&deg;C &mdash; a hot car will warp it</li>
+            <li>Brittle under sudden load or repeated flexing</li>
+            <li>Not UV or weather stable long-term</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="best-for">
+        <span class="col-label">BEST FOR</span>
+        <p>Miniatures, display models, prototypes you're iterating on fast, brackets and jigs that never see heat or impact, cosplay props, anything decorative. PLA+/ silk/matte variants swap a little ease-of-print for slightly better toughness or looks.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="petg">
+    <div class="mat-card" style="--card-accent: var(--spool-petg)">
+      <div class="mat-head">
+        <h3><span class="dot" style="background:var(--spool-petg)"></span>PETG <span style="color:var(--ink-faint); font-size:0.7em;">(Glycol-modified PET)</span></h3>
+        <span class="mat-tag">go-to functional part</span>
+      </div>
+      <p class="mat-desc">The step up from PLA that most people reach for once a part actually has to do something. Tougher, handles mild heat, and shrugs off moisture and mild chemicals &mdash; but it strings more and is harder to sand or glue cleanly.</p>
+
+      <div class="spec-grid">
+        <div class="spec"><span class="k">NOZZLE</span><span class="v">230&ndash;250&deg;C</span></div>
+        <div class="spec"><span class="k">BED</span><span class="v">70&ndash;85&deg;C</span></div>
+        <div class="spec"><span class="k">FAN</span><span class="v">30&ndash;50%</span></div>
+        <div class="spec"><span class="k">ENCLOSURE</span><span class="v">not required</span></div>
+        <div class="spec"><span class="k">DRY BEFORE?</span><span class="v">yes, hygroscopic</span></div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <span class="col-label">STRENGTHS</span>
+          <ul class="plain good">
+            <li>Good layer adhesion and impact resistance</li>
+            <li>Handles outdoor damp and mild chemical exposure</li>
+            <li>Food-contact safe when printed with a dedicated nozzle*</li>
+          </ul>
+        </div>
+        <div>
+          <span class="col-label">LIMITS</span>
+          <ul class="plain bad">
+            <li>Stringy &mdash; retraction tuning matters</li>
+            <li>Soft enough to scratch and to ooze on overhangs</li>
+            <li>Absorbs moisture fast; dry it before long prints</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="best-for">
+        <span class="col-label">BEST FOR</span>
+        <p>Enclosures, brackets, outdoor planters, tool holders, anything that gets handled or lightly stressed, kitchen and garage parts. A solid all-round "print it and trust it" material.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="abs">
+    <div class="mat-card" style="--card-accent: var(--spool-abs)">
+      <div class="mat-head">
+        <h3><span class="dot" style="background:var(--spool-abs)"></span>ABS <span style="color:var(--ink-faint); font-size:0.7em;">(Acrylonitrile Butadiene Styrene)</span></h3>
+        <span class="mat-tag">tough, needs an enclosure</span>
+      </div>
+      <p class="mat-desc">Same plastic as most injection-molded consumer parts (think Lego, car interior trim). Tougher and more heat-resistant than PLA/PETG, machinable and acetone-vapor-smoothable &mdash; but it warps and delaminates without a controlled chamber, and it smells while printing.</p>
+
+      <div class="spec-grid">
+        <div class="spec"><span class="k">NOZZLE</span><span class="v">230&ndash;250&deg;C</span></div>
+        <div class="spec"><span class="k">BED</span><span class="v">95&ndash;110&deg;C</span></div>
+        <div class="spec"><span class="k">FAN</span><span class="v">0&ndash;20%</span></div>
+        <div class="spec"><span class="k">ENCLOSURE</span><span class="v">strongly recommended</span></div>
+        <div class="spec"><span class="k">DRY BEFORE?</span><span class="v">yes</span></div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <span class="col-label">STRENGTHS</span>
+          <ul class="plain good">
+            <li>Higher heat resistance than PLA/PETG</li>
+            <li>Machinable, sandable, acetone vapor-polishes to gloss</li>
+            <li>Genuinely tough under impact</li>
+          </ul>
+        </div>
+        <div>
+          <span class="col-label">LIMITS</span>
+          <ul class="plain bad">
+            <li>Warps and cracks without an enclosed, heated chamber</li>
+            <li>Releases styrene fumes &mdash; ventilate or filter</li>
+            <li>Poor UV resistance; yellows and degrades outdoors</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="best-for">
+        <span class="col-label">BEST FOR</span>
+        <p>Automotive/interior-adjacent parts, enclosures that see mild heat (near electronics, in a car), parts you plan to vapor-smooth or paint. If the part will live outdoors, use ASA instead &mdash; same process, far better UV life.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="asa">
+    <div class="mat-card" style="--card-accent: var(--spool-asa)">
+      <div class="mat-head">
+        <h3><span class="dot" style="background:var(--spool-asa)"></span>ASA <span style="color:var(--ink-faint); font-size:0.7em;">(Acrylonitrile Styrene Acrylate)</span></h3>
+        <span class="mat-tag">ABS's outdoor sibling</span>
+      </div>
+      <p class="mat-desc">Chemically close to ABS with the same enclosure and warping requirements, but formulated to resist UV, so it doesn't yellow or go brittle in sunlight. If you're choosing between the two for anything that sees daylight, this is the one.</p>
+
+      <div class="spec-grid">
+        <div class="spec"><span class="k">NOZZLE</span><span class="v">235&ndash;255&deg;C</span></div>
+        <div class="spec"><span class="k">BED</span><span class="v">95&ndash;110&deg;C</span></div>
+        <div class="spec"><span class="k">FAN</span><span class="v">0&ndash;20%</span></div>
+        <div class="spec"><span class="k">ENCLOSURE</span><span class="v">required</span></div>
+        <div class="spec"><span class="k">DRY BEFORE?</span><span class="v">yes</span></div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <span class="col-label">STRENGTHS</span>
+          <ul class="plain good">
+            <li>Excellent long-term UV and weather stability</li>
+            <li>Same toughness and heat resistance as ABS</li>
+            <li>Slightly less warping-prone than ABS in practice</li>
+          </ul>
+        </div>
+        <div>
+          <span class="col-label">LIMITS</span>
+          <ul class="plain bad">
+            <li>Still needs an enclosed, draft-free chamber</li>
+            <li>Fumes &mdash; ventilate the same as ABS</li>
+            <li>Pricier than ABS for a modest real-world gain indoors</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="best-for">
+        <span class="col-label">BEST FOR</span>
+        <p>Anything permanently outdoors: mailbox parts, garden fixtures, drone bodies, signage, mounts on a car or patio. Skip it for indoor-only parts where PETG does the job for less hassle.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="tpu">
+    <div class="mat-card" style="--card-accent: var(--spool-tpu)">
+      <div class="mat-head">
+        <h3><span class="dot" style="background:var(--spool-tpu)"></span>TPU <span style="color:var(--ink-faint); font-size:0.7em;">(Thermoplastic Polyurethane)</span></h3>
+        <span class="mat-tag">the flexible one</span>
+      </div>
+      <p class="mat-desc">A rubber-like flexible filament ranging from firm (95A shore hardness) to genuinely squishy (85A and softer). Prints slow because it's soft enough to buckle in a bowden tube, but a direct-drive extruder handles it fine.</p>
+
+      <div class="spec-grid">
+        <div class="spec"><span class="k">NOZZLE</span><span class="v">210&ndash;230&deg;C</span></div>
+        <div class="spec"><span class="k">BED</span><span class="v">30&ndash;60&deg;C</span></div>
+        <div class="spec"><span class="k">FAN</span><span class="v">50&ndash;100%</span></div>
+        <div class="spec"><span class="k">ENCLOSURE</span><span class="v">no</span></div>
+        <div class="spec"><span class="k">DRY BEFORE?</span><span class="v">yes, very hygroscopic</span></div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <span class="col-label">STRENGTHS</span>
+          <ul class="plain good">
+            <li>Genuinely rubber-like flex and rebound</li>
+            <li>Excellent abrasion and tear resistance</li>
+            <li>Good chemical/oil resistance</li>
+          </ul>
+        </div>
+        <div>
+          <span class="col-label">LIMITS</span>
+          <ul class="plain bad">
+            <li>Slow print speed &mdash; retraction and speed both need turning down</li>
+            <li>Grabs moisture aggressively; degrades print quality fast if wet</li>
+            <li>Stringing and elephant's-foot are common failure points</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="best-for">
+        <span class="col-label">BEST FOR</span>
+        <p>Phone cases, gaskets, cable management/grommets, wheels and tires for RC or robotics, vibration dampers, wearable straps, protective bumpers on other printed parts.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="nylon">
+    <div class="mat-card" style="--card-accent: var(--spool-nylon)">
+      <div class="mat-head">
+        <h3><span class="dot" style="background:var(--spool-nylon)"></span>Nylon <span style="color:var(--ink-faint); font-size:0.7em;">(PA / PA-CF)</span></h3>
+        <span class="mat-tag">mechanical workhorse</span>
+      </div>
+      <p class="mat-desc">The strongest and most fatigue-resistant common filament, used for gears, hinges, and anything that flexes thousands of times without cracking. Demanding to print well: it absorbs moisture almost instantly and warps badly without an enclosure.</p>
+
+      <div class="spec-grid">
+        <div class="spec"><span class="k">NOZZLE</span><span class="v">250&ndash;280&deg;C</span></div>
+        <div class="spec"><span class="k">BED</span><span class="v">70&ndash;100&deg;C</span></div>
+        <div class="spec"><span class="k">FAN</span><span class="v">0&ndash;20%</span></div>
+        <div class="spec"><span class="k">ENCLOSURE</span><span class="v">required</span></div>
+        <div class="spec"><span class="k">DRY BEFORE?</span><span class="v">critical, every session</span></div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <span class="col-label">STRENGTHS</span>
+          <ul class="plain good">
+            <li>Outstanding fatigue life &mdash; survives repeated flexing/impact</li>
+            <li>Low friction; good for gears and living hinges</li>
+            <li>CF-filled variants rival some engineering plastics for stiffness</li>
+          </ul>
+        </div>
+        <div>
+          <span class="col-label">LIMITS</span>
+          <ul class="plain bad">
+            <li>Absorbs moisture from open air within hours</li>
+            <li>Warps aggressively without an enclosure and a bed adhesive</li>
+            <li>CF-filled blends require a hardened steel or ruby nozzle</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="best-for">
+        <span class="col-label">BEST FOR</span>
+        <p>Gears, living hinges, tool handles, drone frames, load-bearing brackets, anything that needs to survive repeated stress cycles rather than one big load.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="pc">
+    <div class="mat-card" style="--card-accent: var(--spool-pc)">
+      <div class="mat-head">
+        <h3><span class="dot" style="background:var(--spool-pc)"></span>PC <span style="color:var(--ink-faint); font-size:0.7em;">(Polycarbonate)</span></h3>
+        <span class="mat-tag">highest heat &amp; impact</span>
+      </div>
+      <p class="mat-desc">The top of the common-filament ladder for heat resistance and impact strength &mdash; the same family of plastic used for safety glasses and machine guards. Needs the hottest nozzle and bed of anything on this page, plus a sealed, heated chamber.</p>
+
+      <div class="spec-grid">
+        <div class="spec"><span class="k">NOZZLE</span><span class="v">270&ndash;310&deg;C</span></div>
+        <div class="spec"><span class="k">BED</span><span class="v">100&ndash;130&deg;C</span></div>
+        <div class="spec"><span class="k">FAN</span><span class="v">0&ndash;10%</span></div>
+        <div class="spec"><span class="k">ENCLOSURE</span><span class="v">required, heated</span></div>
+        <div class="spec"><span class="k">DRY BEFORE?</span><span class="v">critical</span></div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <span class="col-label">STRENGTHS</span>
+          <ul class="plain good">
+            <li>Highest heat deflection temperature of the common filaments</li>
+            <li>Very high impact strength, resists shattering</li>
+            <li>Optically clear grades exist for lenses/covers</li>
+          </ul>
+        </div>
+        <div>
+          <span class="col-label">LIMITS</span>
+          <ul class="plain bad">
+            <li>Needs the hottest hotend and chamber temps here &mdash; not every printer can reach it</li>
+            <li>Brittle if underheated; layer splitting is common on cool printers</li>
+            <li>Expensive relative to PETG/ABS</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="best-for">
+        <span class="col-label">BEST FOR</span>
+        <p>Functional prototypes standing in for injection-molded parts, housings near heat sources, impact-resistant covers, parts that must hold shape at temperatures ABS would sag at.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="pva-hips">
+    <div class="mat-card" style="--card-accent: var(--spool-pva)">
+      <div class="mat-head">
+        <h3><span class="dot" style="background:var(--spool-pva)"></span>PVA &amp; HIPS <span style="color:var(--ink-faint); font-size:0.7em;">(support materials)</span></h3>
+        <span class="mat-tag">dissolvable supports</span>
+      </div>
+      <p class="mat-desc">Not structural materials &mdash; these exist to hold up overhangs on a second extruder/AMS slot, then disappear. PVA dissolves in plain water and pairs with PLA/PETG; HIPS dissolves in limonene and pairs with ABS since it shares a similar print temperature.</p>
+
+      <div class="spec-grid">
+        <div class="spec"><span class="k">PVA NOZZLE</span><span class="v">190&ndash;210&deg;C</span></div>
+        <div class="spec"><span class="k">HIPS NOZZLE</span><span class="v">230&ndash;245&deg;C</span></div>
+        <div class="spec"><span class="k">DISSOLVES IN</span><span class="v">water / limonene</span></div>
+        <div class="spec"><span class="k">DRY BEFORE?</span><span class="v">PVA: critical</span></div>
+      </div>
+
+      <div class="best-for">
+        <span class="col-label">BEST FOR</span>
+        <p>Complex overhangs, internal cavities, and multi-part assemblies printed in one go on a dual-extruder or AMS-equipped printer &mdash; pick the support material that matches the print temperature of your main filament (PVA with PLA/PETG, HIPS with ABS).</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="decision">
+    <h2 class="section-head">Pick by what the part has to do</h2>
+    <p class="section-note">When you're not sure which material fits, start from the job, not the filament.</p>
+    <div class="decision-grid">
+      <div class="decision-card">
+        <div class="need">JUST NEEDS TO LOOK GOOD</div>
+        <p class="answer">PLA</p>
+        <p class="why">Best detail and surface finish for the least effort. Miniatures, models, display pieces.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">HANDLED / LIGHTLY STRESSED PART</div>
+        <p class="answer">PETG</p>
+        <p class="why">Tougher than PLA, still no enclosure needed. The default for "will this actually hold up" parts.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">LIVES OUTDOORS</div>
+        <p class="answer">ASA</p>
+        <p class="why">UV-stable where ABS and PLA both fail. Use PETG only if it's brief/incidental exposure.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">NEAR HEAT OR IN A HOT CAR</div>
+        <p class="answer">ABS or PC</p>
+        <p class="why">PLA/PETG will sag. Go PC if you also need high impact strength or the temps exceed ~95&deg;C.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">NEEDS TO FLEX OR BEND REPEATEDLY</div>
+        <p class="answer">TPU</p>
+        <p class="why">Gaskets, cases, dampers &mdash; anything that needs to compress or bend and spring back.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">GEARS, HINGES, HIGH FATIGUE LOAD</div>
+        <p class="answer">Nylon (PA / PA-CF)</p>
+        <p class="why">Best fatigue resistance of the group. Worth the moisture-management hassle for moving parts.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">OVERHANGS &amp; CAVITIES, PRINTED IN ONE GO</div>
+        <p class="answer">PVA or HIPS support</p>
+        <p class="why">On a dual-extruder or AMS setup, print supports in a dissolvable material instead of snapping them off by hand.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">CLEAR, HIGH-HEAT COVER OR LENS</div>
+        <p class="answer">PC (clear grade)</p>
+        <p class="why">Holds optical clarity and shape at temperatures that would fog or sag a PETG or acrylic equivalent.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="callout">
+      <strong>Enclosure note:</strong> ABS, ASA, Nylon, and PC all want a draft-free, heated chamber to avoid warping and layer splitting on anything bigger than a small part. If your printer is enclosed and AMS/multi-material capable, it also makes PVA or HIPS soluble-support workflows realistic without a second printer.
+    </div>
+  </section>
+
+  <section id="general">
+    <h2 class="section-head">General good-to-know</h2>
+    <p class="section-note">Stuff that applies regardless of which filament is loaded &mdash; the habits that separate a clean print from a failed one.</p>
+    <div class="decision-grid">
+      <div class="decision-card">
+        <div class="need">MOISTURE &amp; STORAGE</div>
+        <p class="answer">Keep it sealed</p>
+        <p class="why">PETG, TPU, Nylon, and PVA pull moisture from the air within hours to days. Wet filament pops, strings, and surfaces rough. Store spools in sealed bins or bags with silica desiccant, and use a filament dryer or dehydrator before printing anything that's been open a while.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">BED ADHESION &amp; FIRST LAYER</div>
+        <p class="answer">Clean + level first</p>
+        <p class="why">Most failed prints trace back to the first layer. Wipe the bed with IPA between prints (skin oils kill adhesion), relevel regularly, and use a glue stick or hairspray on stubborn materials like ABS/ASA/Nylon.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">STRINGING &amp; OOZING</div>
+        <p class="answer">Retraction + drier filament</p>
+        <p class="why">Fine web-like strings between parts are almost always retraction distance/speed, nozzle temp running a touch hot, or moisture in the filament &mdash; check the last one before re-tuning settings.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">PART COOLING FAN</div>
+        <p class="answer">Depends on the material</p>
+        <p class="why">PLA and TPU want strong cooling for crisp overhangs and bridges. ABS, ASA, Nylon, and PC want little to none &mdash; aggressive cooling causes layer splitting (delamination) in those materials by cooling layers unevenly.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">NOZZLE WEAR</div>
+        <p class="answer">Match nozzle to material</p>
+        <p class="why">Standard brass nozzles are fine for PLA/PETG/ABS/TPU. Anything with carbon fiber, glass fiber, wood, or metal particles is abrasive and will erode a brass nozzle's orifice within a spool or two &mdash; use hardened steel or a ruby-tipped nozzle for those.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">VENTILATION</div>
+        <p class="answer">Don't skip it</p>
+        <p class="why">ABS, ASA, Nylon, and PC release fumes (styrene and others) that are worth not breathing for hours at a time. Print in a ventilated space, vent an enclosure outside, or run a carbon/HEPA filter. PLA and PETG are lower-odor but still benefit from airflow.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">LAYER HEIGHT TRADE-OFF</div>
+        <p class="answer">Detail vs. speed</p>
+        <p class="why">Smaller layer heights (0.1&ndash;0.16mm) give finer detail and slightly better layer adhesion/strength, at roughly double the print time of a 0.2&ndash;0.28mm layer. Save fine layers for visible or precision parts; go coarser for brackets and prototypes.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">STRENGTH: WALLS VS. INFILL</div>
+        <p class="answer">Walls matter more</p>
+        <p class="why">For most functional parts, adding wall/perimeter count (3&ndash;5 instead of 2) improves real-world strength more than cranking infill percentage. Infill mostly matters for compression resistance and top/bottom surface support.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">PART ORIENTATION</div>
+        <p class="answer">Load along the layers, not across them</p>
+        <p class="why">FDM parts are always weakest between layers (the Z-axis bond), regardless of material. Orient a part so the force it will experience runs parallel to the layer lines, not perpendicular through them, whenever the geometry allows it.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">NEW FILAMENT BRAND OR COLOR</div>
+        <p class="answer">Run a quick calibration print</p>
+        <p class="why">Different brands of the "same" material can need different temps. A temperature tower or a simple retraction test print takes a few minutes and saves guessing on a full-size print.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">UNATTENDED PRINTING</div>
+        <p class="answer">Treat it like any heater</p>
+        <p class="why">A hotend and heated bed are both heating elements running for hours unsupervised. Print on a fireproof, non-flammable surface, keep the area clear of combustibles, and consider a smoke detector nearby if you print long jobs overnight &mdash; especially with enclosed, higher-temp materials.</p>
+      </div>
+      <div class="decision-card">
+        <div class="need">FOOD CONTACT</div>
+        <p class="answer">FDM isn't really food-safe</p>
+        <p class="why">Even with a "food-safe" filament and a nozzle never used for anything else, layer lines harbor bacteria that can't be cleaned out, and most consumer nozzles/tubing use materials not certified for food contact. Treat printed food-adjacent parts as safe for dry goods only, not something that touches food directly or goes in a dishwasher repeatedly.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Print temps are starting points &mdash; always sanity-check against the specific spool's spec sheet, since brand-to-brand variation is real, especially for ABS/ASA/Nylon/PC.
+</footer>
+
+<script>
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    var icon = document.getElementById('themeIcon');
+    var label = document.getElementById('themeLabel');
+    if (theme === 'light') {
+      icon.textContent = '\u263D';
+      label.textContent = 'Dark mode';
+    } else {
+      icon.textContent = '\u2600';
+      label.textContent = 'Light mode';
+    }
+    try { localStorage.setItem('filament-guide-theme', theme); } catch (e) {}
+  }
+  function toggleTheme() {
+    var current = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  }
+  (function init() {
+    var saved = null;
+    try { saved = localStorage.getItem('filament-guide-theme'); } catch (e) {}
+    var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    applyTheme(saved || (prefersLight ? 'light' : 'dark'));
+  })();
+</script>
+</body>
+</html>
