@@ -1,1 +1,4 @@
 .DS_Store
+print-tracker-config.json
+print-tracker-state.json
+pending-prints.json

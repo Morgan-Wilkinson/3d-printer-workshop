@@ -733,6 +733,7 @@
         <option value="total-asc">Least used</option>
       </select>
       <button class="btn btn-sm" id="btnLogUsageTab">+ Log a print</button>
+      <button class="btn btn-sm" id="btnAutoPrints">Auto prints</button>
     </div>
     <div id="logTableWrap"></div>
   </div>
@@ -971,6 +972,29 @@
       <div class="right">
         <button class="btn" id="btnCancelUsage">Cancel</button>
         <button class="btn btn-primary" id="btnSaveUsage">Log print</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Auto prints modal -->
+<div class="overlay" id="autoPrintOverlay">
+  <div class="modal" style="max-width: 720px;">
+    <h2>Auto-detected prints</h2>
+    <div class="modal-sub">Imports prints detected by the print tracker. Choose a spool for each filament used, then save.</div>
+    <div class="field">
+      <label for="autoPrintUrl">Source URL</label>
+      <input type="text" id="autoPrintUrl" value="/print-tracker/pending-prints.json" placeholder="/print-tracker/pending-prints.json">
+      <div class="field-hint">The endpoint or file the print tracker writes to. Adjust if you host it elsewhere.</div>
+    </div>
+    <div id="autoPrintList" style="max-height: 360px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 12px;"></div>
+    <div class="modal-actions">
+      <div class="left">
+        <button class="btn" id="btnLoadAutoPrints">Refresh</button>
+      </div>
+      <div class="right">
+        <button class="btn" id="btnCancelAutoPrints">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveAutoPrints">Add selected</button>
       </div>
     </div>
   </div>
@@ -3606,6 +3630,142 @@
     };
     reader.readAsText(file);
   });
+
+  // ============================================================
+  // Auto print tracker import
+  // ============================================================
+  var autoPrints = [];
+
+  function openAutoPrintsModal() {
+    $("autoPrintOverlay").classList.add("open");
+    loadAutoPrints();
+  }
+
+  function closeAutoPrintsModal() {
+    $("autoPrintOverlay").classList.remove("open");
+  }
+
+  function suggestSpoolForAmount(printObj, amountIdx) {
+    // Try to find a loaded spool that matches the print's project or any un-archived spool
+    var active = Store.spools.filter(function (s) { return !s.archived; });
+    if (!active.length) return null;
+    return active[0].id;
+  }
+
+  function renderAutoPrints() {
+    var container = $("autoPrintList");
+    if (!autoPrints.length) {
+      container.innerHTML = '<div class="empty" style="padding: 20px;"><h3>No pending prints</h3><p>The tracker has not found any completed prints yet.</p></div>';
+      return;
+    }
+
+    var spoolOptions = '<option value="">— pick spool —</option>' +
+      Store.spools.filter(function (s) { return !s.archived; }).map(function (s) {
+        var label = escapeHtml(s.brand + " — " + (s.line || s.material) + (s.colorName ? " (" + s.colorName + ")" : ""));
+        return '<option value="' + s.id + '">' + label + '</option>';
+      }).join("");
+
+    container.innerHTML = autoPrints.map(function (p, idx) {
+      var total = (p.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
+      var checked = ' checked';
+      return '<div class="panel" style="margin-bottom: 10px; padding: 12px;">' +
+        '<div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">' +
+          '<input type="checkbox" id="autoPrintCheck_' + idx + '"' + checked + ' style="width:18px; height:18px;">' +
+          '<label for="autoPrintCheck_' + idx + '" style="font-weight:700; font-size:14px;">' + escapeHtml(p.project || "Unknown project") + '</label>' +
+          '<span style="margin-left:auto; font-family:var(--font-mono); font-size:12px; color:var(--ink-faint);">' + (p.date || "") + '</span>' +
+        '</div>' +
+        '<div style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">' + escapeHtml(p.notes || "") + '</div>' +
+        (p.filaments || []).map(function (f, fIdx) {
+          return '<div class="field-row" style="align-items:center; margin-bottom:8px;">' +
+            '<div class="field" style="flex:0 0 120px;">' +
+              '<label>Amount (g)</label>' +
+              '<input type="number" id="autoPrintAmount_' + idx + '_' + fIdx + '" value="' + (Number(f.amount) || 0) + '" step="0.01" min="0">' +
+            '</div>' +
+            '<div class="field" style="flex:1;">' +
+              '<label>Spool</label>' +
+              '<select id="autoPrintSpool_' + idx + '_' + fIdx + '">' + spoolOptions + '</select>' +
+            '</div>' +
+          '</div>';
+        }).join("") +
+        '<div style="font-size:12px; color:var(--ink-faint); text-align:right;">Total: ' + fmtNum(total) + ' g</div>' +
+      '</div>';
+    }).join("");
+
+    autoPrints.forEach(function (p, idx) {
+      (p.filaments || []).forEach(function (f, fIdx) {
+        var sel = $("autoPrintSpool_" + idx + "_" + fIdx);
+        if (sel) sel.value = f.spoolId || suggestSpoolForAmount(p, fIdx) || "";
+      });
+    });
+  }
+
+  function loadAutoPrints() {
+    var url = $("autoPrintUrl").value.trim() || "/print-tracker/pending-prints.json";
+    if (!url.startsWith("http") && !url.startsWith("/")) {
+      url = "/" + url;
+    }
+
+    fetch(url)
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!Array.isArray(data)) data = data.prints || [];
+        autoPrints = data;
+        renderAutoPrints();
+        showToast("Loaded " + autoPrints.length + " pending print(s).");
+      })
+      .catch(function (err) {
+        console.error(err);
+        showToast("Could not load auto prints. " + err.message);
+        autoPrints = [];
+        renderAutoPrints();
+      });
+  }
+
+  function saveAutoPrints() {
+    var added = 0;
+    autoPrints.forEach(function (p, idx) {
+      if (!$("autoPrintCheck_" + idx) || !$("autoPrintCheck_" + idx).checked) return;
+
+      var filaments = [];
+      (p.filaments || []).forEach(function (f, fIdx) {
+        var spoolId = $("autoPrintSpool_" + idx + "_" + fIdx).value;
+        var amount = Number($("autoPrintAmount_" + idx + "_" + fIdx).value) || 0;
+        if (spoolId && amount > 0) {
+          filaments.push({ spoolId: spoolId, amount: amount });
+        }
+      });
+
+      if (!filaments.length) return;
+
+      var print = {
+        id: p.id || Store.genId(),
+        date: p.date || todayStr(),
+        startTime: p.startTime || "",
+        endTime: p.endTime || "",
+        project: p.project || "",
+        buildPlate: p.buildPlate || "",
+        plateName: p.plateName || "",
+        notes: (p.notes || "") + (p.source ? " [" + p.source + "]" : ""),
+        filaments: filaments
+      };
+      Store.addPrint(print);
+      added++;
+    });
+
+    if (added) {
+      showToast("Added " + added + " print(s).");
+      closeAutoPrintsModal();
+      renderAll();
+    } else {
+      showToast("No prints were selected or matched to spools.");
+    }
+  }
+
+  $("btnAutoPrints").addEventListener("click", openAutoPrintsModal);
+  $("btnCancelAutoPrints").addEventListener("click", closeAutoPrintsModal);
+  $("autoPrintOverlay").addEventListener("click", function (e) { if (e.target === e.currentTarget) closeAutoPrintsModal(); });
+  $("btnLoadAutoPrints").addEventListener("click", loadAutoPrints);
+  $("btnSaveAutoPrints").addEventListener("click", saveAutoPrints);
 
   // ============================================================
   // Boot

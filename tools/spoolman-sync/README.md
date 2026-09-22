@@ -30,6 +30,34 @@ python sync-filament-log-to-spoolman.py filament-log-backup-2026-09-22.json --cl
 3. Save the JSON file
 4. Run the sync script with the file path
 
+### auto-print-tracker.py
+
+Polls a Moonraker (Klipper) or OctoPrint API for completed print jobs and writes
+`pending-prints.json` for one-click import into the Filament Log web app.
+
+**Features:**
+- Detects completed prints automatically
+- Converts printer job data to Filament Log v6 print objects
+- Avoids duplicate entries with a `seen_ids` state file
+- Optionally updates Spoolman spool `used_weight`
+- Daemon mode for continuous polling
+
+**Usage:**
+```bash
+python auto-print-tracker.py --config print-tracker-config.json --once
+python auto-print-tracker.py --config print-tracker-config.json --daemon
+```
+
+**Setup:**
+1. Copy `print-tracker-config.json.example` to `print-tracker-config.json` and edit it with your printer URL and API key
+2. If using the home server, set `output_path` to `../../home-server/shared-storage/print-tracker/pending-prints.json`
+3. Click **Auto prints** in the Filament Log Usage log tab to import detected prints
+4. Set up a cron job or systemd timer to run the tracker in the background:
+   ```bash
+   # Example cron entry (polls every minute)
+   * * * * * cd /path/to/tools/spoolman-sync && python auto-print-tracker.py --config print-tracker-config.json --once
+   ```
+
 ### add-print-log.py
 
 Adds print usage logs to both Filament Log and Spoolman systems.

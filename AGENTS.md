@@ -107,6 +107,7 @@ The project includes sync tools in `tools/spoolman-sync/` for integrating with S
 
 - **sync-filament-log-to-spoolman.py**: Syncs filament inventory from Filament Log to Spoolman
 - **add-print-log.py**: Adds print usage logs to both Filament Log and Spoolman systems
+- **auto-print-tracker.py**: Polls Moonraker/OctoPrint for completed prints and produces `pending-prints.json`
 - **reconcile-spoolman.py**: Reconciles exact used_weight from Filament Log to Spoolman
 - **migrate-v5-to-v6.py**: Migrates v5 (spool-centric usage) data to v6 (print-centric prints)
 - **spoolman_id_mapping.json**: Maps Filament Log spool IDs to Spoolman spool IDs
