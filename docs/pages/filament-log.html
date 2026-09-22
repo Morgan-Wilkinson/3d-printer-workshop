@@ -2238,7 +2238,7 @@
     Store.spools.forEach(function (s) { bySpool[s.id] = s; });
 
     wrap.innerHTML = '<table class="log-table"><thead><tr>' +
-      '<th>Date</th><th>Project</th><th>Build Plate</th><th>Plate</th><th class="num">Total</th><th style="min-width: 260px;">Filaments</th><th></th>' +
+      '<th style="min-width: 110px; white-space: nowrap;">Date</th><th>Project</th><th>Build Plate</th><th>Plate</th><th class="num" style="min-width: 90px; white-space: nowrap;">Total</th><th style="min-width: 260px;">Filaments</th><th></th>' +
       '</tr></thead><tbody>' +
       list.map(function (p) {
         var buildPlateLabel = "";
