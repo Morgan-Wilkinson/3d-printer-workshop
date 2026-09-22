@@ -540,88 +540,9 @@
     gap: 6px;
   }
 
-  .alerts-panel {
-    width: 280px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    padding: 12px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 0;
-  }
-
-  .alerts-panel h3 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .alerts-panel .clear-btn {
-    font-size: 11px;
-    padding: 2px 8px;
-    background: var(--line);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-
-  .alerts-panel .clear-btn:hover {
-    background: var(--ink-faint);
-  }
-
-  .alert-item {
-    background: var(--surface-alt);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    padding: 10px;
-    margin-bottom: 8px;
-    font-size: 12px;
-  }
-
-  .alert-item.low {
-    border-left: 3px solid var(--warn);
-  }
-
-  .alert-item.crit {
-    border-left: 3px solid var(--danger);
-  }
-
-  .alert-item .alert-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  .alert-item .alert-message {
-    color: var(--ink-faint);
-    line-height: 1.4;
-  }
-
-  .alert-item .alert-time {
-    font-size: 10px;
-    color: var(--ink-faint);
-    margin-top: 4px;
-  }
-
-  .alerts-panel .empty {
-    text-align: center;
-    color: var(--ink-faint);
-    font-size: 12px;
-    padding: 20px 0;
-  }
-
   .main-content {
     flex: 1;
     min-width: 0;
-  }
-
-  .content-with-alerts {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
   }
 
   .toast {
@@ -665,7 +586,7 @@
 
   <div class="stats" id="statsRow"></div>
 
-  <div class="content-with-alerts">
+  <div class="content">
     <div class="main-content">
       <div class="tabs">
         <button class="tab active" data-view="inventory">Inventory</button>
@@ -811,13 +732,6 @@
   <div class="view" id="view-stats"></div>
     </div>
 
-    <div class="alerts-panel">
-      <h3>
-        Alerts
-        <button class="clear-btn" id="btnClearAlerts">Clear all</button>
-      </h3>
-      <div id="alertsList"></div>
-    </div>
   </div>
 </div>
 
@@ -968,7 +882,7 @@
     </div>
 
     <div class="field">
-      <label for="fLowStock">Low stock alert below (%)</label>
+      <label for="fLowStock">Low stock threshold (%)</label>
       <input type="number" id="fLowStock" min="1" max="90" value="15">
     </div>
 
@@ -1195,7 +1109,7 @@
         <input type="number" id="bulkEditPrice" min="0" step="0.01" placeholder="Leave blank to keep current">
       </div>
       <div class="field">
-        <label for="bulkEditLowStock">Low stock alert below (%)</label>
+        <label for="bulkEditLowStock">Low stock threshold (%)</label>
         <input type="number" id="bulkEditLowStock" min="1" max="90" placeholder="Leave blank to keep current">
       </div>
     </div>
@@ -1339,7 +1253,7 @@
     </details>
 
     <div class="field">
-      <label for="rLowStock">Low stock alert below (%)</label>
+      <label for="rLowStock">Low stock threshold (%)</label>
       <input type="number" id="rLowStock" min="1" max="90" value="15">
     </div>
 
@@ -2028,8 +1942,7 @@
     formType: "filament",
     selectedSpools: new Set(),
     analyticsView: "simple",
-    savedQueries: [],
-    alerts: []
+    savedQueries: []
   };
 
   function ringSvg(pct, color, size) {
@@ -2294,7 +2207,7 @@
     Store.spools.forEach(function (s) { bySpool[s.id] = s; });
 
     wrap.innerHTML = '<table class="log-table"><thead><tr>' +
-      '<th>Date</th><th>Project</th><th>Build Plate</th><th>Plate</th><th class="num">Total</th><th>Filaments</th><th></th>' +
+      '<th>Date</th><th>Project</th><th>Build Plate</th><th>Plate</th><th class="num">Total</th><th style="min-width: 260px;">Filaments</th><th></th>' +
       '</tr></thead><tbody>' +
       list.map(function (p) {
         var buildPlateLabel = "";
@@ -2776,114 +2689,13 @@
   window.deleteQuery = deleteQuery;
 
   // ============================================================
-  // Alerts
+  // View rendering
   // ============================================================
-  // NOTE: Alert system is not currently working properly. The generateAlerts()
-  // function runs and console logs show it's being called, but alerts are not
-  // appearing in the UI. The alertsList container exists in the DOM but may have
-  // layout/visibility issues. This needs further debugging to resolve.
-  function generateAlerts() {
-    console.log("generateAlerts called");
-    var active = Store.spools.filter(function (s) { return !s.archived; });
-    console.log("Active spools:", active.length);
 
-    // Remove alerts for archived spools
-    var activeSpoolIds = new Set(active.map(function (s) { return s.id; }));
-    state.alerts = state.alerts.filter(function (a) { return activeSpoolIds.has(a.spoolId); });
 
-    // Generate new alerts for low stock spools
-    active.forEach(function (s) {
-      var pct = spoolPct(s) * 100;
-      var threshold = s.lowStockPct || 15;
-      var critThreshold = 5;
 
-      if (pct <= critThreshold) {
-        var existingAlert = state.alerts.find(function (a) { return a.spoolId === s.id; });
-        if (existingAlert) {
-          // Update existing alert if type changed
-          if (existingAlert.type !== "crit") {
-            existingAlert.type = "crit";
-            existingAlert.message = "Nearly empty (" + fmtNum(spoolRemaining(s)) + " " + spoolUnit(s) + " remaining)";
-            existingAlert.createdAt = new Date().toISOString();
-          }
-        } else {
-          // Add new critical alert
-          state.alerts.push({
-            id: s.id,
-            type: "crit",
-            spoolId: s.id,
-            spoolName: (s.brand || "Unlabeled") + " — " + (s.colorName || "No color"),
-            message: "Nearly empty (" + fmtNum(spoolRemaining(s)) + " " + spoolUnit(s) + " remaining)",
-            createdAt: new Date().toISOString()
-          });
-        }
-      } else if (pct <= threshold) {
-        var existingAlert = state.alerts.find(function (a) { return a.spoolId === s.id; });
-        if (existingAlert) {
-          // Update existing alert with new percentage
-          existingAlert.message = "Running low (" + Math.round(pct) + "% remaining)";
-          existingAlert.createdAt = new Date().toISOString();
-        } else {
-          // Add new low stock alert
-          state.alerts.push({
-            id: s.id,
-            type: "low",
-            spoolId: s.id,
-            spoolName: (s.brand || "Unlabeled") + " — " + (s.colorName || "No color"),
-            message: "Running low (" + Math.round(pct) + "% remaining)",
-            createdAt: new Date().toISOString()
-          });
-        }
-      }
-    });
 
-    console.log("Total alerts after processing:", state.alerts.length);
 
-    // Save alerts
-    try {
-      localStorage.setItem("filamentlog_alerts", JSON.stringify(state.alerts));
-    } catch (e) {}
-  }
-
-  function renderAlerts() {
-    console.log("renderAlerts called");
-    var container = $("alertsList");
-    console.log("Container found:", !!container);
-    if (!container) {
-      console.error("alertsList container not found in DOM");
-      return;
-    }
-
-    console.log("Alerts to render:", state.alerts.length);
-
-    if (state.alerts.length === 0) {
-      container.innerHTML = '<div class="empty">No alerts</div>';
-      return;
-    }
-
-    var html = "";
-    state.alerts.forEach(function (alert) {
-      var time = new Date(alert.createdAt);
-      var timeStr = time.toLocaleDateString() + " " + time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      html += '<div class="alert-item ' + alert.type + '">' +
-        '<div class="alert-title">' + (alert.type === "crit" ? "⚠️ Critical" : "Low stock") + '</div>' +
-        '<div class="alert-message">' + escapeHtml(alert.spoolName) + '<br>' + escapeHtml(alert.message) + '</div>' +
-        '<div class="alert-time">' + timeStr + '</div>' +
-        '</div>';
-    });
-    container.innerHTML = html;
-    console.log("Alerts rendered");
-  }
-
-  function clearAlerts() {
-    state.alerts = [];
-    try {
-      localStorage.setItem("filamentlog_alerts", JSON.stringify(state.alerts));
-    } catch (e) {}
-    renderAlerts();
-  }
-
-  $("btnClearAlerts").addEventListener("click", clearAlerts);
 
   function renderAll() {
     renderStats();
@@ -2901,8 +2713,7 @@
     if (state.activeView === "analytics") {
       renderAnalytics();
     }
-    generateAlerts();
-    renderAlerts();
+
   }
   Store.onChange = renderAll;
 
@@ -3312,8 +3123,7 @@
     if (added > 0) {
       showToast(added + " spool(s) added.");
       closeBulkAddModal();
-      generateAlerts();
-      renderAlerts();
+
     } else {
       showToast("Enter color names for the spools you want to add.");
     }
@@ -3361,8 +3171,7 @@
       state.selectedSpools.clear();
       updateBulkActionBar();
       closeBulkEditModal();
-      generateAlerts();
-      renderAlerts();
+
     }
   });
 
@@ -3457,8 +3266,7 @@
         showToast("Refill added.");
       }
       closeRefillModal();
-      generateAlerts();
-      renderAlerts();
+
     } catch (e) {
       showToast("Couldn't save — try again.");
     }
@@ -3510,8 +3318,7 @@
       Store.convertRefillToSpool(state.editingRefillId, spoolData);
       showToast("Refill converted to spool.");
       closeRefillModal();
-      generateAlerts();
-      renderAlerts();
+
     } catch (e) {
       showToast("Couldn't convert — try again.");
     }
@@ -3568,8 +3375,7 @@
         showToast("Spool added.");
       }
       closeSpoolModal();
-      generateAlerts();
-      renderAlerts();
+
     } catch (e) {
       showToast("Couldn't save — try again.");
     }
@@ -3669,8 +3475,7 @@
       });
       showToast("Print logged.");
       closeUsageModal();
-      generateAlerts();
-      renderAlerts();
+
     } catch (e) {
       showToast("Couldn't log it — try again.");
     }
@@ -3783,15 +3588,9 @@
     state.savedQueries = JSON.parse(localStorage.getItem("filamentlog_queries") || "[]");
   } catch (e) { state.savedQueries = []; }
 
-  // Load alerts
-  try {
-    state.alerts = JSON.parse(localStorage.getItem("filamentlog_alerts") || "[]");
-  } catch (e) { state.alerts = []; }
-
   renderAll();
   Store.init();
-  generateAlerts();
-  renderAlerts();
+
 
 })();
 </script>
