@@ -7,19 +7,28 @@ import json
 import requests
 
 # Load filament log data
-with open('/Users/morganwilkinson/Downloads/filament-log-backup-2026-09-22.json', 'r') as f:
+import sys
+backup_path = sys.argv[1] if len(sys.argv) > 1 else '/Users/morganwilkinson/Downloads/filament-log-backup-2026-09-22.json'
+with open(backup_path, 'r') as f:
     data = json.load(f)
 
 # Load ID mapping
 with open('/Users/morganwilkinson/Development/A 3D Printer Workshop/tools/spoolman-sync/spoolman_id_mapping.json', 'r') as f:
     mapping = json.load(f)
 
-# Calculate total usage per spool from filament log
+# Calculate total usage per spool from filament log (v6 prints or v5 usage)
 totals = {}
-for usage in data.get('usage', []):
-    spool_id = usage.get('spoolId')
-    if spool_id:
-        totals[spool_id] = totals.get(spool_id, 0) + usage.get('amount', 0)
+if 'prints' in data:
+    for p in data['prints']:
+        for filament in p.get('filaments', []):
+            spool_id = filament.get('spoolId')
+            if spool_id:
+                totals[spool_id] = totals.get(spool_id, 0) + filament.get('amount', 0)
+else:
+    for usage in data.get('usage', []):
+        spool_id = usage.get('spoolId')
+        if spool_id:
+            totals[spool_id] = totals.get(spool_id, 0) + usage.get('amount', 0)
 
 print("Calculated totals from filament log:")
 for spool_id, total in totals.items():

@@ -107,6 +107,8 @@ The project includes sync tools in `tools/spoolman-sync/` for integrating with S
 
 - **sync-filament-log-to-spoolman.py**: Syncs filament inventory from Filament Log to Spoolman
 - **add-print-log.py**: Adds print usage logs to both Filament Log and Spoolman systems
+- **reconcile-spoolman.py**: Reconciles exact used_weight from Filament Log to Spoolman
+- **migrate-v5-to-v6.py**: Migrates v5 (spool-centric usage) data to v6 (print-centric prints)
 - **spoolman_id_mapping.json**: Maps Filament Log spool IDs to Spoolman spool IDs
 
 ### Workflow for Adding Print Logs
@@ -117,6 +119,10 @@ When adding print logs from screenshots or printer data:
 3. **Check for duplicates** - the tool will identify similar existing entries
 4. **Add print log** using: `python tools/spoolman-sync/add-print-log.py --spool-id <id> --amount <g> --date <YYYY-MM-DD> --project "<name>"`
 5. **Import updated data** back into Filament Log web app
+
+### Print-Centric Data Model (v6)
+
+Filament Log v6 stores print jobs as `prints`, where each print has one project, date/time, build plate, plate name, and a `filaments` array. Each filament entry is `{spoolId, amount}`. This replaces the old v5 `usage` array which stored one spool entry per log line. The app will automatically migrate v5 backups to v6 on import.
 
 ### Important Notes
 - Filament Log app is the source of truth for filament inventory
