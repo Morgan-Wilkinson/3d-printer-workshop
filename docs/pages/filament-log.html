@@ -1533,7 +1533,7 @@
     disconnect: function () {
       if (this.unsubSpools) this.unsubSpools();
       if (this.unsubRefills) this.unsubRefills();
-      if (this.unsubUsage) this.unsubUsage();
+      if (this.unsubPrints) this.unsubPrints();
       this.connected = false;
       this.db = null;
       this.code = null;
@@ -1544,7 +1544,7 @@
       var self = this;
       var preSpools = Store.spools.slice();
       var preRefills = Store.refills.slice();
-      var preUsage = Store.prints.slice();
+      var prePrints = Store.prints.slice();
       var announced = false;
 
       self.unsubSpools = self.db.collection(self.basePath() + "/spools").onSnapshot(function (snap) {
@@ -1554,9 +1554,9 @@
         if (!announced) {
           announced = true;
           cb(true, null);
-          if (self.firstSnapshotSpools && snap.docs.length === 0 && (preSpools.length || preRefills.length || preUsage.length)) {
+          if (self.firstSnapshotSpools && snap.docs.length === 0 && (preSpools.length || preRefills.length || prePrints.length)) {
             self.firstSnapshotSpools = false;
-            setTimeout(function () { self._offerMigration(preSpools, preRefills, preUsage); }, 150);
+            setTimeout(function () { self._offerMigration(preSpools, preRefills, prePrints); }, 150);
           }
         }
       }, function (err) {
@@ -1570,19 +1570,19 @@
         Store.onChange();
       }, function (err) { showToast("Cloud sync error: " + err.message); });
 
-      self.unsubUsage = self.db.collection(self.basePath() + "/usage").onSnapshot(function (snap) {
+      self.unsubPrints = self.db.collection(self.basePath() + "/prints").onSnapshot(function (snap) {
         Store.prints = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
         Store.persist();
         Store.onChange();
       }, function (err) { showToast("Cloud sync error: " + err.message); });
     },
 
-    _offerMigration: function (preSpools, preRefills, preUsage) {
+    _offerMigration: function (preSpools, preRefills, prePrints) {
       var self = this;
       if (!confirm("This sync code has no data in it yet, but this browser has " + preSpools.length + " spool(s) saved locally.\n\nUpload the local data to the cloud now?")) return;
       var spoolCol = self.db.collection(self.basePath() + "/spools");
       var refillCol = self.db.collection(self.basePath() + "/refills");
-      var usageCol = self.db.collection(self.basePath() + "/usage");
+      var printsCol = self.db.collection(self.basePath() + "/prints");
       var idMap = {};
       var writes = preSpools.map(function (s) {
         var copy = Object.assign({}, s);
@@ -1598,13 +1598,15 @@
         });
         return Promise.all(refillWrites);
       }).then(function () {
-        var usageWrites = preUsage.map(function (u) {
-          var copy = Object.assign({}, u);
+        var printWrites = prePrints.map(function (p) {
+          var copy = Object.assign({}, p);
           delete copy.id;
-          if (idMap[copy.spoolId]) copy.spoolId = idMap[copy.spoolId];
-          return usageCol.add(copy);
+          (copy.filaments || []).forEach(function (f) {
+            if (idMap[f.spoolId]) f.spoolId = idMap[f.spoolId];
+          });
+          return printsCol.add(copy);
         });
-        return Promise.all(usageWrites);
+        return Promise.all(printWrites);
       }).then(function () {
         showToast("Local data uploaded to the cloud.");
       }).catch(function (e) {
