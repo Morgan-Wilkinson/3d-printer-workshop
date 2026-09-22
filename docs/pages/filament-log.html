@@ -576,6 +576,7 @@
       <button class="btn btn-quiet btn-sm" id="btnCloudSync">Cloud sync</button>
       <button class="btn btn-quiet btn-sm" id="btnExport">Export backup</button>
       <button class="btn btn-quiet btn-sm" id="btnImport">Import backup</button>
+      <button class="btn btn-quiet btn-sm" id="btnSyncPriceApi">↻ Sync prices</button>
       <input type="file" id="importFile" accept="application/json" style="display:none;">
       <button class="btn btn-primary" id="btnAddSpool">+ Add spool</button>
       <button class="btn btn-primary" id="btnAddRefill">+ Add refill</button>
@@ -3062,7 +3063,7 @@
     }
   });
 
-  function syncToPriceApi(data, type) {
+  function syncToPriceApi(data, type, silent) {
     var id = data.id;
     var priceApiId = data.priceApiId || null;
     var productName = data.brand + ' — ' + (data.line || data.material || '') + (data.colorName ? ' (' + data.colorName + ')' : '');
@@ -3079,7 +3080,7 @@
     };
     var apiUrl = priceApiId ? 'http://price-api.local/api/products/' + priceApiId : 'http://price-api.local/api/products';
     var method = priceApiId ? 'PUT' : 'POST';
-    fetch(apiUrl, {
+    return fetch(apiUrl, {
       method: method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -3095,10 +3096,25 @@
         Store.persist();
         Store.onChange();
       }
-      showToast('Synced to price-api.');
+      if (!silent) showToast('Synced to price-api.');
     }).catch(function (err) {
       console.error('price-api sync failed', err);
-      showToast('price-api sync failed: ' + err.message);
+      if (!silent) showToast('price-api sync failed: ' + err.message);
+    });
+  }
+
+  function syncAllToPriceApi() {
+    var promises = [];
+    Store.spools.forEach(function (s) {
+      promises.push(syncToPriceApi(s, 'spool', true));
+    });
+    Store.refills.forEach(function (r) {
+      promises.push(syncToPriceApi(r, 'refill', true));
+    });
+    Promise.all(promises).then(function () {
+      showToast('Synced all spools and refills to price-api.');
+    }).catch(function (err) {
+      showToast('Some price-api syncs failed.');
     });
   }
 
@@ -3707,6 +3723,7 @@
   });
 
   $("btnImport").addEventListener("click", function () { $("importFile").click(); });
+  $("btnSyncPriceApi").addEventListener("click", syncAllToPriceApi);
   $("importFile").addEventListener("change", function (e) {
     var file = e.target.files[0];
     if (!file) return;
