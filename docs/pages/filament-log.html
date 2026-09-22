@@ -576,6 +576,7 @@
       <button class="btn btn-quiet btn-sm" id="btnCloudSync">Cloud sync</button>
       <button class="btn btn-quiet btn-sm" id="btnExport">Export backup</button>
       <button class="btn btn-quiet btn-sm" id="btnImport">Import backup</button>
+      <button class="btn btn-quiet btn-sm" id="btnSyncPriceApi">↻ Sync prices</button>
       <input type="file" id="importFile" accept="application/json" style="display:none;">
       <button class="btn btn-primary" id="btnAddSpool">+ Add spool</button>
       <button class="btn btn-primary" id="btnAddRefill">+ Add refill</button>
@@ -851,6 +852,16 @@
           <option value="AliExpress">
           <option value="eBay">
         </datalist>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fUrl">Product URL</label>
+          <input type="url" id="fUrl" placeholder="https://... (for price tracking)">
+        </div>
+        <div class="field">
+          <label for="fUpc">Product UPC / ASIN</label>
+          <input type="text" id="fUpc" placeholder="Optional product ID">
+        </div>
       </div>
       <div class="field-row">
         <div class="field">
@@ -1262,6 +1273,16 @@
           <option value="AliExpress">
           <option value="eBay">
         </datalist>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="rUrl">Product URL</label>
+          <input type="url" id="rUrl" placeholder="https://... (for price tracking)">
+        </div>
+        <div class="field">
+          <label for="rUpc">Product UPC / ASIN</label>
+          <input type="text" id="rUpc" placeholder="Optional product ID">
+        </div>
       </div>
       <div class="field-row">
         <div class="field">
@@ -1807,7 +1828,7 @@
     },
 
     exportJson: function () {
-      return JSON.stringify({ spools: this.spools, refills: this.refills, prints: this.prints, exportedAt: new Date().toISOString(), version: 6 }, null, 2);
+      return JSON.stringify({ spools: this.spools, refills: this.refills, prints: this.prints, exportedAt: new Date().toISOString(), version: 7 }, null, 2);
     },
     importJson: function (text, mode) {
       var data;
@@ -1885,6 +1906,19 @@
         });
         delete data.usage;
         data.version = 6;
+      }
+
+      // Migration from version 6 to version 7 (add price-api sync fields)
+      if (data.version === 6) {
+        var addPriceApiFields = function (item) {
+          item.url = item.url || "";
+          item.upc = item.upc || "";
+          item.priceApiId = item.priceApiId || null;
+          return item;
+        };
+        data.spools = data.spools.map(addPriceApiFields);
+        data.refills = (data.refills || []).map(addPriceApiFields);
+        data.version = 7;
       }
 
       data.prints = data.prints || [];
@@ -3029,6 +3063,61 @@
     }
   });
 
+  function syncToPriceApi(data, type, silent) {
+    var id = data.id;
+    var priceApiId = data.priceApiId || null;
+    var productName = data.brand + ' — ' + (data.line || data.material || '') + (data.colorName ? ' (' + data.colorName + ')' : '');
+    var payload = {
+      name: productName,
+      brand: data.brand,
+      category: data.material,
+      url: data.url || null,
+      upc: data.upc || null,
+      source: data.purchaseSource || 'Filament Log',
+      current_price: data.pricePaid || null,
+      target_price: null,
+      notes: data.notes || ''
+    };
+    var apiUrl = priceApiId ? 'http://price-api.local/api/products/' + priceApiId : 'http://price-api.local/api/products';
+    var method = priceApiId ? 'PUT' : 'POST';
+    return fetch(apiUrl, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      if (!res.ok) throw new Error('price-api returned ' + res.status);
+      return res.json();
+    }).then(function (body) {
+      var newPriceApiId = body.id || priceApiId;
+      var list = (type === 'refill' ? Store.refills : Store.spools);
+      var item = list.find(function (x) { return x.id === id; });
+      if (item) {
+        item.priceApiId = newPriceApiId;
+        Store.persist();
+        Store.onChange();
+      }
+      if (!silent) showToast('Synced to price-api.');
+    }).catch(function (err) {
+      console.error('price-api sync failed', err);
+      if (!silent) showToast('price-api sync failed: ' + err.message);
+    });
+  }
+
+  function syncAllToPriceApi() {
+    var promises = [];
+    Store.spools.forEach(function (s) {
+      promises.push(syncToPriceApi(s, 'spool', true));
+    });
+    Store.refills.forEach(function (r) {
+      promises.push(syncToPriceApi(r, 'refill', true));
+    });
+    Promise.all(promises).then(function () {
+      showToast('Synced all spools and refills to price-api.');
+    }).catch(function (err) {
+      showToast('Some price-api syncs failed.');
+    });
+  }
+
   function openSpoolModal(id) {
     state.editingSpoolId = id || null;
     $("presetSelect").value = "";
@@ -3053,6 +3142,8 @@
       $("fPrice").value = s.pricePaid || "";
       $("fPurchaseDate").value = s.purchaseDate || todayStr();
       $("fSource").value = s.purchaseSource || "";
+      $("fUrl").value = s.url || "";
+      $("fUpc").value = s.upc || "";
       $("fOriginalPrice").value = s.originalPrice || "";
       $("fSaleUnit").value = s.saleUnit || "";
       $("fBundleInfo").value = s.bundleInfo || "";
@@ -3256,6 +3347,8 @@
       $("rPrice").value = r.pricePaid || "";
       $("rPurchaseDate").value = r.purchaseDate || todayStr();
       $("rSource").value = r.purchaseSource || "";
+      $("rUrl").value = r.url || "";
+      $("rUpc").value = r.upc || "";
       $("rNozzleMin").value = r.nozzleMin || "";
       $("rNozzleMax").value = r.nozzleMax || "";
       $("rBedMin").value = r.bedMin || "";
@@ -3300,6 +3393,8 @@
       pricePaid: parseFloat($("rPrice").value) || 0,
       purchaseDate: $("rPurchaseDate").value || todayStr(),
       purchaseSource: $("rSource").value.trim(),
+      url: $("rUrl").value.trim(),
+      upc: $("rUpc").value.trim(),
       nozzleMin: parseFloat($("rNozzleMin").value) || null,
       nozzleMax: parseFloat($("rNozzleMax").value) || null,
       bedMin: parseFloat($("rBedMin").value) || null,
@@ -3313,6 +3408,11 @@
       archived: false
     };
 
+    if (state.editingRefillId) {
+      var existing = Store.refills.find(function (x) { return x.id === state.editingRefillId; });
+      if (existing) data.priceApiId = existing.priceApiId || null;
+    }
+
     try {
       if (state.editingRefillId) {
         Store.updateRefill(state.editingRefillId, data);
@@ -3322,6 +3422,7 @@
         showToast("Refill added.");
       }
       closeRefillModal();
+      syncToPriceApi(data, 'refill');
 
     } catch (e) {
       showToast("Couldn't save — try again.");
@@ -3401,6 +3502,8 @@
       pricePaid: parseFloat($("fPrice").value) || 0,
       purchaseDate: $("fPurchaseDate").value || todayStr(),
       purchaseSource: $("fSource").value.trim(),
+      url: $("fUrl").value.trim(),
+      upc: $("fUpc").value.trim(),
       originalPrice: parseFloat($("fOriginalPrice").value) || 0,
       saleUnit: $("fSaleUnit").value,
       bundleInfo: $("fBundleInfo").value.trim(),
@@ -3422,6 +3525,11 @@
       data.bedMax = parseFloat($("fBedMax").value) || null;
     }
 
+    if (state.editingSpoolId) {
+      var existing = Store.spools.find(function (x) { return x.id === state.editingSpoolId; });
+      if (existing) data.priceApiId = existing.priceApiId || null;
+    }
+
     try {
       if (state.editingSpoolId) {
         Store.updateSpool(state.editingSpoolId, data);
@@ -3431,6 +3539,7 @@
         showToast("Spool added.");
       }
       closeSpoolModal();
+      syncToPriceApi(data, 'spool');
 
     } catch (e) {
       showToast("Couldn't save — try again.");
@@ -3614,6 +3723,7 @@
   });
 
   $("btnImport").addEventListener("click", function () { $("importFile").click(); });
+  $("btnSyncPriceApi").addEventListener("click", syncAllToPriceApi);
   $("importFile").addEventListener("change", function (e) {
     var file = e.target.files[0];
     if (!file) return;
