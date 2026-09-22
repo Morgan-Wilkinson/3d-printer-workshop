@@ -91,6 +91,7 @@ Every pull request must include:
 - **Refill**: A roll of filament without the spool housing - can be purchased independently and used to refill empty spools
 - **Refills are independent**: Can be purchased and tracked without any existing spool of that color or material
 - **Conversion**: Refills can be converted to spools when loaded onto empty spool housing
+- **Build Plates**: The X2D printer has 3 distinct build plates - Cool Plate, Engineering Plate, and Textured PEI Plate (the standard plate that comes with the printer)
 
 ### Design Philosophy
 - Single-file architecture for simplicity
@@ -122,3 +123,26 @@ When adding print logs from screenshots or printer data:
 - Spoolman is used for advanced filament management and integrations
 - Always check for duplicates before adding new print logs
 - The ID mapping file must be preserved for future operations
+
+## Build Plate Compatibility System
+
+### Build Plates Configuration
+The Filament Log app includes build plate compatibility tracking for Bambu Lab X2D printer:
+
+- **Cool Plate**: Low-temp materials (PLA, PLA-CF, PETG, PETG-CF, TPU)
+- **Engineering Plate**: High-temp materials (PLA, PLA-CF, ABS, ABS-GF, ASA, ASA-CF, Polycarbonate, Nylon-CF, Nylon-GF, PET-CF, PPA-CF, PPS-CF)
+- **Textured PEI Plate**: All-rounder (PLA, PLA-CF, PETG, PETG-CF, ABS, ASA, TPU)
+
+### Compatibility Features
+- **Automatic Badge Display**: Each spool card shows color-coded badges for compatible build plates
+- **Build Plate Filtering**: Filter inventory by compatible build plate
+- **Real-time Form Feedback**: When adding/editing spools, compatible plates are shown based on material type
+- **Print Logging**: Track which build plate was used for each print job
+
+### Print Logging Enhancements
+- **Build Plate Selection**: Picklist to select which build plate was used (Cool Plate, Engineering Plate, Textured PEI Plate)
+- **Plate Number Tracking**: Track specific plate numbers for multi-plate models (e.g., "1", "2", "3", "A", "B")
+- **Usage Log Display**: Build plate and plate number are displayed in the usage log table
+
+### Data Structure
+Build plate compatibility is determined automatically based on material type and stored in the filament data structure. No manual compatibility assignment is required - the system calculates compatibility based on the material entered.

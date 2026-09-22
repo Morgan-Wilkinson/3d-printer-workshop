@@ -274,6 +274,19 @@
   }
   .low-flag.crit { color: var(--red); background: var(--red-bg); }
 
+  .compatibility-badges {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+  }
+  .compatibility-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600; color: var(--ink);
+    padding: 3px 8px; border-radius: 12px;
+    border: 1px solid var(--line);
+  }
+  .compatibility-badge.cool-plate { background: #E3F2FD; border-color: #4A90E2; color: #1565C0; }
+  .compatibility-badge.engineering-plate { background: #FFF3E0; border-color: #F5A623; color: #E65100; }
+  .compatibility-badge.texture-pei-plate { background: #E8F5E9; border-color: #7ED321; color: #2E7D32; }
+
   .empty {
     border: 1px dashed var(--line-strong);
     border-radius: var(--radius-md);
@@ -295,6 +308,10 @@
   .log-table td.num, .log-table th.num { font-family: var(--font-mono); text-align: right; }
   .log-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; border: 1px solid rgba(0,0,0,0.15); }
   .log-table tr:last-child td { border-bottom: none; }
+  @media (max-width: 768px) {
+    .log-table { font-size: 11px; }
+    .log-table th, .log-table td { padding: 6px 8px; }
+  }
 
   /* ---------- Stats view ---------- */
   .panel {
@@ -628,6 +645,9 @@
 <div class="wrap">
   <div class="hdr">
     <div>
+      <a href="../index.html" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-bottom: 8px;">
+        <span>← Back to Workshop</span>
+      </a>
       <h1>Filament log</h1>
       <div class="tagline">Spools, resin, and what they're costing you</div>
     </div>
@@ -658,6 +678,7 @@
     <div class="filterbar">
       <input type="search" id="searchInput" placeholder="Search brand, color, material...">
       <select id="materialFilter"><option value="">All materials</option></select>
+      <select id="buildPlateFilter"><option value="">All build plates</option></select>
       <select id="sortFilter"><option value="name">Sort by name</option><option value="brand">Sort by brand</option><option value="source">Sort by source</option><option value="price">Sort by price</option></select>
       <label class="chk-lowstock"><input type="checkbox" id="lowStockOnly"> Running low only</label>
     </div>
@@ -940,6 +961,13 @@
     </details>
 
     <div class="field">
+      <label>Compatible build plates</label>
+      <div id="fCompatiblePlates" style="font-size: 12px; color: var(--ink-soft); padding: 8px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--line);">
+        Enter a material to see compatible build plates
+      </div>
+    </div>
+
+    <div class="field">
       <label for="fLowStock">Low stock alert below (%)</label>
       <input type="number" id="fLowStock" min="1" max="90" value="15">
     </div>
@@ -979,6 +1007,21 @@
       <div class="field">
         <label for="uDate">Date</label>
         <input type="date" id="uDate">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="uBuildPlate">Build plate used</label>
+        <select id="uBuildPlate">
+          <option value="">Select build plate</option>
+          <option value="cool_plate">Cool Plate</option>
+          <option value="engineering_plate">Engineering Plate</option>
+          <option value="texture_pei_plate">Textured PEI Plate</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="uPlateNumber">Plate number</label>
+        <input type="text" id="uPlateNumber" placeholder="e.g., 1, 2, 3, A, B">
       </div>
     </div>
     <div class="field">
@@ -1447,6 +1490,75 @@
   ];
 
   // ============================================================
+  // Build plates and nozzle configuration for X2D printer
+  // ============================================================
+  var BUILD_PLATES = [
+    {
+      id: "cool_plate",
+      name: "Cool Plate",
+      type: "cool",
+      color: "#4A90E2",
+      description: "Standard cool plate for PLA and other low-temp materials",
+      compatibleMaterials: ["PLA", "PLA-CF", "PETG", "PETG-CF", "TPU"],
+      bedTempRange: [0, 60]
+    },
+    {
+      id: "engineering_plate",
+      name: "Engineering Plate", 
+      type: "engineering",
+      color: "#F5A623",
+      description: "High-temp plate for ABS, ASA, and engineering materials. Can also work with PLA but not optimal.",
+      compatibleMaterials: ["PLA", "PLA-CF", "ABS", "ABS-GF", "ASA", "ASA-CF", "Polycarbonate", "Nylon-CF", "Nylon-GF", "PET-CF", "PPA-CF", "PPS-CF"],
+      bedTempRange: [80, 120]
+    },
+    {
+      id: "texture_pei_plate",
+      name: "Textured PEI Plate",
+      type: "texture_pei", 
+      color: "#7ED321",
+      description: "Textured PEI surface - the standard plate that came with X2D. Excellent all-rounder for most materials.",
+      compatibleMaterials: ["PLA", "PLA-CF", "PETG", "PETG-CF", "ABS", "ASA", "TPU"],
+      bedTempRange: [0, 100]
+    }
+  ];
+
+  var NOZZLES = [
+    {
+      id: "standard_0.4",
+      name: "Standard 0.4mm",
+      diameter: 0.4,
+      description: "Standard nozzle that came with X2D",
+      compatibleMaterials: ["PLA", "PLA-CF", "PETG", "PETG-CF", "ABS", "ABS-GF", "ASA", "ASA-CF", "TPU", "Polycarbonate", "Nylon-CF", "Nylon-GF", "PET-CF", "PPA-CF", "PPS-CF"]
+    }
+  ];
+
+  // Function to get compatible build plates for a material
+  function getCompatibleBuildPlates(material) {
+    if (!material) return [];
+    return BUILD_PLATES.filter(function (plate) {
+      return plate.compatibleMaterials.some(function (mat) {
+        return material.toLowerCase().indexOf(mat.toLowerCase()) > -1;
+      });
+    });
+  }
+
+  // Function to get compatible build plate IDs for a material
+  function getCompatibleBuildPlateIds(material) {
+    return getCompatibleBuildPlates(material).map(function (plate) {
+      return plate.id;
+    });
+  }
+
+  // Function to check if a material is compatible with a specific build plate
+  function isMaterialCompatibleWithPlate(material, plateId) {
+    var plate = BUILD_PLATES.find(function (p) { return p.id === plateId; });
+    if (!plate || !material) return false;
+    return plate.compatibleMaterials.some(function (mat) {
+      return material.toLowerCase().indexOf(mat.toLowerCase()) > -1;
+    });
+  }
+
+  // ============================================================
   // Cloud sync (optional) — Firebase Firestore. Off by default;
   // the app is fully local until you connect one. When connected,
   // every device using the same Firebase project + sync code reads
@@ -1862,6 +1974,7 @@
     materialFilter: "",
     sortFilter: "name",
     lowStockOnly: false,
+    buildPlateFilter: "",
     logSpoolFilter: "",
     editingSpoolId: null,
     editingRefillId: null,
@@ -1914,9 +2027,23 @@
     sel.value = mats.indexOf(current) > -1 ? current : "";
   }
 
+  function renderBuildPlateFilterOptions() {
+    var sel = $("buildPlateFilter");
+    var current = sel.value;
+    sel.innerHTML = '<option value="">All build plates</option>' + BUILD_PLATES.map(function (plate) {
+      return '<option value="' + plate.id + '">' + plate.name + '</option>';
+    }).join("");
+    sel.value = current;
+  }
+
   function renderSpoolGrid() {
     var list = Store.spools.filter(function (s) { return !s.archived; });
     if (state.materialFilter) list = list.filter(function (s) { return s.material === state.materialFilter; });
+    if (state.buildPlateFilter) {
+      list = list.filter(function (s) {
+        return isMaterialCompatibleWithPlate(s.material, state.buildPlateFilter);
+      });
+    }
     if (state.search) {
       var q = state.search.toLowerCase();
       list = list.filter(function (s) {
@@ -1996,6 +2123,11 @@
       var days = estDaysRemaining(s);
       var isSelected = state.selectedSpools.has(s.id);
       var savings = s.originalPrice > 0 ? (s.originalPrice - s.pricePaid) : 0;
+      var compatiblePlates = getCompatibleBuildPlates(s.material);
+      var compatibilityBadges = compatiblePlates.length > 0 ? 
+        '<div class="compatibility-badges">' + compatiblePlates.map(function (plate) {
+          return '<span class="compatibility-badge ' + plate.type + '-plate">' + escapeHtml(plate.name) + '</span>';
+        }).join('') + '</div>' : '';
       return '<div class="card' + (low ? '' : '') + '" data-id="' + s.id + '">' +
         '<div class="ring-wrap">' + ringSvg(pct, s.colorHex || "#8a8f89") +
           '<div class="ring-pct">' + pctInt + '%</div></div>' +
@@ -2007,6 +2139,7 @@
             (ppk ? '<div class="metric"><span class="m-lbl">Price</span><span class="m-val">' + fmtMoney(ppk) + '/kg' + '</span></div>' : '') +
             (s.purchaseSource ? '<div class="metric"><span class="m-lbl">From</span><span class="m-val">' + escapeHtml(s.purchaseSource) + '</span></div>' : '') +
           '</div>' +
+          compatibilityBadges +
           (savings > 0 ? '<div class="card-sub" style="margin-top:6px; color:var(--green);">Saved ' + fmtMoney(savings) + ' on this purchase</div>' : '') +
           (days !== null ? '<div class="card-sub" style="margin-top:6px;">~' + Math.round(days) + ' days left at current pace</div>' : '') +
           (low ? '<div class="low-flag' + (crit ? ' crit' : '') + '">' + (crit ? "Nearly empty" : "Running low") + '</div>' : '') +
@@ -2114,16 +2247,23 @@
     Store.spools.forEach(function (s) { bySpool[s.id] = s; });
 
     wrap.innerHTML = '<table class="log-table"><thead><tr>' +
-      '<th>Date</th><th>Spool</th><th>Project</th><th class="num">Amount</th><th></th>' +
+      '<th>Date</th><th>Spool</th><th>Project</th><th>Build Plate</th><th>Plate #</th><th class="num">Amount</th><th></th>' +
       '</tr></thead><tbody>' +
       list.map(function (u) {
         var s = bySpool[u.spoolId];
         var swatch = s ? '<span class="log-swatch" style="background:' + (s.colorHex || "#999") + '"></span>' : "";
         var label = s ? (s.brand + " — " + (s.line || s.material)) : "(deleted spool)";
+        var buildPlateLabel = "";
+        if (u.buildPlate) {
+          var plate = BUILD_PLATES.find(function (p) { return p.id === u.buildPlate; });
+          buildPlateLabel = plate ? plate.name : u.buildPlate;
+        }
         return '<tr data-id="' + u.id + '">' +
           '<td>' + (u.date || "") + '</td>' +
           '<td>' + swatch + escapeHtml(label) + '</td>' +
           '<td>' + escapeHtml(u.project || "") + (u.notes ? '<div class="card-sub">' + escapeHtml(u.notes) + '</div>' : '') + '</td>' +
+          '<td>' + escapeHtml(buildPlateLabel) + '</td>' +
+          '<td>' + escapeHtml(u.plateNumber || "") + '</td>' +
           '<td class="num">' + fmtNum(u.amount) + (s ? " " + spoolUnit(s) : " g") + '</td>' +
           '<td><button class="btn btn-sm btn-quiet btn-danger delUsageBtn">Delete</button></td>' +
           '</tr>';
@@ -2693,6 +2833,7 @@
   function renderAll() {
     renderStats();
     renderMaterialFilterOptions();
+    renderBuildPlateFilterOptions();
     renderSpoolGrid();
     renderRefillGrid();
     renderLogFilterOptions();
@@ -2749,6 +2890,7 @@
   $("searchInput").addEventListener("input", function (e) { state.search = e.target.value; renderSpoolGrid(); });
   $("refillSearchInput").addEventListener("input", function (e) { state.refillSearch = e.target.value; renderRefillGrid(); });
   $("materialFilter").addEventListener("change", function (e) { state.materialFilter = e.target.value; renderSpoolGrid(); });
+  $("buildPlateFilter").addEventListener("change", function (e) { state.buildPlateFilter = e.target.value; renderSpoolGrid(); });
   $("sortFilter").addEventListener("change", function (e) { state.sortFilter = e.target.value; renderSpoolGrid(); });
   $("lowStockOnly").addEventListener("change", function (e) { state.lowStockOnly = e.target.checked; renderSpoolGrid(); });
   $("logSpoolFilter").addEventListener("change", function (e) { state.logSpoolFilter = e.target.value; renderLogTable(); });
@@ -2923,7 +3065,10 @@
       $("fBedMin").value = p.bed[0];
       $("fBedMax").value = p.bed[1];
     }
+    updateCompatiblePlatesDisplay();
   });
+
+  $("fMaterial").addEventListener("input", updateCompatiblePlatesDisplay);
 
   $("bulkPresetSelect").addEventListener("change", function (e) {
     if (e.target.value === "") return;
@@ -3002,9 +3147,31 @@
       setFormType("filament");
       $("btnDeleteSpool").style.display = "none";
     }
+    updateCompatiblePlatesDisplay();
     $("spoolOverlay").classList.add("open");
   }
   function closeSpoolModal() { $("spoolOverlay").classList.remove("open"); }
+
+  function updateCompatiblePlatesDisplay() {
+    var material = $("fMaterial").value.trim();
+    var display = $("fCompatiblePlates");
+    
+    if (!material) {
+      display.innerHTML = "Enter a material to see compatible build plates";
+      return;
+    }
+    
+    var compatiblePlates = getCompatibleBuildPlates(material);
+    if (compatiblePlates.length === 0) {
+      display.innerHTML = "No compatible build plates found for this material";
+      display.style.color = "var(--red)";
+    } else {
+      display.innerHTML = compatiblePlates.map(function (plate) {
+        return '<span class="compatibility-badge ' + plate.type + '-plate">' + escapeHtml(plate.name) + '</span>';
+      }).join(' ');
+      display.style.color = "var(--ink-soft)";
+    }
+  }
 
   // ============================================================
   // Bulk add modal
@@ -3401,6 +3568,8 @@
     $("uProject").value = "";
     $("uNotes").value = "";
     $("uDate").value = todayStr();
+    $("uBuildPlate").value = "";
+    $("uPlateNumber").value = "";
     updateUsagePreview();
     $("usageOverlay").classList.add("open");
   }
@@ -3430,6 +3599,8 @@
         project: $("uProject").value.trim(),
         notes: $("uNotes").value.trim(),
         date: $("uDate").value || todayStr(),
+        buildPlate: $("uBuildPlate").value,
+        plateNumber: $("uPlateNumber").value.trim(),
         loggedAt: new Date().toISOString()
       });
       Store.updateSpool(spoolId, updatedSpool);

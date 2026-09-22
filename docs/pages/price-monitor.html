@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500;0,600;0,700;0,800;1,500&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #E7EAE7;
+    --surface: #FBFCFB;
+    --surface-2: #EFF1EE;
+    --ink: #1D211E;
+    --ink-soft: #5B615C;
+    --ink-faint: #8A908A;
+    --line: #C7CDC6;
+    --line-strong: #9BA39A;
+    --amber: #B4750F;
+    --amber-bg: #FBEDD4;
+    --red: #A3311A;
+    --red-bg: #F7E1DB;
+    --green: #3C6E42;
+    --green-bg: #E7F0E8;
+    --focus: #2B6CB0;
+    --radius-sm: 3px;
+    --radius-md: 5px;
+    --font-head: 'Archivo', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #171917;
+      --surface: #1F221F;
+      --surface-2: #262925;
+      --ink: #E9ECE8;
+      --ink-soft: #A6ACA5;
+      --ink-faint: #6F756E;
+      --line: #363A35;
+      --line-strong: #484D46;
+      --amber: #E2A03F;
+      --amber-bg: #3A2E14;
+      --red: #E17A5F;
+      --red-bg: #3B211B;
+      --green: #7FB489;
+      --green-bg: #1E3321;
+      --focus: #6FA8DC;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171917;
+    --surface: #1F221F;
+    --surface-2: #262925;
+    --ink: #E9ECE8;
+    --ink-soft: #A6ACA5;
+    --ink-faint: #6F756E;
+    --line: #363A35;
+    --line-strong: #484D46;
+    --amber: #E2A03F;
+    --amber-bg: #3A2E14;
+    --red: #E17A5F;
+    --red-bg: #3B211B;
+    --green: #7FB489;
+    --green-bg: #1E3321;
+    --focus: #6FA8DC;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-head);
+    -webkit-font-smoothing: antialiased;
+  }
+  body { min-height: 100vh; padding-bottom: 64px; }
+
+  a { color: inherit; }
+  button { font-family: inherit; }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 20px 16px 0;
+  }
+
+  .hdr {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .hdr h1 {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .hdr .tagline {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+  .hdr-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn {
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: var(--radius-sm);
+    padding: 9px 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .btn:hover { border-color: var(--ink-soft); }
+  .btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .btn-primary {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-quiet {
+    border-color: transparent;
+    background: transparent;
+    padding: 9px 10px;
+  }
+  .btn-quiet:hover { background: var(--surface-2); }
+  .btn-danger { color: var(--red); }
+  .btn-sm { padding: 6px 10px; font-size: 12.5px; }
+  .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--surface);
+    margin-bottom: 18px;
+  }
+  @media (max-width: 680px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  .stat {
+    padding: 12px 14px;
+    border-right: 1px solid var(--line);
+  }
+  .stat:last-child { border-right: none; }
+  .stat .num {
+    font-family: var(--font-mono);
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+  .stat .num.highlight { color: var(--green); }
+  .stat .lbl {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin-top: 3px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 18px;
+  }
+  .tab {
+    background: transparent;
+    border: none;
+    padding: 9px 4px;
+    margin-right: 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink-faint);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    position: relative;
+    bottom: -1px;
+  }
+  .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .filterbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filterbar input[type="search"], .filterbar select {
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .filterbar input[type="search"] { flex: 1; min-width: 140px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    padding: 16px;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-weight: 700;
+    font-size: 14.5px;
+    margin-bottom: 4px;
+  }
+  .card-sub {
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+  .price-section {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .price-item {
+    flex: 1;
+  }
+  .price-label {
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-bottom: 2px;
+  }
+  .price-value {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .price-value.drop { color: var(--green); }
+  .price-value.rise { color: var(--red); }
+  .card-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .empty {
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius-md);
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--ink-soft);
+  }
+  .empty h3 { margin: 0 0 6px; font-size: 15px; color: var(--ink); }
+  .empty p { margin: 0 0 16px; font-size: 13px; }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(20,22,20,0.45);
+    display: none; align-items: flex-start; justify-content: center;
+    padding: 24px 12px; overflow-y: auto; z-index: 50;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    width: 100%; max-width: 520px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .modal h2 { font-size: 16px; margin: 0 0 4px; }
+  .modal .modal-sub { font-size: 12.5px; color: var(--ink-faint); margin-bottom: 16px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 4px; }
+  .field input, .field select, .field textarea {
+    width: 100%; border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+    padding: 8px 10px; font-size: 13.5px; font-family: inherit; background: var(--bg); color: var(--ink);
+  }
+  .field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible {
+    outline: 2px solid var(--focus); outline-offset: 1px;
+  }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; }
+  .field-hint { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
+  .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; gap: 8px; }
+  .modal-actions .right { display: flex; gap: 8px; }
+
+  .table-container {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .data-table th {
+    text-align: left;
+    font-size: 11px;
+    color: var(--ink-faint);
+    font-weight: 600;
+    border-bottom: 1px solid var(--line);
+    padding: 10px 12px;
+    background: var(--surface-2);
+  }
+  .data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table .num { font-family: var(--font-mono); text-align: right; }
+  .data-table .drop { color: var(--green); }
+  .data-table .rise { color: var(--red); }
+
+  .alert-item {
+    background: var(--green-bg);
+    border: 1px solid var(--green);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .alert-item .alert-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  .alert-item .alert-message {
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .alert-item .alert-time {
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-top: 4px;
+  }
+
+  .toast {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: var(--radius-sm);
+    font-size: 13px; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .toast.show { opacity: 1; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-sale { background: var(--green-bg); color: var(--green); }
+  .badge-watch { background: var(--amber-bg); color: var(--amber); }
+
+  .integration-section {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .integration-section h3 {
+    font-size: 14px;
+    margin: 0 0 12px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 14px 12px 0; }
+    .modal { padding: 16px; }
+    .field-row { flex-direction: column; gap: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="hdr">
+    <div>
+      <a href="../index.html" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-bottom: 8px;">
+        <span>← Back to Workshop</span>
+      </a>
+      <h1>Price Monitor</h1>
+      <div class="tagline">Track filament prices and get sale alerts</div>
+    </div>
+    <div class="hdr-actions">
+      <button class="btn btn-quiet btn-sm" id="btnExport">Export</button>
+      <button class="btn btn-primary" id="btnAddWatch">+ Add to watch list</button>
+    </div>
+  </div>
+
+  <div class="stats" id="statsRow"></div>
+
+  <div class="tabs">
+    <button class="tab active" data-view="watchlist">Watch List</button>
+    <button class="tab" data-view="alerts">Alerts</button>
+    <button class="tab" data-view="history">Price History</button>
+    <button class="tab" data-view="settings">Settings</button>
+  </div>
+
+  <div class="view active" id="view-watchlist">
+    <div class="filterbar">
+      <input type="search" id="watchSearch" placeholder="Search products...">
+      <select id="watchFilter">
+        <option value="all">All items</option>
+        <option value="sale">On sale</option>
+        <option value="drop">Price dropped</option>
+        <option value="watch">Below target</option>
+      </select>
+    </div>
+    <div id="watchGrid" class="grid"></div>
+  </div>
+
+  <div class="view" id="view-alerts">
+    <div class="filterbar">
+      <button class="btn btn-sm" id="btnClearAlerts">Clear all alerts</button>
+    </div>
+    <div id="alertsList"></div>
+  </div>
+
+  <div class="view" id="view-history">
+    <div class="filterbar">
+      <select id="historyProduct">
+        <option value="">All products</option>
+      </select>
+      <select id="historyPeriod">
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="90">Last 90 days</option>
+        <option value="all">All time</option>
+      </select>
+    </div>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Date</th>
+            <th class="num">Price</th>
+            <th class="num">Change</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="view" id="view-settings">
+    <div class="integration-section">
+      <h3>Alert Preferences</h3>
+      <div class="field">
+        <label>
+          <input type="checkbox" id="settingInApp"> In-app notifications
+        </label>
+      </div>
+      <div class="field">
+        <label>
+          <input type="checkbox" id="settingBrowser"> Browser push notifications
+        </label>
+      </div>
+      <div class="field">
+        <label>
+          <input type="checkbox" id="settingEmail"> Email alerts
+        </label>
+      </div>
+      <div class="field" id="emailField" style="display:none;">
+        <label>Email address</label>
+        <input type="email" id="settingEmailAddress" placeholder="your@email.com">
+      </div>
+    </div>
+
+    <div class="integration-section">
+      <h3>Check Frequency</h3>
+      <div class="field">
+        <label>How often to check for price updates</label>
+        <select id="settingFrequency">
+          <option value="manual">Manual only</option>
+          <option value="hourly">Every hour</option>
+          <option value="daily">Daily</option>
+          <option value="custom">Custom (days)</option>
+        </select>
+      </div>
+      <div class="field" id="customDaysField" style="display:none;">
+        <label>Check every # days</label>
+        <input type="number" id="settingCustomDays" min="1" max="30" value="2">
+      </div>
+    </div>
+
+    <div class="integration-section">
+      <h3>API Information</h3>
+      <p style="font-size: 13px; color: var(--ink-soft); margin-bottom: 12px;">
+        Price data is stored in PostgreSQL and fetched automatically via ProductSource API.
+        Manual price updates are always available.
+      </p>
+      <button class="btn btn-sm" id="btnCheckPrices">Check prices now</button>
+    </div>
+
+    <div class="integration-section">
+      <h3>Data Management</h3>
+      <div class="field">
+        <label>Export version</label>
+        <input type="text" id="exportVersion" value="1.0" readonly>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit watch item modal -->
+<div class="overlay" id="watchOverlay">
+  <div class="modal">
+    <h2 id="watchModalTitle">Add to watch list</h2>
+    <div class="modal-sub">Track prices for filament products</div>
+
+    <div class="field">
+      <label for="wName">Product name</label>
+      <input type="text" id="wName" placeholder="e.g. Bambu Lab PLA Basic 1kg">
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="wBrand">Brand</label>
+        <input type="text" id="wBrand" placeholder="e.g. Bambu Lab">
+      </div>
+      <div class="field">
+        <label for="wMaterial">Category</label>
+        <input type="text" id="wMaterial" placeholder="e.g. PLA, Electronics, 3D Printer">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="wCurrentPrice">Current price ($)</label>
+        <input type="number" id="wCurrentPrice" min="0" step="0.01" placeholder="22.99">
+      </div>
+      <div class="field">
+        <label for="wTargetPrice">Target price ($)</label>
+        <input type="number" id="wTargetPrice" min="0" step="0.01" placeholder="19.99">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="wSource">Retailer/Source</label>
+      <input type="text" id="wSource" list="sourceOptions" placeholder="e.g. Amazon, Walmart, Best Buy">
+      <datalist id="sourceOptions">
+        <option value="Amazon">
+        <option value="Walmart">
+        <option value="Best Buy">
+        <option value="Target">
+        <option value="eBay">
+        <option value="AliExpress">
+        <option value="Bambu Lab Store">
+        <option value="Elegoo Store">
+        <option value="Micro Center">
+        <option value="Prusa Store">
+      </datalist>
+    </div>
+
+    <div class="field">
+      <label for="wUrl">Product URL (optional - auto-extracts product ID)</label>
+      <input type="url" id="wUrl" placeholder="https://..." onchange="handleUrlChange()">
+      <div class="field-hint" id="urlHint">Supports Amazon, Bambu Lab, Walmart, Best Buy, Target, eBay</div>
+    </div>
+
+    <div class="field" id="upcField" style="display:none;">
+      <label for="wUpc">Auto-extracted Product ID</label>
+      <input type="text" id="wUpc" readonly placeholder="Auto-extracted from URL">
+      <div class="field-hint">Product ID automatically extracted from URL</div>
+    </div>
+
+    <div class="field">
+      <label for="wNotes">Notes</label>
+      <textarea id="wNotes" placeholder="Any additional details..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <div class="left">
+        <button class="btn btn-quiet btn-danger" id="btnDeleteWatch" style="display:none;">Delete</button>
+      </div>
+      <div class="right">
+        <button class="btn" id="btnCancelWatch">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveWatch">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Update price modal -->
+<div class="overlay" id="priceUpdateOverlay">
+  <div class="modal">
+    <h2>Update Price</h2>
+    <div class="modal-sub">Record a new price for this product</div>
+
+    <div class="field">
+      <label id="priceUpdateProductLabel">Product</label>
+      <input type="text" id="priceUpdateProduct" readonly>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="priceUpdateNew">New price ($)</label>
+        <input type="number" id="priceUpdateNew" min="0" step="0.01" placeholder="0.00">
+      </div>
+      <div class="field">
+        <label for="priceUpdateDate">Date</label>
+        <input type="date" id="priceUpdateDate">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="priceUpdateSource">Source</label>
+      <input type="text" id="priceUpdateSource" placeholder="e.g. Amazon sale">
+    </div>
+
+    <div class="modal-actions">
+      <div class="left"></div>
+      <div class="right">
+        <button class="btn" id="btnCancelPriceUpdate">Cancel</button>
+        <button class="btn btn-primary" id="btnSavePriceUpdate">Update price</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// API Configuration
+const API_BASE_URL = 'http://price-api.local/api';
+
+// API-based Store
+var Store = {
+  watchList: [],
+  priceHistory: [],
+  alerts: [],
+  settings: {
+    inApp: true,
+    browser: false,
+    email: false,
+    emailAddress: '',
+    frequency: 'manual'
+  },
+  
+  async init() {
+    // Load settings from localStorage (UI preferences only)
+    var savedSettings = localStorage.getItem('priceMonitorSettings');
+    if (savedSettings) {
+      try {
+        var data = JSON.parse(savedSettings);
+        this.settings = data.settings || this.settings;
+      } catch (e) {
+        console.error('Failed to load saved settings:', e);
+      }
+    }
+    // Load data from API
+    await this.loadFromAPI();
+  },
+  
+  async loadFromAPI() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products`);
+      this.watchList = await response.json();
+      
+      const alertsResponse = await fetch(`${API_BASE_URL}/alerts`);
+      this.alerts = await alertsResponse.json();
+      
+      console.log('Data loaded from API successfully');
+    } catch (error) {
+      console.error('Failed to load data from API:', error);
+      // Fallback to empty arrays if API fails
+      this.watchList = [];
+      this.alerts = [];
+    }
+  },
+  
+  saveSettings() {
+    localStorage.setItem('priceMonitorSettings', JSON.stringify({
+      settings: this.settings
+    }));
+  },
+  
+  async getProducts() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products`);
+      this.watchList = await response.json();
+      return this.watchList;
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+      return [];
+    }
+  },
+  
+  async addProduct(item) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: item.name,
+          brand: item.brand,
+          category: item.material,
+          current_price: item.currentPrice,
+          target_price: item.targetPrice,
+          source: item.source,
+          url: item.url,
+          upc: item.upc || null, // Let backend extract if not provided
+          notes: item.notes
+        })
+      });
+      const result = await response.json();
+      await this.loadFromAPI();
+      
+      // Show extraction result
+      if (result.extracted_id) {
+        showToast(`Auto-extracted product ID: ${result.extracted_id}`);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Failed to add product:', error);
+      return null;
+    }
+  },
+  
+  async updateProduct(id, updates) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: updates.name,
+          brand: updates.brand,
+          category: updates.material,
+          current_price: updates.currentPrice,
+          target_price: updates.targetPrice,
+          source: updates.source,
+          url: updates.url,
+          upc: updates.upc || null, // Let backend extract if not provided
+          notes: updates.notes
+        })
+      });
+      const result = await response.json();
+      await this.loadFromAPI();
+      
+      // Show extraction result
+      if (result.extracted_id) {
+        showToast(`Auto-extracted product ID: ${result.extracted_id}`);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Failed to update product:', error);
+      return null;
+    }
+  },
+  
+  async deleteProduct(id) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+        method: 'DELETE'
+      });
+      const result = await response.json();
+      await this.loadFromAPI();
+      return result;
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+      return null;
+    }
+  },
+  
+  async addPriceEntry(productId, price, date, source) {
+    try {
+      // Update the product with new price
+      const product = this.watchList.find(p => p.id === productId);
+      if (product) {
+        await this.updateProduct(productId, {
+          ...product,
+          currentPrice: price
+        });
+      }
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to add price entry:', error);
+      return { success: false };
+    }
+  },
+  
+  async getPriceHistory(productId, days) {
+    try {
+      const url = days === 'all' 
+        ? `${API_BASE_URL}/price-history/${productId}?days=all`
+        : `${API_BASE_URL}/price-history/${productId}?days=${days}`;
+      const response = await fetch(url);
+      const history = await response.json();
+      
+      // Convert API format to expected format
+      return history.map(h => ({
+        id: h.id.toString(),
+        productId: h.product_id.toString(),
+        price: h.price,
+        date: h.fetch_time,
+        source: h.source
+      }));
+    } catch (error) {
+      console.error('Failed to fetch price history:', error);
+      return [];
+    }
+  },
+  
+  async getAlerts() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/alerts`);
+      this.alerts = await response.json();
+      
+      // Convert API format to expected format
+      this.alerts = this.alerts.map(a => ({
+        id: a.id.toString(),
+        productId: a.product_id.toString(),
+        type: a.type,
+        productName: this.getProductName(a.product_id),
+        message: a.message,
+        severity: a.severity,
+        timestamp: a.created_at,
+        read: a.read
+      }));
+      
+      return this.alerts;
+    } catch (error) {
+      console.error('Failed to fetch alerts:', error);
+      return [];
+    }
+  },
+  
+  getProductName(productId) {
+    const product = this.watchList.find(p => p.id === productId);
+    return product ? product.name : 'Unknown Product';
+  },
+  
+  async clearAlerts() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/alerts/clear`, {
+        method: 'POST'
+      });
+      const result = await response.json();
+      await this.loadFromAPI();
+      return result;
+    } catch (error) {
+      console.error('Failed to clear alerts:', error);
+      return null;
+    }
+  },
+  
+  getWatchItem(id) {
+    return this.watchList.find(function(item) { return item.id === id; });
+  },
+  
+  triggerNotifications(alert) {
+    if (this.settings.inApp) {
+      showToast(alert.message);
+    }
+    
+    if (this.settings.browser && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        new Notification('Price Alert: ' + alert.productName, {
+          body: alert.message,
+          icon: '📉'
+        });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission();
+      }
+    }
+    
+    if (this.settings.email && this.settings.emailAddress) {
+      console.log('Email alert would be sent to:', this.settings.emailAddress);
+    }
+  },
+  
+  exportData() {
+    var data = {
+      watchList: this.watchList,
+      alerts: this.alerts,
+      settings: this.settings,
+      exportVersion: '2.0',
+      exportDate: new Date().toISOString(),
+      exportType: 'api-based'
+    };
+    return JSON.stringify(data, null, 2);
+  },
+  
+  importData(jsonString) {
+    // Import is now handled by adding products via API
+    console.log('Import functionality: Add products manually through the UI');
+    return false;
+  }
+};
+
+// UI State
+var state = {
+  currentView: 'watchlist',
+  editingWatchId: null,
+  updatingPriceId: null,
+  selectedHistoryProduct: ''
+};
+
+// Initialize
+Store.init().then(() => {
+  renderStats();
+  renderWatchList();
+});
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+    
+    this.classList.add('active');
+    var viewName = this.getAttribute('data-view');
+    document.getElementById('view-' + viewName).classList.add('active');
+    state.currentView = viewName;
+    
+    if (viewName === 'history') {
+      renderHistory();
+    } else if (viewName === 'alerts') {
+      renderAlerts();
+    } else if (viewName === 'settings') {
+      renderSettings();
+    }
+  });
+});
+
+// Render stats
+async function renderStats() {
+  var statsRow = document.getElementById('statsRow');
+  var totalItems = Store.watchList.length;
+  var onSale = Store.watchList.filter(function(w) { 
+    return w.current_price && w.target_price && w.current_price < w.target_price; 
+  }).length;
+  var totalAlerts = Store.alerts.filter(function(a) { return !a.read; }).length;
+  var avgDrop = 0;
+  
+  // Calculate average drop from available data
+  var drops = [];
+  for (const watch of Store.watchList) {
+    try {
+      var history = await Store.getPriceHistory(watch.id, 30);
+      if (history.length >= 2) {
+        var latest = history[0].price;
+        var previous = history[1].price;
+        if (latest < previous) {
+          drops.push(((previous - latest) / previous) * 100);
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching price history for stats:', e);
+    }
+  }
+  
+  if (drops.length > 0) {
+    avgDrop = (drops.reduce(function(a, b) { return a + b; }, 0) / drops.length).toFixed(1);
+  }
+  
+  statsRow.innerHTML = 
+    '<div class="stat">' +
+      '<div class="num">' + totalItems + '</div>' +
+      '<div class="lbl">Watching</div>' +
+    '</div>' +
+    '<div class="stat">' +
+      '<div class="num highlight">' + onSale + '</div>' +
+      '<div class="lbl">Below target</div>' +
+    '</div>' +
+    '<div class="stat">' +
+      '<div class="num">' + totalAlerts + '</div>' +
+      '<div class="lbl">New alerts</div>' +
+    '</div>' +
+    '<div class="stat">' +
+      '<div class="num">' + (avgDrop > 0 ? '-' + avgDrop + '%' : avgDrop + '%') + '</div>' +
+      '<div class="lbl">Avg drop (30d)</div>' +
+    '</div>';
+}
+
+// Render watch list
+async function renderWatchList() {
+  var grid = document.getElementById('watchGrid');
+  var searchTerm = document.getElementById('watchSearch').value.toLowerCase();
+  var filter = document.getElementById('watchFilter').value;
+  
+  var filtered = Store.watchList.filter(function(item) {
+    var matchesSearch = !searchTerm || 
+      item.name.toLowerCase().indexOf(searchTerm) !== -1 ||
+      (item.brand && item.brand.toLowerCase().indexOf(searchTerm) !== -1) ||
+      (item.category && item.category.toLowerCase().indexOf(searchTerm) !== -1) ||
+      (item.source && item.source.toLowerCase().indexOf(searchTerm) !== -1);
+    
+    var matchesFilter = true;
+    if (filter === 'sale') {
+      matchesFilter = item.current_price && item.target_price && item.current_price <= item.target_price;
+    } else if (filter === 'drop') {
+      // Would need async history check here
+      matchesFilter = false; // Simplified for now
+    } else if (filter === 'watch') {
+      matchesFilter = item.current_price && item.target_price && item.current_price <= item.target_price;
+    }
+    
+    return matchesSearch && matchesFilter;
+  });
+  
+  if (filtered.length === 0) {
+    grid.innerHTML = 
+      '<div class="empty">' +
+        '<h3>No items in watch list</h3>' +
+        '<p>Add products to track their prices and get sale alerts</p>' +
+      '</div>';
+    return;
+  }
+  
+  grid.innerHTML = filtered.map(function(item) {
+    var currentPrice = item.current_price || 0;
+    var targetPrice = item.target_price || 0;
+    var isBelowTarget = currentPrice > 0 && targetPrice > 0 && currentPrice <= targetPrice;
+    var badge = isBelowTarget ? '<span class="badge badge-sale">Below target</span>' : '<span class="badge badge-watch">Watching</span>';
+    
+    return '<div class="card">' +
+      '<div class="card-header">' +
+        '<div>' +
+          '<div class="card-title">' + item.name + '</div>' +
+          '<div class="card-sub">' + (item.brand || 'Unknown') + ' • ' + (item.category || 'Uncategorized') + '</div>' +
+        '</div>' +
+        badge +
+      '</div>' +
+      '<div class="price-section">' +
+        '<div class="price-item">' +
+          '<div class="price-label">Current</div>' +
+          '<div class="price-value' + (isBelowTarget ? ' drop' : '') + '">$' + (currentPrice > 0 ? currentPrice.toFixed(2) : '—') + '</div>' +
+        '</div>' +
+        '<div class="price-item">' +
+          '<div class="price-label">Target</div>' +
+          '<div class="price-value">$' + (targetPrice > 0 ? targetPrice.toFixed(2) : '—') + '</div>' +
+        '</div>' +
+        '<div class="price-item">' +
+          '<div class="price-label">Change (7d)</div>' +
+          '<div class="price-value">—</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card-sub" style="margin-bottom: 8px;">Source: ' + (item.source || 'Unknown') + '</div>' +
+      '<div class="card-actions">' +
+        '<button class="btn btn-sm" onclick="openPriceUpdate(\'' + item.id + '\')">Update price</button>' +
+        '<button class="btn btn-sm" onclick="editWatchItem(\'' + item.id + '\')">Edit</button>' +
+        '<button class="btn btn-sm btn-quiet" onclick="viewHistory(\'' + item.id + '\')">History</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// Render alerts
+async function renderAlerts() {
+  var alertsList = document.getElementById('alertsList');
+  await Store.getAlerts();
+  
+  if (Store.alerts.length === 0) {
+    alertsList.innerHTML = 
+      '<div class="empty">' +
+        '<h3>No alerts</h3>' +
+        '<p>Price drop alerts will appear here</p>' +
+      '</div>';
+    return;
+  }
+  
+  alertsList.innerHTML = Store.alerts.map(function(alert) {
+    var time = new Date(alert.timestamp).toLocaleString();
+    return '<div class="alert-item">' +
+      '<div class="alert-title">' + alert.productName + '</div>' +
+      '<div class="alert-message">' + alert.message + '</div>' +
+      '<div class="alert-time">' + time + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// Render history
+async function renderHistory() {
+  var tableBody = document.getElementById('historyTableBody');
+  var productSelect = document.getElementById('historyProduct');
+  var periodSelect = document.getElementById('historyPeriod');
+  
+  // Populate product select
+  var currentSelection = productSelect.value;
+  productSelect.innerHTML = '<option value="">All products</option>' + 
+    Store.watchList.map(function(item) {
+      return '<option value="' + item.id + '">' + item.name + '</option>';
+    }).join('');
+  productSelect.value = currentSelection;
+  
+  var productId = productSelect.value;
+  var period = periodSelect.value;
+  
+  var history;
+  if (productId) {
+    history = await Store.getPriceHistory(productId, period);
+  } else {
+    // For all products, we'd need to fetch history for each product
+    // Simplified: show empty for now
+    history = [];
+  }
+  
+  if (history.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--ink-faint);">No price history recorded</td></tr>';
+    return;
+  }
+  
+  tableBody.innerHTML = history.map(function(entry) {
+    var item = Store.getWatchItem(entry.productId);
+    var productName = item ? item.name : 'Unknown';
+    var change = '';
+    var changeClass = '';
+    
+    var date = new Date(entry.date).toLocaleDateString();
+    
+    return '<tr>' +
+      '<td>' + productName + '</td>' +
+      '<td>' + date + '</td>' +
+      '<td class="num">$' + entry.price.toFixed(2) + '</td>' +
+      '<td class="num ' + changeClass + '">' + (change || '—') + '</td>' +
+      '<td>' + entry.source + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+// Render settings
+function renderSettings() {
+  document.getElementById('settingInApp').checked = Store.settings.inApp;
+  document.getElementById('settingBrowser').checked = Store.settings.browser;
+  document.getElementById('settingEmail').checked = Store.settings.email;
+  document.getElementById('settingEmailAddress').value = Store.settings.emailAddress || '';
+  document.getElementById('emailField').style.display = Store.settings.email ? 'block' : 'none';
+  document.getElementById('settingFrequency').value = Store.settings.frequency;
+  document.getElementById('settingCustomDays').value = Store.settings.customDays || 2;
+  document.getElementById('customDaysField').style.display = Store.settings.frequency === 'custom' ? 'block' : 'none';
+}
+
+// Modal functions
+function openWatchModal(editId) {
+  var overlay = document.getElementById('watchOverlay');
+  var title = document.getElementById('watchModalTitle');
+  var deleteBtn = document.getElementById('btnDeleteWatch');
+  
+  state.editingWatchId = editId;
+  
+  if (editId) {
+    title.textContent = 'Edit watch item';
+    deleteBtn.style.display = 'block';
+    
+    var item = Store.getWatchItem(editId);
+    if (item) {
+      document.getElementById('wName').value = item.name;
+      document.getElementById('wBrand').value = item.brand || '';
+      document.getElementById('wMaterial').value = item.category || '';
+      document.getElementById('wCurrentPrice').value = item.current_price || '';
+      document.getElementById('wTargetPrice').value = item.target_price || '';
+      document.getElementById('wSource').value = item.source || '';
+      document.getElementById('wUrl').value = item.url || '';
+      document.getElementById('wUpc').value = item.upc || '';
+      document.getElementById('wNotes').value = item.notes || '';
+      
+      // Show UPC field if exists
+      if (item.upc) {
+        document.getElementById('upcField').style.display = 'block';
+        document.getElementById('urlHint').textContent = `Product ID: ${item.upc}`;
+        document.getElementById('urlHint').style.color = 'var(--green)';
+      }
+    }
+  } else {
+    title.textContent = 'Add to watch list';
+    deleteBtn.style.display = 'none';
+    
+    // Clear form
+    document.getElementById('wName').value = '';
+    document.getElementById('wBrand').value = '';
+    document.getElementById('wMaterial').value = '';
+    document.getElementById('wCurrentPrice').value = '';
+    document.getElementById('wTargetPrice').value = '';
+    document.getElementById('wSource').value = '';
+    document.getElementById('wUrl').value = '';
+    document.getElementById('wUpc').value = '';
+    document.getElementById('wNotes').value = '';
+    document.getElementById('upcField').style.display = 'none';
+    document.getElementById('urlHint').textContent = 'Supports Amazon, Bambu Lab, Walmart, Best Buy, Target, eBay';
+    document.getElementById('urlHint').style.color = 'var(--ink-faint)';
+  }
+  
+  overlay.classList.add('open');
+}
+
+function closeWatchModal() {
+  document.getElementById('watchOverlay').classList.remove('open');
+  state.editingWatchId = null;
+}
+
+async function saveWatchItem() {
+  var name = document.getElementById('wName').value.trim();
+  var brand = document.getElementById('wBrand').value.trim();
+  var material = document.getElementById('wMaterial').value.trim();
+  var currentPrice = parseFloat(document.getElementById('wCurrentPrice').value);
+  var targetPrice = parseFloat(document.getElementById('wTargetPrice').value);
+  var source = document.getElementById('wSource').value.trim();
+  var url = document.getElementById('wUrl').value.trim();
+  var upc = document.getElementById('wUpc').value.trim();
+  var notes = document.getElementById('wNotes').value.trim();
+  
+  if (!name || !source) {
+    showToast('Please fill in all required fields');
+    return;
+  }
+  
+  var itemData = {
+    name: name,
+    brand: brand,
+    material: material,
+    currentPrice: currentPrice,
+    targetPrice: targetPrice,
+    source: source,
+    url: url,
+    upc: upc || null, // Let backend extract if empty
+    notes: notes
+  };
+  
+  if (state.editingWatchId) {
+    await Store.updateProduct(state.editingWatchId, itemData);
+    showToast('Watch item updated');
+  } else {
+    await Store.addProduct(itemData);
+    showToast('Added to watch list');
+  }
+  
+  closeWatchModal();
+  renderWatchList();
+  renderStats();
+}
+
+async function deleteWatchItem() {
+  if (state.editingWatchId && confirm('Delete this watch item?')) {
+    await Store.deleteProduct(state.editingWatchId);
+    showToast('Watch item deleted');
+    closeWatchModal();
+    renderWatchList();
+    renderStats();
+  }
+}
+
+function openPriceUpdate(productId) {
+  var item = Store.getWatchItem(productId);
+  if (!item) return;
+  
+  state.updatingPriceId = productId;
+  
+  document.getElementById('priceUpdateProductLabel').textContent = 'Product';
+  document.getElementById('priceUpdateProduct').value = item.name;
+  document.getElementById('priceUpdateNew').value = '';
+  document.getElementById('priceUpdateDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('priceUpdateSource').value = item.source || 'Manual update';
+  
+  document.getElementById('priceUpdateOverlay').classList.add('open');
+}
+
+function closePriceUpdateModal() {
+  document.getElementById('priceUpdateOverlay').classList.remove('open');
+  state.updatingPriceId = null;
+}
+
+async function savePriceUpdate() {
+  var newPrice = parseFloat(document.getElementById('priceUpdateNew').value);
+  var date = document.getElementById('priceUpdateDate').value;
+  var source = document.getElementById('priceUpdateSource').value.trim();
+  
+  if (isNaN(newPrice) || !date) {
+    showToast('Please enter a valid price and date');
+    return;
+  }
+  
+  await Store.addPriceEntry(state.updatingPriceId, newPrice, date, source || 'Manual update');
+  showToast('Price updated');
+  closePriceUpdateModal();
+  renderWatchList();
+  renderStats();
+}
+
+function viewHistory(productId) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  
+  document.querySelector('.tab[data-view="history"]').classList.add('active');
+  document.getElementById('view-history').classList.add('active');
+  
+  document.getElementById('historyProduct').value = productId;
+  renderHistory();
+}
+
+// Toast notification
+function showToast(message) {
+  var toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(function() { toast.classList.remove('show'); }, 3000);
+}
+
+// Event listeners
+document.getElementById('btnAddWatch').addEventListener('click', function() {
+  openWatchModal(null);
+});
+
+document.getElementById('btnCancelWatch').addEventListener('click', closeWatchModal);
+document.getElementById('btnSaveWatch').addEventListener('click', saveWatchItem);
+document.getElementById('btnDeleteWatch').addEventListener('click', deleteWatchItem);
+
+document.getElementById('btnCancelPriceUpdate').addEventListener('click', closePriceUpdateModal);
+document.getElementById('btnSavePriceUpdate').addEventListener('click', savePriceUpdate);
+
+document.getElementById('watchSearch').addEventListener('input', renderWatchList);
+document.getElementById('watchFilter').addEventListener('change', renderWatchList);
+
+document.getElementById('historyProduct').addEventListener('change', renderHistory);
+document.getElementById('historyPeriod').addEventListener('change', renderHistory);
+
+document.getElementById('btnClearAlerts').addEventListener('click', function() {
+  if (confirm('Clear all alerts?')) {
+    Store.clearAlerts();
+    renderAlerts();
+    renderStats();
+    showToast('Alerts cleared');
+  }
+});
+
+// Settings event listeners
+document.getElementById('settingInApp').addEventListener('change', function() {
+  Store.settings.inApp = this.checked;
+  Store.saveSettings();
+});
+
+document.getElementById('settingBrowser').addEventListener('change', function() {
+  Store.settings.browser = this.checked;
+  if (this.checked && 'Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  Store.saveSettings();
+});
+
+document.getElementById('settingEmail').addEventListener('change', function() {
+  Store.settings.email = this.checked;
+  document.getElementById('emailField').style.display = this.checked ? 'block' : 'none';
+  Store.saveSettings();
+});
+
+document.getElementById('settingEmailAddress').addEventListener('change', function() {
+  Store.settings.emailAddress = this.value;
+  Store.saveSettings();
+});
+
+document.getElementById('settingFrequency').addEventListener('change', async function() {
+  Store.settings.frequency = this.value;
+  document.getElementById('customDaysField').style.display = this.value === 'custom' ? 'block' : 'none';
+  Store.saveSettings();
+  await updateCheckFrequency();
+});
+
+document.getElementById('settingCustomDays').addEventListener('change', async function() {
+  Store.settings.customDays = parseInt(this.value);
+  Store.saveSettings();
+  await updateCheckFrequency();
+});
+
+// Manual price check
+document.getElementById('btnCheckPrices').addEventListener('click', async function() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/check-prices`, {
+      method: 'POST'
+    });
+    const result = await response.json();
+    if (result.message) {
+      showToast(result.message);
+      await Store.loadFromAPI();
+      renderWatchList();
+      renderStats();
+    }
+  } catch (error) {
+    console.error('Manual price check failed:', error);
+    showToast('Price check failed - check backend logs');
+  }
+});
+
+// Update check frequency
+async function updateCheckFrequency() {
+  try {
+    const frequency = Store.settings.frequency;
+    const customDays = Store.settings.customDays || 2;
+    
+    const response = await fetch(`${API_BASE_URL}/settings/frequency`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        frequency: frequency,
+        customDays: customDays
+      })
+    });
+    const result = await response.json();
+    if (result.message) {
+      showToast(result.message);
+    }
+  } catch (error) {
+    console.error('Failed to update frequency:', error);
+    showToast('Failed to update check frequency');
+  }
+}
+
+// Export (API-based)
+document.getElementById('btnExport').addEventListener('click', async function() {
+  try {
+    await Store.loadFromAPI(); // Ensure fresh data
+    var data = Store.exportData();
+    var blob = new Blob([data], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'price-monitor-backup-' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Data exported');
+  } catch (error) {
+    console.error('Export failed:', error);
+    showToast('Export failed');
+  }
+});
+
+
+
+
+
+// Close modals on overlay click
+document.querySelectorAll('.overlay').forEach(function(overlay) {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.classList.remove('open');
+    }
+  });
+});
+
+// Handle URL change to auto-extract product ID
+async function handleUrlChange() {
+  const url = document.getElementById('wUrl').value;
+  const upcField = document.getElementById('upcField');
+  const upcInput = document.getElementById('wUpc');
+  const urlHint = document.getElementById('urlHint');
+  
+  if (!url) {
+    upcField.style.display = 'none';
+    urlHint.textContent = 'Supports Amazon, Bambu Lab, Walmart, Best Buy, Target, eBay';
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/extract-id`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url })
+    });
+    const result = await response.json();
+    
+    if (result.extracted_id) {
+      upcInput.value = result.extracted_id;
+      upcField.style.display = 'block';
+      urlHint.textContent = `✓ Auto-extracted: ${result.extracted_id}`;
+      urlHint.style.color = 'var(--green)';
+    } else {
+      upcField.style.display = 'none';
+      urlHint.textContent = 'No product ID found - manual entry required';
+      urlHint.style.color = 'var(--amber)';
+    }
+  } catch (error) {
+    console.error('Failed to extract product ID:', error);
+    urlHint.textContent = 'Could not extract product ID - try manual entry';
+    urlHint.style.color = 'var(--amber)';
+  }
+}
+
+// Initial render
+renderStats();
+renderWatchList();
+</script>
+
+</body>
+</html>
