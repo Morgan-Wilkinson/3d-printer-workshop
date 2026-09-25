@@ -4,3 +4,4 @@ print-tracker-state.json
 pending-prints.json
 print-tracker.log
 com.filamentlog.printtracker.plist
+__pycache__/

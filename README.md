@@ -7,6 +7,8 @@ A collection of web-based tools and resources for 3D printing enthusiasts. This 
 The 3D Printer Workshop is designed to be a lightweight, self-contained toolkit for managing various aspects of 3D printing. Currently, it includes:
 
 ### Filament Log
+📖 **[Full documentation](docs/pages/filament-log.md)** — data model, localStorage schema, integrations, version history
+
 A comprehensive filament and resin inventory management system that helps you:
 - Track spools and refills with detailed specifications
 - Monitor material usage and remaining amounts
@@ -19,21 +21,25 @@ A comprehensive filament and resin inventory management system that helps you:
 **Key Features:**
 - **Bulk Operations**: Add multiple spools at once or edit multiple spools simultaneously
 - **Flexible Views**: Switch between grid and list layouts, with normal or compact card sizes
-- **Advanced Sorting**: Sort by name, brand, purchase source, or price
+- **Advanced Sorting**: Sort by name, brand, purchase source, price, or remaining amount (asc/desc)
 - **Refill Tracking**: Track independent filament rolls (without housing) that can be used to refill empty spools
 - **Refill to Spool Conversion**: Convert refills to spools when you load them onto spool housing
 - **Sales Tracking**: Track sale prices, original prices, bundle deals, and calculate savings
 - **Advanced Analytics**: Three-tier query system (Simple, Medium, Advanced) for deep data analysis
 - **Usage Analytics**: View usage statistics and material costs over time
-- **Build Plate Compatibility**: Automatic compatibility badges for Bambu Lab X2D build plates (Cool Plate, Engineering Plate, Textured PEI Plate)
+- **Build Plate Compatibility**: Automatic compatibility badges for Bambu Lab X2D build plates (Cool Plate, Engineering Plate, Textured PEI Plate) covering 40+ material families via substring matching — resins correctly show none
+- **Material Autocomplete**: Material field suggests canonical names so new spools get the right badges automatically
+- **Session Persistence**: Remembers your last tab, filters, sort order, and scroll position across reloads
 - **Build Plate Filtering**: Filter inventory by compatible build plate
 - **Print Logging Enhancement**: Track which build plate and plate number were used for each print
-- **Auto Print Tracking**: Moonraker / OctoPrint bridge that detects completed prints and lets you import them in one click
+- **Auto Print Tracking**: Moonraker / OctoPrint / Bambu LAN bridge that detects completed prints and lets you import them in one click (imported prints auto-dismiss)
 - **Price-API Sync**: Auto-push new spools and refills to the home-server Price Monitor with product URL and UPC fields
 - **Offline-First**: Works entirely offline with localStorage persistence
 - **Optional Cloud Sync**: Firebase integration for cross-device synchronization
 
 ### Price Monitor
+📖 **[Full documentation](docs/pages/price-monitor.md)** — API endpoints, data model, alert system, known limitations
+
 Track filament prices and get sale alerts for your favorite products:
 - Monitor prices across multiple retailers
 - Set target prices and receive alerts when items go on sale
@@ -52,6 +58,8 @@ Track filament prices and get sale alerts for your favorite products:
 - **Settings**: Configure check frequency and notification methods
 
 ### FDM Temperature & Speed Reference
+📖 **[Full documentation](docs/pages/fdm-temp-speed-reference.md)** — complete spec tables, troubleshooting index, X2D-specific values
+
 A comprehensive guide for FDM 3D printing settings:
 - Material-specific temperature and speed settings
 - Troubleshooting guide organized by symptoms
@@ -68,6 +76,8 @@ A comprehensive guide for FDM 3D printing settings:
 - **Mobile-Friendly**: Optimized for reference during printing
 
 ### Filament Cheatsheet
+📖 **[Full documentation](docs/pages/filament-cheatsheet.md)** — material profiles, decision guides, content structure
+
 A practical guide for choosing the right filament:
 - Material comparison table showing difficulty, strength, heat resistance
 - "I want to make X → use Y" quick lookup
@@ -149,9 +159,14 @@ function renderStats() { }
 │   ├── index.html                         # Main landing page (includes Spoolman link)
 │   └── pages/
 │       ├── filament-log.html              # Filament inventory tool
+│       ├── filament-log.md                # Filament Log documentation
 │       ├── price-monitor.html             # Price tracking and alerts
+│       ├── price-monitor.md               # Price Monitor documentation
 │       ├── fdm-temp-speed-reference.html  # FDM settings reference
-│       └── filament-cheatsheet.html       # Material selection guide
+│       ├── fdm-temp-speed-reference.md    # FDM reference documentation
+│       ├── filament-cheatsheet.html       # Material selection guide
+│       ├── filament-cheatsheet.md         # Cheatsheet documentation
+│       └── live_updates_price_automation.md # Price automation pipeline docs
 ```
 
 ## Technology Stack

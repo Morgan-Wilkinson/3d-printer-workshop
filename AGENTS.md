@@ -107,7 +107,7 @@ The project includes sync tools in `tools/spoolman-sync/` for integrating with S
 
 - **sync-filament-log-to-spoolman.py**: Syncs filament inventory from Filament Log to Spoolman
 - **add-print-log.py**: Adds print usage logs to both Filament Log and Spoolman systems
-- **auto-print-tracker.py**: Polls Moonraker/OctoPrint for completed prints and produces `pending-prints.json`
+- **auto-print-tracker.py**: Polls Moonraker/OctoPrint/Bambu (LAN MQTT) for completed prints and produces `pending-prints.json`. Live config + state live in `home-server/shared-storage/secrets/` (gitignored, not web-served). An AES-256-encrypted backup of the config is committed at `tools/spoolman-sync/print-tracker-config.json.enc` — never commit the plaintext config
 - **reconcile-spoolman.py**: Reconciles exact used_weight from Filament Log to Spoolman
 - **migrate-v5-to-v6.py**: Migrates v5 (spool-centric usage) data to v6 (print-centric prints)
 - **spoolman_id_mapping.json**: Maps Filament Log spool IDs to Spoolman spool IDs
@@ -136,9 +136,10 @@ Filament Log v6 stores print jobs as `prints`, where each print has one project,
 ### Build Plates Configuration
 The Filament Log app includes build plate compatibility tracking for Bambu Lab X2D printer:
 
-- **Cool Plate**: Low-temp materials (PLA, PLA-CF, PETG, PETG-CF, TPU)
-- **Engineering Plate**: High-temp materials (PLA, PLA-CF, ABS, ABS-GF, ASA, ASA-CF, Polycarbonate, Nylon-CF, Nylon-GF, PET-CF, PPA-CF, PPS-CF)
-- **Textured PEI Plate**: All-rounder (PLA, PLA-CF, PETG, PETG-CF, ABS, ASA, TPU)
+- **Cool Plate** (SuperTack): Low-temp materials only — PLA, PETG, PET, PVA, BVOH. CF/GF variants and TPU damage the coating and are excluded
+- **Engineering Plate**: High-temp/engineering materials — PLA, PET-CF, PETG-CF/GF, ABS, ASA, HIPS, PC/Polycarbonate, Nylon/PA family (PA6/11/12, PAHT, PPA), PPS, TPU/TPE, PP/Polypropylene (PP requires PP glue)
+- **Textured PEI Plate**: All-rounder — PLA, PET/PETG, ABS, ASA, HIPS, TPU/TPE/TPC, PC/Polycarbonate, Nylon/PA family, PVA/BVOH/PVB, including CF/GF variants
+- Matching is substring-based per material family (`PA` catches PA6/PA12/PPA, `PET` catches PETG/PET-CF); `excludeMaterials` lists per plate remove false positives, and materials containing "resin" get no badges
 
 ### Compatibility Features
 - **Automatic Badge Display**: Each spool card shows color-coded badges for compatible build plates
