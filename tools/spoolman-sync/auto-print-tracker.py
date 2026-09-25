@@ -136,6 +136,49 @@ def parse_3mf_content(data):
     return [0.0]
 
 
+def collect_ams_state(print_data):
+    """Snapshot AMS tray remain% and weight, keyed by global tray index."""
+    state = {}
+    ams = print_data.get("ams") or {}
+    for unit in ams.get("ams") or []:
+        try:
+            uid = int(unit.get("id", 0))
+        except (TypeError, ValueError):
+            uid = 0
+        for tray in unit.get("tray") or []:
+            try:
+                tid = int(tray.get("id", 0))
+            except (TypeError, ValueError):
+                continue
+            state[str(uid * 4 + tid)] = {
+                "remain": float(tray.get("remain") or 0),
+                "weight": float(tray.get("tray_weight") or 0),
+            }
+    for vt in ams.get("vt_tray") or []:
+        try:
+            tid = int(vt.get("id", 0))
+        except (TypeError, ValueError):
+            continue
+        state[str(tid)] = {
+            "remain": float(vt.get("remain") or 0),
+            "weight": float(vt.get("tray_weight") or 0),
+        }
+    return state
+
+
+def estimate_grams_from_ams(start_state, end_state):
+    """Estimate grams used per tray from remain% deltas."""
+    grams = []
+    for key, start in (start_state or {}).items():
+        end = (end_state or {}).get(key)
+        if not end or not start.get("weight"):
+            continue
+        used = (start.get("remain", 0) - end.get("remain", 0)) / 100 * start["weight"]
+        if used > 0:
+            grams.append(round(used, 2))
+    return grams
+
+
 class PrintTracker:
     def __init__(self, config):
         self.config = {**DEFAULT_CONFIG, **config}
@@ -235,8 +278,9 @@ class PrintTracker:
         try:
             ftps = ftp_open()
             name = remote_path
-            # Try the full remote path; if it's an internal /data path it may not be present.
-            for attempt in (name, os.path.basename(name)):
+            # Try the full remote path; internal /data paths get stripped as fallbacks.
+            alt = re.sub(r"^/?data/", "", name)
+            for attempt in dict.fromkeys((name, alt, os.path.basename(name))):
                 try:
                     data = try_retr(ftps, attempt)
                     ftps.quit()
@@ -352,11 +396,14 @@ class PrintTracker:
                     "job_id": bambu_job_id,
                     "gcode_file": gcode_file,
                     "start_time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M"),
-                    "project": subtask_name
+                    "project": subtask_name,
+                    "ams_state": collect_ams_state(print_data)
                 }
 
             if active and (gcode_state in ("FINISH", "FAILED", "ABORT") or (gcode_state == "IDLE" and not gcode_file)):
                 grams = self.get_grams(active.get("project") or subtask_name, active.get("gcode_file") or gcode_file)
+                if not any(g > 0 for g in grams):
+                    grams = estimate_grams_from_ams(active.get("ams_state"), collect_ams_state(print_data)) or grams
                 active["end_time"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")
                 active["filament_grams"] = grams
                 active["gcode_file"] = gcode_file or active["gcode_file"]
@@ -372,7 +419,7 @@ class PrintTracker:
             subtask_name = print_data.get("subtask_name", "") or strip_gcode(gcode_file)
             bambu_job_id = str(print_data.get("job_id", ""))
             if (gcode_state in ("FINISH", "IDLE") and (gcode_file or subtask_name)):
-                if not any(j.get("jobId") == bambu_job_id for j in finished) and bambu_job_id not in self.state.get("seen_ids", []):
+                if not any(j.get("job_id") == bambu_job_id for j in finished) and bambu_job_id not in self.state.get("seen_ids", []):
                     grams = self.get_grams(subtask_name, gcode_file)
                     now = datetime.now(timezone.utc)
                     finished.append({
@@ -551,10 +598,10 @@ class PrintTracker:
             pending = new + pending
             self.save_pending(pending)
             self.state["seen_ids"] = list(seen)
-            self.save_state()
             print(f"Added {len(new)} new print(s) to {self.config['output_path']}")
         else:
             print("No new completed prints found")
+        self.save_state()
 
     def run_daemon(self):
         pt = self.config["printer_type"].lower()
@@ -648,12 +695,15 @@ class PrintTracker:
                 "job_id": bambu_job_id,
                 "gcode_file": gcode_file,
                 "start_time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M"),
-                "project": subtask_name
+                "project": subtask_name,
+                "ams_state": collect_ams_state(print_data)
             }
             self.save_state()
 
         if active and (gcode_state in ("FINISH", "FAILED", "ABORT") or (gcode_state == "IDLE" and not gcode_file)):
             grams = self.get_grams(active.get("project") or subtask_name, active.get("gcode_file") or gcode_file)
+            if not any(g > 0 for g in grams):
+                grams = estimate_grams_from_ams(active.get("ams_state"), collect_ams_state(print_data)) or grams
             active["end_time"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")
             active["filament_grams"] = grams
             active["gcode_file"] = gcode_file or active["gcode_file"]

@@ -32,13 +32,16 @@ python sync-filament-log-to-spoolman.py filament-log-backup-2026-09-22.json --cl
 
 ### auto-print-tracker.py
 
-Polls a Moonraker (Klipper) or OctoPrint API for completed print jobs and writes
-`pending-prints.json` for one-click import into the Filament Log web app.
+Polls a Moonraker (Klipper), OctoPrint, or Bambu Lab (LAN MQTT) printer for
+completed print jobs and writes `pending-prints.json` for one-click import into
+the Filament Log web app.
 
 **Features:**
 - Detects completed prints automatically
 - Converts printer job data to Filament Log v6 print objects
 - Avoids duplicate entries with a `seen_ids` state file
+- Bambu: estimates filament grams per tray from AMS `remain%` deltas when the
+  sliced file can't be read from the local queue or SD card
 - Optionally updates Spoolman spool `used_weight`
 - Daemon mode for continuous polling
 
@@ -46,17 +49,39 @@ Polls a Moonraker (Klipper) or OctoPrint API for completed print jobs and writes
 ```bash
 python auto-print-tracker.py --config print-tracker-config.json --once
 python auto-print-tracker.py --config print-tracker-config.json --daemon
+python auto-print-tracker.py --config print-tracker-config.json --dump-bambu  # debug MQTT reports
 ```
 
 **Setup:**
-1. Copy `print-tracker-config.json.example` to `print-tracker-config.json` and edit it with your printer URL and API key
-2. If using the home server, set `output_path` to `../../home-server/shared-storage/print-tracker/pending-prints.json`
-3. Click **Auto prints** in the Filament Log Usage log tab to import detected prints
-4. Set up a cron job or systemd timer to run the tracker in the background:
+1. The real config contains the printer access code — never commit it in
+   plaintext (it's gitignored). An AES-256-encrypted backup lives in the repo at
+   `tools/spoolman-sync/print-tracker-config.json.enc`. The passphrase is stored
+   in the owner's password manager — ask for it rather than reading it off the
+   printer.
+
+   Restore on any machine:
    ```bash
-   # Example cron entry (polls every minute)
-   * * * * * cd /path/to/tools/spoolman-sync && python auto-print-tracker.py --config print-tracker-config.json --once
+   openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+     -in tools/spoolman-sync/print-tracker-config.json.enc \
+     -out <path-to>/print-tracker-config.json
    ```
+
+   Re-encrypt after editing the config:
+   ```bash
+   openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+     -in <path-to>/print-tracker-config.json \
+     -out tools/spoolman-sync/print-tracker-config.json.enc
+   ```
+
+2. On the home server machine the live config + state live in
+   `home-server/shared-storage/secrets/` (local dir, gitignored, NOT served by
+   nginx). `output_path` points to
+   `shared-storage/print-tracker/pending-prints.json` (served by nginx at
+   `3dworkshop.local/print-tracker/`).
+3. Click **Auto prints** in the Filament Log Usage log tab to import detected prints
+4. On macOS the tracker runs via launchd agent
+   `~/Library/LaunchAgents/com.filamentlog.printtracker.plist` (every 60s,
+   `--once` mode). Logs go to `shared-storage/print-tracker/print-tracker.log`.
 
 ### add-print-log.py
 
