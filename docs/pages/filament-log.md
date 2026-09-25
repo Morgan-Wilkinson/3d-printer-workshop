@@ -186,7 +186,7 @@ Search across brand/line/color/material, material dropdown (populated from inven
 
 ### Auto print tracker import
 
-"Auto prints" button fetches `pending-prints.json` (default `/print-tracker/pending-prints.json`, configurable URL — written by `tools/spoolman-sync/auto-print-tracker.py`). Each pending print gets a checkbox, editable gram amounts, and a spool picker per filament. "Add selected" creates real print records (preserving the tracker's print ID to prevent re-import) and decrements spools. See the [tools README](../../tools/spoolman-sync/README.md).
+"Auto prints" button fetches `pending-prints.json` (default `/print-tracker/pending-prints.json`, configurable URL — written by `tools/spoolman-sync/auto-print-tracker.py`). Each pending print gets a checkbox, editable gram amounts, and a spool picker per filament. "Add selected" creates real print records and decrements spools. Imported entries are recorded in `filamentlog_dismissed_autoprints` (localStorage, by pending `id`/`jobId`) and filtered out on subsequent loads so they don't reappear — the JSON file itself is served read-only by nginx. See the [tools README](../../tools/spoolman-sync/README.md).
 
 ### Price-API sync
 

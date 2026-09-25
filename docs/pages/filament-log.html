@@ -3819,7 +3819,12 @@
       .then(function (res) { return res.json(); })
       .then(function (data) {
         if (!Array.isArray(data)) data = data.prints || [];
-        autoPrints = data;
+        var dismissed = {};
+        try {
+          JSON.parse(localStorage.getItem("filamentlog_dismissed_autoprints") || "[]")
+            .forEach(function (id) { dismissed[id] = true; });
+        } catch (e) {}
+        autoPrints = data.filter(function (p) { return !dismissed[p.id] && !dismissed[p.jobId]; });
         renderAutoPrints();
         showToast("Loaded " + autoPrints.length + " pending print(s).");
       })
@@ -3833,6 +3838,8 @@
 
   function saveAutoPrints() {
     var added = 0;
+    var dismissed = [];
+    try { dismissed = JSON.parse(localStorage.getItem("filamentlog_dismissed_autoprints") || "[]"); } catch (e) {}
     autoPrints.forEach(function (p, idx) {
       if (!$("autoPrintCheck_" + idx) || !$("autoPrintCheck_" + idx).checked) return;
 
@@ -3860,9 +3867,12 @@
       };
       Store.addPrint(print);
       added++;
+      if (p.id) dismissed.push(p.id);
+      if (p.jobId) dismissed.push(p.jobId);
     });
 
     if (added) {
+      try { localStorage.setItem("filamentlog_dismissed_autoprints", JSON.stringify(dismissed)); } catch (e) {}
       showToast("Added " + added + " print(s).");
       closeAutoPrintsModal();
       renderAll();

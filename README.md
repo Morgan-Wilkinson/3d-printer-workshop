@@ -30,7 +30,7 @@ A comprehensive filament and resin inventory management system that helps you:
 - **Build Plate Compatibility**: Automatic compatibility badges for Bambu Lab X2D build plates (Cool Plate, Engineering Plate, Textured PEI Plate)
 - **Build Plate Filtering**: Filter inventory by compatible build plate
 - **Print Logging Enhancement**: Track which build plate and plate number were used for each print
-- **Auto Print Tracking**: Moonraker / OctoPrint bridge that detects completed prints and lets you import them in one click
+- **Auto Print Tracking**: Moonraker / OctoPrint / Bambu LAN bridge that detects completed prints and lets you import them in one click (imported prints auto-dismiss)
 - **Price-API Sync**: Auto-push new spools and refills to the home-server Price Monitor with product URL and UPC fields
 - **Offline-First**: Works entirely offline with localStorage persistence
 - **Optional Cloud Sync**: Firebase integration for cross-device synchronization
