@@ -3815,7 +3815,7 @@
       url = "/" + url;
     }
 
-    fetch(url)
+    fetch(url, { cache: "no-store" })
       .then(function (res) { return res.json(); })
       .then(function (data) {
         if (!Array.isArray(data)) data = data.prints || [];
