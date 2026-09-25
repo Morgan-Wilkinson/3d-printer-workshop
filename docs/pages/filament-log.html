@@ -305,7 +305,7 @@
     border-bottom: 1px solid var(--line); padding: 8px 10px;
   }
   .log-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  .log-table td.num, .log-table th.num { font-family: var(--font-mono); text-align: right; }
+  .log-table td.num, .log-table th.num { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
   .log-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; border: 1px solid rgba(0,0,0,0.15); }
   .log-table tr:last-child td { border-bottom: none; }
   @media (max-width: 768px) {
@@ -601,7 +601,7 @@
       <input type="search" id="searchInput" placeholder="Search brand, color, material...">
       <select id="materialFilter"><option value="">All materials</option></select>
       <select id="buildPlateFilter"><option value="">All build plates</option></select>
-      <select id="sortFilter"><option value="name">Sort by name</option><option value="brand">Sort by brand</option><option value="source">Sort by source</option><option value="price">Sort by price</option></select>
+      <select id="sortFilter"><option value="name">Sort by name</option><option value="brand">Sort by brand</option><option value="source">Sort by source</option><option value="price">Sort by price</option><option value="remaining-asc">Remaining (low &rarr; high)</option><option value="remaining-desc">Remaining (high &rarr; low)</option></select>
       <label class="chk-lowstock"><input type="checkbox" id="lowStockOnly"> Running low only</label>
     </div>
 
@@ -776,7 +776,8 @@
     <div class="field-row">
       <div class="field">
         <label for="fMaterial">Material</label>
-        <input type="text" id="fMaterial" placeholder="e.g. PLA">
+        <input type="text" id="fMaterial" list="materialOptions" placeholder="e.g. PLA">
+        <datalist id="materialOptions"></datalist>
       </div>
       <div class="field">
         <label for="fColorName">Color</label>
@@ -1475,8 +1476,9 @@
       name: "Cool Plate",
       type: "cool",
       color: "#4A90E2",
-      description: "Standard cool plate for PLA and other low-temp materials",
-      compatibleMaterials: ["PLA", "PLA-CF", "PETG", "PETG-CF", "TPU"],
+      description: "SuperTack cool plate for PLA, PETG and other low-temp materials. TPU and CF/GF filaments damage the coating - do not use.",
+      compatibleMaterials: ["PLA", "PETG", "PET", "PVA", "BVOH"],
+      excludeMaterials: ["-CF", "-GF"],
       bedTempRange: [0, 60]
     },
     {
@@ -1484,8 +1486,8 @@
       name: "Engineering Plate", 
       type: "engineering",
       color: "#F5A623",
-      description: "High-temp plate for ABS, ASA, and engineering materials. Can also work with PLA but not optimal.",
-      compatibleMaterials: ["PLA", "PLA-CF", "ABS", "ABS-GF", "ASA", "ASA-CF", "Polycarbonate", "Nylon-CF", "Nylon-GF", "PET-CF", "PPA-CF", "PPS-CF"],
+      description: "High-temp plate for ABS, ASA, PC, nylon and CF/GF engineering materials - apply glue first. Also the go-to plate for PP (PP glue) and TPU.",
+      compatibleMaterials: ["PLA", "PET-CF", "PETG-CF", "PETG-GF", "ABS", "ASA", "HIPS", "PC", "Polycarbonate", "Nylon", "PA", "PPS", "TPU", "TPE", "PP", "Polypropylene"],
       bedTempRange: [80, 120]
     },
     {
@@ -1493,8 +1495,8 @@
       name: "Textured PEI Plate",
       type: "texture-pei",
       color: "#7ED321",
-      description: "Textured PEI surface - the standard plate that came with X2D. Excellent all-rounder for most materials.",
-      compatibleMaterials: ["PLA", "PLA-CF", "PETG", "PETG-CF", "ABS", "ASA", "TPU"],
+      description: "Textured PEI surface - the standard plate that came with X2D. Excellent all-rounder for most materials including CF/GF.",
+      compatibleMaterials: ["PLA", "PET", "PETG", "ABS", "ASA", "HIPS", "TPU", "TPE", "TPC", "PC", "Polycarbonate", "Nylon", "PA", "PVA", "BVOH", "PVB"],
       bedTempRange: [0, 100]
     }
   ];
@@ -1509,13 +1511,27 @@
     }
   ];
 
+  // A material matches a plate when its name contains one of the plate's
+  // compatibleMaterials tokens and none of its excludeMaterials tokens.
+  // Resins never match - build plates only apply to filament.
+  function materialMatchesPlate(material, plate) {
+    if (!material) return false;
+    var m = material.toLowerCase();
+    if (m.indexOf("resin") > -1) return false;
+    var excluded = (plate.excludeMaterials || []).some(function (ex) {
+      return m.indexOf(ex.toLowerCase()) > -1;
+    });
+    if (excluded) return false;
+    return plate.compatibleMaterials.some(function (mat) {
+      return m.indexOf(mat.toLowerCase()) > -1;
+    });
+  }
+
   // Function to get compatible build plates for a material
   function getCompatibleBuildPlates(material) {
     if (!material) return [];
     return BUILD_PLATES.filter(function (plate) {
-      return plate.compatibleMaterials.some(function (mat) {
-        return material.toLowerCase().indexOf(mat.toLowerCase()) > -1;
-      });
+      return materialMatchesPlate(material, plate);
     });
   }
 
@@ -1529,10 +1545,7 @@
   // Function to check if a material is compatible with a specific build plate
   function isMaterialCompatibleWithPlate(material, plateId) {
     var plate = BUILD_PLATES.find(function (p) { return p.id === plateId; });
-    if (!plate || !material) return false;
-    return plate.compatibleMaterials.some(function (mat) {
-      return material.toLowerCase().indexOf(mat.toLowerCase()) > -1;
-    });
+    return !!plate && materialMatchesPlate(material, plate);
   }
 
   // ============================================================
@@ -1949,6 +1962,7 @@
   function $(id) { return document.getElementById(id); }
   function fmtMoney(n) { return "$" + (Math.round(n * 100) / 100).toFixed(2); }
   function fmtNum(n, d) { d = d || 0; return Number(n).toFixed(d); }
+  function fmtG(n) { return parseFloat(Number(n || 0).toFixed(2)); }
   function todayStr() { return new Date().toISOString().slice(0, 10); }
   function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
@@ -2013,6 +2027,35 @@
     analyticsView: "simple",
     savedQueries: []
   };
+
+  // Persisted UI state — tab, filters and sorts survive reloads
+  var UI_STATE_KEY = "filamentlog_ui_state";
+  var UI_STATE_FIELDS = ["activeView", "search", "refillSearch", "materialFilter", "sortFilter", "lowStockOnly", "buildPlateFilter", "logSpoolFilter", "logSort", "analyticsView"];
+  var pendingScrollRestore = 0;
+
+  function persistUiState() {
+    try {
+      var s = { scrollY: window.scrollY };
+      UI_STATE_FIELDS.forEach(function (k) { s[k] = state[k]; });
+      localStorage.setItem(UI_STATE_KEY, JSON.stringify(s));
+    } catch (e) {}
+  }
+
+  function restoreUiState() {
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(UI_STATE_KEY) || "{}"); } catch (e) {}
+    UI_STATE_FIELDS.forEach(function (k) { if (saved[k] !== undefined) state[k] = saved[k]; });
+    pendingScrollRestore = typeof saved.scrollY === "number" ? saved.scrollY : 0;
+
+    $("searchInput").value = state.search;
+    $("refillSearchInput").value = state.refillSearch;
+    $("materialFilter").value = state.materialFilter;
+    $("buildPlateFilter").value = state.buildPlateFilter;
+    $("sortFilter").value = state.sortFilter;
+    $("lowStockOnly").checked = !!state.lowStockOnly;
+    $("logSpoolFilter").value = state.logSpoolFilter;
+    $("logSort").value = state.logSort;
+  }
 
   function ringSvg(pct, color, size) {
     size = size || 64;
@@ -2116,6 +2159,12 @@
           return priceB - priceA; // Descending
         });
         break;
+      case "remaining-asc":
+        list.sort(function (a, b) { return spoolRemaining(a) - spoolRemaining(b); });
+        break;
+      case "remaining-desc":
+        list.sort(function (a, b) { return spoolRemaining(b) - spoolRemaining(a); });
+        break;
       default:
         list.sort(function (a, b) { return spoolPct(a) - spoolPct(b); });
     }
@@ -2164,7 +2213,7 @@
           '<div class="card-title">' + escapeHtml(s.brand || "Unlabeled") + ' — ' + escapeHtml(s.line || s.material || "") + '</div>' +
           '<div class="card-sub">' + escapeHtml(s.colorName || "") + (s.colorName && s.material ? " · " : "") + escapeHtml(s.material || "") + '</div>' +
           '<div class="card-metrics">' +
-            '<div class="metric' + (crit ? ' crit' : (low ? ' low' : '')) + '"><span class="m-lbl">Remaining</span><span class="m-val">' + fmtNum(spoolRemaining(s)) + ' / ' + fmtNum(spoolTotal(s)) + ' ' + unit + '</span></div>' +
+            '<div class="metric' + (crit ? ' crit' : (low ? ' low' : '')) + '"><span class="m-lbl">Remaining</span><span class="m-val">' + fmtG(spoolRemaining(s)) + ' / ' + fmtG(spoolTotal(s)) + ' ' + unit + '</span></div>' +
             (ppk ? '<div class="metric"><span class="m-lbl">Price</span><span class="m-val">' + fmtMoney(ppk) + '/kg' + '</span></div>' : '') +
             (s.purchaseSource ? '<div class="metric"><span class="m-lbl">From</span><span class="m-val">' + escapeHtml(s.purchaseSource) + '</span></div>' : '') +
           '</div>' +
@@ -2231,7 +2280,7 @@
           '<div class="card-title">' + colorSwatch + escapeHtml(r.brand || "Unlabeled") + ' — ' + escapeHtml(r.line || r.material || "") + '</div>' +
           '<div class="card-sub">' + escapeHtml(r.colorName || "No color") + (r.colorName && r.material ? " · " : "") + escapeHtml(r.material || "") + '</div>' +
           '<div class="card-metrics">' +
-            '<div class="metric"><span class="m-lbl">Amount</span><span class="m-val">' + fmtNum(r.amount) + 'g</span></div>' +
+            '<div class="metric"><span class="m-lbl">Amount</span><span class="m-val">' + fmtG(r.amount) + 'g</span></div>' +
             '<div class="metric"><span class="m-lbl">Price</span><span class="m-val">' + fmtMoney(r.pricePaid) + '</span></div>' +
             (r.purchaseSource ? '<div class="metric"><span class="m-lbl">From</span><span class="m-val">' + escapeHtml(r.purchaseSource) + '</span></div>' : '') +
           '</div>' +
@@ -2309,14 +2358,14 @@
           var s = bySpool[f.spoolId];
           var swatch = s ? '<span class="log-swatch" style="background:' + (s.colorHex || "#999") + '"></span>' : "";
           var label = s ? (s.brand + " — " + (s.line || s.material)) : "(deleted spool)";
-          return '<div>' + swatch + escapeHtml(label) + ' <strong>' + fmtNum(f.amount) + (s ? " " + spoolUnit(s) : " g") + '</strong></div>';
+          return '<div>' + swatch + escapeHtml(label) + ' <strong style="white-space:nowrap;">' + fmtG(f.amount) + (s ? " " + spoolUnit(s) : " g") + '</strong></div>';
         }).join("");
         return '<tr data-id="' + p.id + '">' +
           '<td>' + (p.date || "") + '</td>' +
           '<td>' + escapeHtml(p.project || "") + (p.notes ? '<div class="card-sub">' + escapeHtml(p.notes) + '</div>' : '') + '</td>' +
           '<td>' + escapeHtml(buildPlateLabel) + '</td>' +
           '<td>' + escapeHtml(p.plateName || "") + '</td>' +
-          '<td class="num">' + fmtNum(total) + ' g</td>' +
+          '<td class="num">' + fmtG(total) + ' g</td>' +
           '<td>' + filamentsHtml + '</td>' +
           '<td><button class="btn btn-sm btn-quiet btn-danger delUsageBtn">Delete</button></td>' +
           '</tr>';
@@ -2819,6 +2868,7 @@
         document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
         tab.classList.add("active");
         state.activeView = viewType;
+        persistUiState();
         $("view-" + viewType).classList.add("active");
         if (viewType === "stats") renderStatsView();
         if (viewType === "inventory") {
@@ -2833,6 +2883,7 @@
           document.querySelectorAll(".analytics-view").forEach(function (v) { v.classList.remove("active"); });
           tab.classList.add("active");
           state.analyticsView = analyticsType;
+          persistUiState();
           $("analytics-" + analyticsType).classList.add("active");
           if (analyticsType === "simple") renderSimpleAnalytics();
           if (analyticsType === "advanced") renderSavedQueries();
@@ -2844,14 +2895,20 @@
   // ============================================================
   // Filters
   // ============================================================
-  $("searchInput").addEventListener("input", function (e) { state.search = e.target.value; renderSpoolGrid(); });
-  $("refillSearchInput").addEventListener("input", function (e) { state.refillSearch = e.target.value; renderRefillGrid(); });
-  $("materialFilter").addEventListener("change", function (e) { state.materialFilter = e.target.value; renderSpoolGrid(); });
-  $("buildPlateFilter").addEventListener("change", function (e) { state.buildPlateFilter = e.target.value; renderSpoolGrid(); });
-  $("sortFilter").addEventListener("change", function (e) { state.sortFilter = e.target.value; renderSpoolGrid(); });
-  $("lowStockOnly").addEventListener("change", function (e) { state.lowStockOnly = e.target.checked; renderSpoolGrid(); });
-  $("logSpoolFilter").addEventListener("change", function (e) { state.logSpoolFilter = e.target.value; renderLogTable(); });
-  $("logSort").addEventListener("change", function (e) { state.logSort = e.target.value; renderLogTable(); });
+  $("searchInput").addEventListener("input", function (e) { state.search = e.target.value; persistUiState(); renderSpoolGrid(); });
+  $("refillSearchInput").addEventListener("input", function (e) { state.refillSearch = e.target.value; persistUiState(); renderRefillGrid(); });
+  $("materialFilter").addEventListener("change", function (e) { state.materialFilter = e.target.value; persistUiState(); renderSpoolGrid(); });
+  $("buildPlateFilter").addEventListener("change", function (e) { state.buildPlateFilter = e.target.value; persistUiState(); renderSpoolGrid(); });
+  $("sortFilter").addEventListener("change", function (e) { state.sortFilter = e.target.value; persistUiState(); renderSpoolGrid(); });
+  $("lowStockOnly").addEventListener("change", function (e) { state.lowStockOnly = e.target.checked; persistUiState(); renderSpoolGrid(); });
+  $("logSpoolFilter").addEventListener("change", function (e) { state.logSpoolFilter = e.target.value; persistUiState(); renderLogTable(); });
+  $("logSort").addEventListener("change", function (e) { state.logSort = e.target.value; persistUiState(); renderLogTable(); });
+
+  var persistScrollT;
+  window.addEventListener("scroll", function () {
+    clearTimeout(persistScrollT);
+    persistScrollT = setTimeout(persistUiState, 150);
+  }, { passive: true });
 
   // ============================================================
   // Analytics event listeners
@@ -3027,6 +3084,22 @@
   });
 
   $("fMaterial").addEventListener("input", updateCompatiblePlatesDisplay);
+
+  // Material datalist: FILAMENT_DB materials plus other common families so
+  // whatever is typed lands on a name the build-plate matcher understands.
+  (function () {
+    var extraMaterials = [
+      "PLA-GF", "PET", "PET-CF", "ABS-CF", "ASA-GF", "HIPS", "PC-ABS", "PC-CF",
+      "TPE", "TPC", "Nylon", "PA6", "PA11", "PA12", "PAHT", "PA-CF", "PA-GF",
+      "PPA", "PPA-GF", "PPS", "PPS-GF", "PP", "Polypropylene", "PVA", "BVOH", "PVB"
+    ];
+    var mats = Array.from(new Set(
+      FILAMENT_DB.map(function (f) { return f.material; }).concat(extraMaterials)
+    )).sort();
+    $("materialOptions").innerHTML = mats.map(function (m) {
+      return '<option value="' + m + '">';
+    }).join("");
+  })();
 
   $("bulkPresetSelect").addEventListener("change", function (e) {
     if (e.target.value === "") return;
@@ -3840,12 +3913,12 @@
               '<label>' + spoolLabel + '</label>' +
               '<select id="autoPrintSpool_' + idx + '_' + fIdx + '">' + spoolOptions + '</select>' +
             '</div>' +
-            '<button class="btn btn-ghost btn-sm" onclick="removeAutoPrintRow(' + idx + ',' + fIdx + ')" title="Remove filament">×</button>' +
+            '<button class="btn btn-ghost btn-sm" onclick="removeAutoPrintRow(' + idx + ',' + fIdx + ')" title="Remove filament" style="width:36px; height:36px; padding:0; justify-content:center;">×</button>' +
           '</div>';
         }).join("") +
         '<div style="display:flex; align-items:center; margin-top:4px;">' +
           '<button class="btn btn-ghost btn-sm" onclick="addAutoPrintRow(' + idx + ')">+ filament</button>' +
-          '<span style="margin-left:auto; font-size:12px; color:var(--ink-faint);">Total: ' + fmtNum(total) + ' g</span>' +
+          '<span style="margin-left:auto; font-size:12px; color:var(--ink-faint); white-space:nowrap;">Total: ' + fmtG(total) + ' g</span>' +
         '</div>' +
       '</div>';
     }).join("");
@@ -3949,7 +4022,23 @@
     state.savedQueries = JSON.parse(localStorage.getItem("filamentlog_queries") || "[]");
   } catch (e) { state.savedQueries = []; }
 
+  restoreUiState();
   renderAll();
+
+  // Option lists may have dropped saved values that no longer exist — sync back
+  state.materialFilter = $("materialFilter").value;
+  state.buildPlateFilter = $("buildPlateFilter").value;
+  state.logSpoolFilter = $("logSpoolFilter").value;
+
+  // Return to the tab (and analytics sub-tab) the user last had open
+  var lastTab = document.querySelector('.tab[data-view="' + state.activeView + '"]');
+  if (lastTab && !lastTab.classList.contains("active")) lastTab.click();
+  if (state.activeView === "analytics") {
+    var lastAnalyticsTab = document.querySelector('.tab[data-analytics="' + state.analyticsView + '"]');
+    if (lastAnalyticsTab && !lastAnalyticsTab.classList.contains("active")) lastAnalyticsTab.click();
+  }
+  setTimeout(function () { window.scrollTo(0, pendingScrollRestore); persistUiState(); }, 0);
+
   Store.init();
 
 

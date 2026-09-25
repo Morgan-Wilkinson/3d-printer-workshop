@@ -21,13 +21,15 @@ A comprehensive filament and resin inventory management system that helps you:
 **Key Features:**
 - **Bulk Operations**: Add multiple spools at once or edit multiple spools simultaneously
 - **Flexible Views**: Switch between grid and list layouts, with normal or compact card sizes
-- **Advanced Sorting**: Sort by name, brand, purchase source, or price
+- **Advanced Sorting**: Sort by name, brand, purchase source, price, or remaining amount (asc/desc)
 - **Refill Tracking**: Track independent filament rolls (without housing) that can be used to refill empty spools
 - **Refill to Spool Conversion**: Convert refills to spools when you load them onto spool housing
 - **Sales Tracking**: Track sale prices, original prices, bundle deals, and calculate savings
 - **Advanced Analytics**: Three-tier query system (Simple, Medium, Advanced) for deep data analysis
 - **Usage Analytics**: View usage statistics and material costs over time
-- **Build Plate Compatibility**: Automatic compatibility badges for Bambu Lab X2D build plates (Cool Plate, Engineering Plate, Textured PEI Plate)
+- **Build Plate Compatibility**: Automatic compatibility badges for Bambu Lab X2D build plates (Cool Plate, Engineering Plate, Textured PEI Plate) covering 40+ material families via substring matching — resins correctly show none
+- **Material Autocomplete**: Material field suggests canonical names so new spools get the right badges automatically
+- **Session Persistence**: Remembers your last tab, filters, sort order, and scroll position across reloads
 - **Build Plate Filtering**: Filter inventory by compatible build plate
 - **Print Logging Enhancement**: Track which build plate and plate number were used for each print
 - **Auto Print Tracking**: Moonraker / OctoPrint / Bambu LAN bridge that detects completed prints and lets you import them in one click (imported prints auto-dismiss)

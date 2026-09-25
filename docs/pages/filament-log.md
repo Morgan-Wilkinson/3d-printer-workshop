@@ -143,13 +143,15 @@ Auto-fills brand, material, temps, and a reference price in the add-spool/refill
 
 ### `BUILD_PLATES` — Bambu X2D build plates
 
-Compatibility is **derived from `material`** (substring match against `compatibleMaterials`), never stored on the spool.
+Compatibility is **derived from `material`** (substring match against `compatibleMaterials`, minus anything in `excludeMaterials`), never stored on the spool. Materials containing "resin" never match — plates only apply to filament.
 
-| ID | Name | Materials | Bed range |
-|---|---|---|---|
-| `cool_plate` | Cool Plate | PLA, PLA-CF, PETG, PETG-CF, TPU | 0–60 °C |
-| `engineering_plate` | Engineering Plate | PLA, PLA-CF, ABS, ABS-GF, ASA, ASA-CF, Polycarbonate, Nylon-CF, Nylon-GF, PET-CF, PPA-CF, PPS-CF | 80–120 °C |
-| `texture_pei_plate` | Textured PEI Plate | PLA, PLA-CF, PETG, PETG-CF, ABS, ASA, TPU | 0–100 °C |
+| ID | Name | Compatible material families | Excluded | Bed range |
+|---|---|---|---|---|
+| `cool_plate` | Cool Plate (SuperTack) | PLA, PETG, PET, PVA, BVOH | `‑CF` / `‑GF` variants (abrasive) and TPU damage the coating | 0–60 °C |
+| `engineering_plate` | Engineering Plate | PLA, PET‑CF, PETG‑CF/GF, ABS, ASA, HIPS, PC, Nylon/PA family (PA6/11/12, PAHT, PPA…), PPS, TPU, TPE, PP/Polypropylene (needs PP glue) | — | 80–120 °C |
+| `texture_pei_plate` | Textured PEI Plate | PLA, PET, PETG, ABS, ASA, HIPS, TPU/TPE/TPC, PC, Nylon/PA family, PVA, BVOH, PVB — including CF/GF variants | — | 0–100 °C |
+
+Substrings work family-wide: `PA` covers PA6/PA12/PAHT/PPA, `PET` covers PETG and PET-CF, `PC` covers PC-ABS/PC-CF, etc. Because `Polypropylene` doesn't literally contain `PP`, both spellings are listed.
 
 Every spool card renders color-coded compatibility badges, the Inventory tab has a build-plate filter, the spool form live-updates compatible plates as you type a material, and each print log records which plate was used.
 
