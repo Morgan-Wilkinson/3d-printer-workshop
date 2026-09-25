@@ -3756,10 +3756,48 @@
   }
 
   function suggestSpoolForAmount(printObj, amountIdx) {
-    // Try to find a loaded spool that matches the print's project or any un-archived spool
+    // Match the AMS tray hint (material/line/color) to a loaded spool.
+    // Returns null rather than a wrong guess when nothing matches.
+    var f = (printObj.filaments || [])[amountIdx] || {};
+    var hint = f.tray || {};
     var active = Store.spools.filter(function (s) { return !s.archived; });
     if (!active.length) return null;
-    return active[0].id;
+    var best = null;
+    var bestScore = 0;
+    active.forEach(function (s) {
+      var score = 0;
+      if (hint.material && (s.material || "").toLowerCase() === hint.material.toLowerCase()) score += 2;
+      if (hint.line && (s.line || "").toLowerCase() === hint.line.toLowerCase()) score += 2;
+      if (hint.colorHex && (s.colorHex || "").toLowerCase() === hint.colorHex.toLowerCase()) score += 3;
+      if (score > bestScore) { bestScore = score; best = s.id; }
+    });
+    return best;
+  }
+
+  function syncAutoPrintInputs() {
+    autoPrints.forEach(function (p, idx) {
+      var check = $("autoPrintCheck_" + idx);
+      if (check) p._checked = check.checked;
+      (p.filaments || []).forEach(function (f, fIdx) {
+        var amt = $("autoPrintAmount_" + idx + "_" + fIdx);
+        var sp = $("autoPrintSpool_" + idx + "_" + fIdx);
+        if (amt) f.amount = Number(amt.value) || 0;
+        if (sp) f.spoolId = sp.value || null;
+      });
+    });
+  }
+
+  function addAutoPrintRow(idx) {
+    syncAutoPrintInputs();
+    autoPrints[idx].filaments = autoPrints[idx].filaments || [];
+    autoPrints[idx].filaments.push({ spoolId: null, amount: 0 });
+    renderAutoPrints();
+  }
+
+  function removeAutoPrintRow(idx, fIdx) {
+    syncAutoPrintInputs();
+    autoPrints[idx].filaments.splice(fIdx, 1);
+    renderAutoPrints();
   }
 
   function renderAutoPrints() {
@@ -3777,7 +3815,7 @@
 
     container.innerHTML = autoPrints.map(function (p, idx) {
       var total = (p.filaments || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0);
-      var checked = ' checked';
+      var checked = p._checked === false ? '' : ' checked';
       return '<div class="panel" style="margin-bottom: 10px; padding: 12px;">' +
         '<div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">' +
           '<input type="checkbox" id="autoPrintCheck_' + idx + '"' + checked + ' style="width:18px; height:18px;">' +
@@ -3786,6 +3824,11 @@
         '</div>' +
         '<div style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">' + escapeHtml(p.notes || "") + '</div>' +
         (p.filaments || []).map(function (f, fIdx) {
+          var trayLabel = "";
+          if (f.tray) {
+            var parts = ["Tray " + (f.tray.id != null ? f.tray.id : "?"), f.tray.line || f.tray.material, f.tray.colorHex].filter(Boolean);
+            trayLabel = '<div style="font-size:11px; color:var(--ink-faint); margin-top:4px;">' + escapeHtml(parts.join(" · ")) + '</div>';
+          }
           return '<div class="field-row" style="align-items:center; margin-bottom:8px;">' +
             '<div class="field" style="flex:0 0 120px;">' +
               '<label>Amount (g)</label>' +
@@ -3794,10 +3837,15 @@
             '<div class="field" style="flex:1;">' +
               '<label>Spool</label>' +
               '<select id="autoPrintSpool_' + idx + '_' + fIdx + '">' + spoolOptions + '</select>' +
+              trayLabel +
             '</div>' +
+            '<button class="btn btn-ghost btn-sm" onclick="removeAutoPrintRow(' + idx + ',' + fIdx + ')" title="Remove filament" style="margin-top:18px;">×</button>' +
           '</div>';
         }).join("") +
-        '<div style="font-size:12px; color:var(--ink-faint); text-align:right;">Total: ' + fmtNum(total) + ' g</div>' +
+        '<div style="display:flex; align-items:center; margin-top:4px;">' +
+          '<button class="btn btn-ghost btn-sm" onclick="addAutoPrintRow(' + idx + ')">+ filament</button>' +
+          '<span style="margin-left:auto; font-size:12px; color:var(--ink-faint);">Total: ' + fmtNum(total) + ' g</span>' +
+        '</div>' +
       '</div>';
     }).join("");
 

@@ -137,7 +137,7 @@ def parse_3mf_content(data):
 
 
 def collect_ams_state(print_data):
-    """Snapshot AMS tray remain% and weight, keyed by global tray index."""
+    """Snapshot AMS tray remain%, weight and filament identity, keyed by global tray index."""
     state = {}
     ams = print_data.get("ams") or {}
     for unit in ams.get("ams") or []:
@@ -150,33 +150,37 @@ def collect_ams_state(print_data):
                 tid = int(tray.get("id", 0))
             except (TypeError, ValueError):
                 continue
-            state[str(uid * 4 + tid)] = {
-                "remain": float(tray.get("remain") or 0),
-                "weight": float(tray.get("tray_weight") or 0),
-            }
+            state[str(uid * 4 + tid)] = _tray_state(tray)
     for vt in ams.get("vt_tray") or []:
         try:
             tid = int(vt.get("id", 0))
         except (TypeError, ValueError):
             continue
-        state[str(tid)] = {
-            "remain": float(vt.get("remain") or 0),
-            "weight": float(vt.get("tray_weight") or 0),
-        }
+        state[str(tid)] = _tray_state(vt)
     return state
 
 
-def estimate_grams_from_ams(start_state, end_state):
-    """Estimate grams used per tray from remain% deltas."""
-    grams = []
+def _tray_state(tray):
+    return {
+        "remain": float(tray.get("remain") or 0),
+        "weight": float(tray.get("tray_weight") or 0),
+        "material": tray.get("tray_type") or "",
+        "line": tray.get("tray_sub_brands") or "",
+        "color": tray.get("tray_color") or "",
+    }
+
+
+def estimate_grams_by_tray(start_state, end_state):
+    """Estimate grams used per tray from remain% deltas, keyed by tray index."""
+    est = {}
     for key, start in (start_state or {}).items():
         end = (end_state or {}).get(key)
         if not end or not start.get("weight"):
             continue
         used = (start.get("remain", 0) - end.get("remain", 0)) / 100 * start["weight"]
         if used > 0:
-            grams.append(round(used, 2))
-    return grams
+            est[key] = round(used, 2)
+    return est
 
 
 class PrintTracker:
@@ -309,6 +313,38 @@ class PrintTracker:
 
         return [0.0]
 
+    def build_bambu_filaments(self, active, print_data, grams):
+        """Build one filament entry per tray the job mapped, with tray hints for spool matching."""
+        end_state = collect_ams_state(print_data)
+        est = estimate_grams_by_tray(active.get("ams_state"), end_state)
+        trays_used = []
+        for t in print_data.get("mapping") or []:
+            try:
+                trays_used.append(str(int(t)))
+            except (TypeError, ValueError):
+                pass
+        if not trays_used:
+            trays_used = list(est.keys())
+
+        filaments = []
+        for i, t in enumerate(trays_used):
+            amount = grams[i] if i < len(grams) and grams[i] > 0 else est.get(t, 0.0)
+            hint = end_state.get(t) or {}
+            color = (hint.get("color") or "")[:6]
+            filaments.append({
+                "spoolId": None,
+                "amount": round(amount, 2),
+                "tray": {
+                    "id": t,
+                    "material": hint.get("material", ""),
+                    "line": hint.get("line", ""),
+                    "colorHex": "#" + color.lower() if color else "",
+                },
+            })
+        if not filaments:
+            filaments = [{"spoolId": None, "amount": round(sum(grams), 2) if any(grams) else 0.0}]
+        return filaments
+
     def get_bambu_jobs(self):
         if mqtt is None:
             raise RuntimeError("paho-mqtt is required for Bambu support. Install with: pip install paho-mqtt")
@@ -402,10 +438,8 @@ class PrintTracker:
 
             if active and (gcode_state in ("FINISH", "FAILED", "ABORT") or (gcode_state == "IDLE" and not gcode_file)):
                 grams = self.get_grams(active.get("project") or subtask_name, active.get("gcode_file") or gcode_file)
-                if not any(g > 0 for g in grams):
-                    grams = estimate_grams_from_ams(active.get("ams_state"), collect_ams_state(print_data)) or grams
                 active["end_time"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")
-                active["filament_grams"] = grams
+                active["filaments"] = self.build_bambu_filaments(active, print_data, grams)
                 active["gcode_file"] = gcode_file or active["gcode_file"]
                 active["project"] = subtask_name or active["project"]
                 finished.append(active)
@@ -516,12 +550,7 @@ class PrintTracker:
         end = job.get("end_time", datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M"))
         date = end[:10]
 
-        filaments = []
-        for amount in job.get("filament_grams", [0.0]):
-            if amount > 0:
-                filaments.append({"spoolId": None, "amount": round(amount, 2)})
-        if not filaments:
-            filaments = [{"spoolId": None, "amount": 0.0}]
+        filaments = job.get("filaments") or [{"spoolId": None, "amount": 0.0}]
 
         return {
             "id": f"print_{job.get('job_id')}",
@@ -702,10 +731,8 @@ class PrintTracker:
 
         if active and (gcode_state in ("FINISH", "FAILED", "ABORT") or (gcode_state == "IDLE" and not gcode_file)):
             grams = self.get_grams(active.get("project") or subtask_name, active.get("gcode_file") or gcode_file)
-            if not any(g > 0 for g in grams):
-                grams = estimate_grams_from_ams(active.get("ams_state"), collect_ams_state(print_data)) or grams
             active["end_time"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")
-            active["filament_grams"] = grams
+            active["filaments"] = self.build_bambu_filaments(active, print_data, grams)
             active["gcode_file"] = gcode_file or active["gcode_file"]
             active["project"] = subtask_name or active["project"]
 
@@ -717,10 +744,11 @@ class PrintTracker:
                 self.save_pending(pending)
                 seen.add(normalized["jobId"])
                 self.state["seen_ids"] = list(seen)
-                print(f"Detected finished Bambu print: {active['project']} ({sum(grams)}g)")
+                total = sum(f.get("amount", 0) for f in active["filaments"])
+                print(f"Detected finished Bambu print: {active['project']} ({total}g)")
 
-                if self.config.get("spoolman_enabled") and grams:
-                    self.update_spoolman(sum(grams), active["project"])
+                if self.config.get("spoolman_enabled") and total:
+                    self.update_spoolman(total, active["project"])
 
             bambu_state["active_job"] = None
             self.save_state()
